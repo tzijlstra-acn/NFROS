@@ -1,0 +1,3165 @@
+/*
+ * Presentation mode.
+ *
+ * This stylesheet owns the cinematic deck at /story. It is presentation only:
+ * nothing here is used by the workday surfaces, and nothing in the workday
+ * surfaces is redefined globally.
+ *
+ * ---------------------------------------------------------------------------
+ * 1. The four layer scene geometry contract
+ * ---------------------------------------------------------------------------
+ *
+ * Carried verbatim in concept from docs/handoffs/source-visual-findings.md,
+ * section "The scene geometry contract". Four nested layers, each with one job:
+ *
+ *   section.story-scene   block-size: 100dvh, min-height: 0, overflow: clip
+ *   .story-inner          centred measure, no height of its own
+ *   .scene-screen         grid-template-rows: auto minmax(0, 1fr) auto
+ *   .scene-stage          height: 100%, contain: layout paint size
+ *
+ * The middle grid row is minmax(0, 1fr) and every level carries min-height: 0.
+ * That pair is what stops an SVG or a long list from pushing a scene taller
+ * than the viewport. The header and footer rows are height capped so they
+ * cannot steal stage space, which is the regression the source repository
+ * recorded as a P2 defect and then fixed.
+ *
+ * Nothing in the deck scrolls. Where content is taller than its stage, the
+ * stage scales it down (see .scene-fit and StageFit in the components), which
+ * is the presenter safe behaviour: a shrunk diagram reads, a scrollbar on a
+ * projector does not.
+ *
+ * ---------------------------------------------------------------------------
+ * 2. Type floor
+ * ---------------------------------------------------------------------------
+ *
+ * These scenes are projected. No HTML text in the deck renders below 14px, at
+ * any of the three target sizes. The floor is enforced structurally rather
+ * than by inspection: .story-deck redeclares the type scale tokens, so every
+ * reused utility class (.label, .meta, .chip, .provenance, .synthetic-label)
+ * picks up the deck scale instead of the product scale. The 1366px breakpoint
+ * in globals.css reduces --text-base; the deck reasserts it.
+ *
+ * One stated exception, resolved rather than inherited. Text inside a reused
+ * hero visualisation is SVG text in viewBox units, so its rendered size is a
+ * function of how wide the drawing is painted. Hero scenes therefore run lean
+ * chrome (data-chrome="lean") and a hero stage, which at the 1920x1080
+ * reference size paints those drawings wide enough for their 11 unit labels to
+ * land at or above 14px. Below the reference size the whole composition scales
+ * down proportionally, which is what a projector does to it anyway.
+ *
+ * ---------------------------------------------------------------------------
+ * 3. Motion discipline
+ * ---------------------------------------------------------------------------
+ *
+ * Every transition here is driven by a per scene reveal step counter, never by
+ * a loop. Three loops exist in the whole deck and each is declared:
+ *   .story-breath   the stated unknown on scene 1, and the unresolved
+ *                   conflict on scene 13. Both mark something unresolved.
+ * Motion budget: no scene timeline exceeds 12,000 ms, and the two scenes over
+ * 7,000 ms are the two the storyboard justifies.
+ *
+ * Two layers neutralise motion, exactly as the source findings prescribe:
+ *   CSS     collapses transition and animation durations
+ *   JS      jumps the reveal step counter to its final value
+ * Both fire for prefers-reduced-motion, for [data-motion="paused"], and for
+ * presenter safe mode (?safe=1) and export mode (?export=1).
+ */
+
+/* ==========================================================================
+   Deck shell
+   ========================================================================== */
+
+.story-deck {
+  /* Deck type scale. Projected sizes, and a hard 14px floor. */
+  --text-xs: 0.875rem; /* 14px. The floor. Never reduced at any breakpoint. */
+  --text-sm: 0.9375rem; /* 15px */
+  --text-base: 1rem; /* 16px */
+  --text-md: 1.125rem; /* 18px */
+  --text-lg: 1.375rem; /* 22px */
+  --text-xl: 1.75rem; /* 28px */
+  --text-2xl: 2.375rem; /* 38px */
+  --text-3xl: 3.125rem; /* 50px */
+
+  /* Chrome metrics. The scene padding is derived from these. */
+  --story-bar-h: 46px;
+  --story-foot-h: 54px;
+  --story-pad-x: 46px;
+  --story-notes-w: 0px;
+  --story-measure: 1420px;
+
+  /* Stage geometry */
+  --screen-gap: clamp(8px, 1.1vh, 14px);
+  --story-hdr-max: 132px;
+  --story-foot-max: 46px;
+
+  /* Reveal timing. One curve, two durations. */
+  --story-reveal: 420ms;
+  --story-draw: 720ms;
+
+  position: relative;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) var(--story-notes-w);
+  block-size: 100dvh;
+  min-height: 0;
+  overflow: clip;
+  background: var(--bg);
+  color: var(--text-2);
+  font-size: var(--text-base);
+}
+
+.story-deck[data-notes="open"] {
+  --story-notes-w: 400px;
+}
+
+/* The navigable frame. The notes panel sits beside it, never over the stage. */
+.story-frame {
+  position: relative;
+  min-width: 0;
+  min-height: 0;
+  overflow: clip;
+}
+
+/* ==========================================================================
+   Layer 1: the scene section, 100dvh
+   ========================================================================== */
+
+.story-scene {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  block-size: 100dvh;
+  max-block-size: 100%;
+  min-height: 0;
+  overflow: clip;
+  padding: var(--story-bar-h) var(--story-pad-x) var(--story-foot-h);
+}
+
+/* Hero scenes run lean chrome so a wide drawing is painted wide. */
+.story-scene[data-chrome="lean"] {
+  --story-hdr-max: 104px;
+  --story-pad-x: 28px;
+}
+
+/*
+ * Bare chrome. The title sits on one line, the subtitle moves to the
+ * presenter notes, and the stage takes everything that is left. Used only by
+ * the scenes whose whole content is a drawing, because a drawing painted
+ * small is a drawing nobody at the back of the room can read.
+ */
+.story-scene[data-chrome="bare"] {
+  --story-hdr-max: 40px;
+  --story-foot-max: 48px;
+  --story-pad-x: 24px;
+}
+
+.story-scene[data-chrome="bare"] .scene-footer-key {
+  -webkit-line-clamp: 1;
+}
+
+.story-scene[data-chrome="bare"] .screen-hdr {
+  flex-direction: row;
+  align-items: baseline;
+  gap: 14px;
+  flex-wrap: wrap;
+}
+
+.story-scene[data-chrome="bare"] .scene-title {
+  font-size: var(--text-xl);
+}
+
+.story-scene[data-chrome="bare"] .scene-subtitle {
+  display: none;
+}
+
+/* ==========================================================================
+   Layer 2: the inner measure
+   ========================================================================== */
+
+.story-inner {
+  width: 100%;
+  max-width: var(--story-measure);
+  margin: 0 auto;
+  min-height: 0;
+}
+
+.story-scene[data-chrome="lean"] .story-inner {
+  max-width: min(1660px, 100%);
+}
+
+/* ==========================================================================
+   Layer 3: the three row screen grid
+   ========================================================================== */
+
+.scene-screen {
+  flex: 1;
+  display: grid;
+  grid-template-rows: auto minmax(0, 1fr) auto;
+  gap: var(--screen-gap);
+  padding-block: 14px 16px;
+  min-height: 0;
+  overflow: hidden;
+  contain: layout;
+}
+
+/* Header row. Height capped, so a long subtitle cannot eat the stage. */
+.screen-hdr {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  max-height: var(--story-hdr-max);
+  overflow: clip;
+  flex-shrink: 0;
+  min-height: 0;
+}
+
+.screen-hdr-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+  min-height: 0;
+  flex-shrink: 0;
+}
+
+.scene-eyebrow {
+  font-family: var(--font-mono);
+  font-size: var(--text-xs);
+  letter-spacing: var(--tracking-label);
+  text-transform: uppercase;
+  color: var(--text-4);
+}
+
+.scene-title {
+  font-family: var(--font-display);
+  font-size: var(--text-2xl);
+  line-height: 1.08;
+  letter-spacing: var(--tracking-tight);
+  color: var(--text-1);
+  font-weight: 600;
+  margin: 0;
+  text-wrap: balance;
+}
+
+.story-scene[data-chrome="lean"] .scene-title {
+  font-size: var(--text-xl);
+}
+
+.scene-subtitle {
+  font-size: var(--text-md);
+  line-height: 1.34;
+  color: var(--text-3);
+  max-width: 96ch;
+  margin: 0;
+  /* Clamped rather than clipped by the header's max height. A subtitle cut
+     through the middle of a line of glyphs reads as a broken slide. */
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  overflow: hidden;
+}
+
+.story-scene[data-chrome="lean"] .scene-subtitle {
+  font-size: var(--text-base);
+}
+
+/* Footer row. One capped row, merged on purpose: the source repository
+   recorded three stacked footer rows stealing stage height as a defect. */
+.scene-footer {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  max-height: var(--story-foot-max);
+  overflow: clip;
+  flex-shrink: 0;
+  min-height: 0;
+  border-top: 1px solid var(--border-1);
+  padding-top: 10px;
+}
+
+.scene-footer-key {
+  font-size: var(--text-sm);
+  color: var(--text-2);
+  line-height: 1.3;
+  flex: 1 1 auto;
+  min-width: 0;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.scene-footer-key::before {
+  content: "Key message. ";
+  font-family: var(--font-mono);
+  font-size: var(--text-xs);
+  letter-spacing: var(--tracking-label);
+  text-transform: uppercase;
+  color: var(--text-4);
+}
+
+.scene-footer-meta {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-shrink: 0;
+}
+
+/* ==========================================================================
+   Layer 4: the stage
+   ========================================================================== */
+
+.scene-stage {
+  position: relative;
+  height: 100%;
+  width: 100%;
+  min-height: 0;
+  overflow: clip;
+  contain: layout paint size;
+  container-type: size;
+}
+
+/*
+ * The fit wrapper. Absolute, so the stage's contained size is the only input
+ * and the natural height of .scene-root is measured before any transform.
+ *
+ * Centred on both axes. A composition shorter than its stage should sit in the
+ * middle of the frame rather than hugging the top, and a composition that has
+ * been scaled down should shrink toward the same axis, so the two cases are
+ * visually consistent.
+ */
+.scene-fit {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  min-height: 0;
+}
+
+.scene-root {
+  width: 100%;
+  flex: 0 0 auto;
+  transform: scale(var(--fit, 1));
+  transform-origin: center center;
+  transition: transform var(--duration-base) var(--ease-out);
+}
+
+/* Aspect budgets, so a scene knows its drawing space without measuring.
+   Values carried from the source findings, widened for a 1920 projection. */
+.scene-root[data-size="compact"] {
+  width: min(1040px, 100%);
+  margin: 0 auto;
+}
+
+.scene-root[data-size="standard"] {
+  width: min(1280px, 100%);
+  margin: 0 auto;
+}
+
+.scene-root[data-size="wide"] {
+  width: min(1560px, 100%);
+  margin: 0 auto;
+}
+
+.scene-root[data-size="full"] {
+  width: 100%;
+}
+
+/*
+ * The focus idiom.
+ *
+ * Several scenes show a set of three to eight items and then work through
+ * them. Rendering every item at full height at once is what forces a stage to
+ * scale, and it is also the wrong instruction to the room: the presenter is
+ * reading one of them. So the whole set stays on screen, which keeps the
+ * picture, and only the item under discussion carries its detail.
+ *
+ * The reduction is a display change rather than an opacity trick, because the
+ * height has to come back: a hidden block that still occupies its space has
+ * not solved anything.
+ */
+[data-focus="off"] .focus-detail {
+  display: none;
+}
+
+[data-focus="off"] {
+  opacity: 0.52;
+}
+
+[data-focus="on"] {
+  opacity: 1;
+}
+
+/*
+ * A region that holds several compositions in the same space, one at a time.
+ *
+ * Accumulating panels down a scene is the single biggest cause of a stage
+ * having to scale its content down, and a scaled composition punishes every
+ * word on the slide for one dense panel. Swapping in place costs nothing in
+ * height, and it is better presentation anyway: the audience looks at one
+ * thing, and the transition between two panes says that the second is what
+ * the first resolves into.
+ */
+.swap-region {
+  position: relative;
+  min-width: 0;
+  min-height: 0;
+}
+
+.swap-pane {
+  position: absolute;
+  inset: 0;
+  min-width: 0;
+  min-height: 0;
+  overflow: clip;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+}
+
+/*
+ * A pane that is not on stage takes no clicks.
+ *
+ * `content-visibility: hidden` was tried here and is wrong twice over. It does
+ * not remove the subtree's client rects, because a geometry query on a skipped
+ * subtree forces its layout and returns real coordinates, so it hides nothing
+ * from a measurement. And it stops the ResizeObserver in useFitScale from ever
+ * firing inside the pane, which leaves a nested FitBox at scale 1 and pushes
+ * the composition it was supposed to shrink straight off the stage.
+ *
+ * The faded out state is carried by `visibility` on .rv-fade instead.
+ */
+.swap-pane[data-shown="false"] {
+  pointer-events: none;
+}
+
+/* The local containment boundary for a hero visualisation. */
+.fit-box {
+  position: relative;
+  min-width: 0;
+  min-height: 0;
+  overflow: clip;
+  flex: 0 0 auto;
+}
+
+.fit-inner {
+  position: absolute;
+  inset-inline: 0;
+  inset-block-start: 0;
+  transform: scale(var(--fit, 1));
+  transform-origin: top center;
+}
+
+/*
+ * A reused hero visualisation.
+ *
+ * Its SVG is width driven with `height: auto`, so the only way to respect the
+ * stage height is to cap the width. `--hero-ar` is the whole figure's
+ * approximate aspect, drawing plus caption plus legend, and the cap is
+ * expressed against the stage's own height in container query units. That
+ * paints the drawing as wide as the stage allows, which is what keeps its
+ * viewBox unit text as large as the geometry permits.
+ *
+ * `--hero-h` is available for scenes that reduce the hero to make room for a
+ * panel, and the height transition makes that reduction read as the drawing
+ * making way rather than as a layout jump.
+ */
+.story-hero {
+  width: min(100%, calc(var(--hero-ar, 1.2) * var(--hero-h, 100cqh)));
+  margin: 0 auto;
+  min-height: 0;
+  transition: width var(--duration-slow) var(--ease-out);
+}
+
+.story-hero > figure {
+  min-height: 0;
+}
+
+/* SVG text inside a reused hero visualisation is in viewBox units, between 11
+   and 12, so its rendered size follows the drawing width. The deck's HTML
+   text floor is 14px and is enforced by the deck type scale. These dense
+   diagram cell labels are the one stated exception, and every one of them is
+   also carried at full size in the figure's own legend and in the scene's
+   accessible summary. */
+.story-hero svg text {
+  font-family: var(--font-body);
+}
+
+/* The accessible summary of a visual. Read by screen readers, and by the
+   presenter when a visual fails. */
+.scene-alt {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+  border: 0;
+}
+
+/* ==========================================================================
+   Chapter and counter bar
+   ========================================================================== */
+
+.story-chapterbar {
+  position: absolute;
+  inset-inline: 0;
+  inset-block-start: 0;
+  z-index: 6;
+  height: var(--story-bar-h);
+  display: flex;
+  align-items: center;
+  gap: 18px;
+  padding: 0 var(--story-pad-x);
+  background: linear-gradient(to bottom, var(--bg) 62%, rgb(14 15 20 / 0%));
+  border-bottom: 1px solid var(--border-1);
+}
+
+.story-chapter-ordinal {
+  font-family: var(--font-mono);
+  font-size: var(--text-xs);
+  letter-spacing: var(--tracking-label);
+  color: var(--accent);
+  border: 1px solid var(--accent-edge);
+  background: var(--accent-tint);
+  border-radius: var(--radius-sm);
+  padding: 1px 8px;
+  flex-shrink: 0;
+}
+
+.story-chapter-name {
+  font-family: var(--font-display);
+  font-size: var(--text-sm);
+  letter-spacing: var(--tracking-wide);
+  text-transform: uppercase;
+  color: var(--text-2);
+  white-space: nowrap;
+}
+
+.story-chapter-rail {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+/* One segment per chapter, width proportional to its speaking time. */
+.story-chapter-seg {
+  height: 6px;
+  border-radius: 2px;
+  background: var(--surface-2);
+  border: 1px solid var(--border-1);
+  position: relative;
+  overflow: clip;
+  min-width: 18px;
+  padding: 0;
+  cursor: pointer;
+  transition:
+    border-color var(--duration-fast) var(--ease-out),
+    background var(--duration-fast) var(--ease-out);
+}
+
+.story-chapter-seg:hover {
+  border-color: var(--border-strong);
+}
+
+.story-chapter-seg[data-state="done"] {
+  background: var(--accent-dim);
+}
+
+.story-chapter-seg[data-state="current"] {
+  border-color: var(--accent-edge);
+}
+
+.story-chapter-seg[data-state="current"]::after {
+  content: "";
+  position: absolute;
+  inset-block: 0;
+  inset-inline-start: 0;
+  width: var(--seg-progress, 0%);
+  background: var(--accent);
+}
+
+.story-counter {
+  font-family: var(--font-mono);
+  font-size: var(--text-xs);
+  letter-spacing: var(--tracking-wide);
+  color: var(--text-3);
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+.story-counter b {
+  color: var(--text-1);
+  font-weight: 600;
+}
+
+.story-clock {
+  font-family: var(--font-mono);
+  font-size: var(--text-xs);
+  color: var(--cyan);
+  border: 1px solid var(--cyan-edge);
+  background: var(--cyan-tint);
+  border-radius: var(--radius-sm);
+  padding: 1px 8px;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+/* ==========================================================================
+   Progress indicator
+   ========================================================================== */
+
+/* The per scene reveal progress, a hairline under the chapter bar. It reports
+   how far through the current scene's reveal the presenter is. */
+.story-progress {
+  position: absolute;
+  inset-inline: 0;
+  inset-block-start: var(--story-bar-h);
+  z-index: 6;
+  height: 2px;
+  background: var(--surface-2);
+}
+
+.story-progress-fill {
+  height: 100%;
+  width: var(--progress, 0%);
+  background: var(--accent);
+  transition: width var(--duration-base) var(--ease-out);
+}
+
+/* ==========================================================================
+   Control bar
+   ========================================================================== */
+
+.story-controlbar {
+  position: absolute;
+  inset-inline: 0;
+  inset-block-end: 0;
+  z-index: 6;
+  height: var(--story-foot-h);
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 0 var(--story-pad-x);
+  background: linear-gradient(to top, var(--bg) 62%, rgb(14 15 20 / 0%));
+  border-top: 1px solid var(--border-1);
+}
+
+.story-controlbar .btn {
+  min-height: 32px;
+  font-size: var(--text-xs);
+  padding: var(--space-1) var(--space-3);
+}
+
+.story-control-group {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.story-control-spacer {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+.story-step-readout {
+  font-family: var(--font-mono);
+  font-size: var(--text-xs);
+  color: var(--text-4);
+  white-space: nowrap;
+}
+
+/* ==========================================================================
+   Click and tap zones
+   ========================================================================== */
+
+/* Visible only as a restrained edge chevron on hover, so the affordance is
+   discoverable without dressing the stage. The navigation itself is handled by
+   a delegated click on the frame, which ignores any real control, so a tap
+   zone can never swallow a click meant for a button. */
+.story-zone {
+  position: absolute;
+  inset-block: var(--story-bar-h) var(--story-foot-h);
+  width: 33%;
+  z-index: 2;
+  pointer-events: none;
+  display: flex;
+  align-items: center;
+  opacity: 0;
+  transition: opacity var(--duration-fast) var(--ease-out);
+  font-family: var(--font-mono);
+  font-size: var(--text-lg);
+  color: var(--text-4);
+}
+
+.story-zone[data-side="prev"] {
+  inset-inline-start: 0;
+  justify-content: flex-start;
+  padding-inline-start: 12px;
+}
+
+.story-zone[data-side="next"] {
+  inset-inline-end: 0;
+  justify-content: flex-end;
+  padding-inline-end: 12px;
+}
+
+.story-frame:hover .story-zone {
+  opacity: 0.45;
+}
+
+/* ==========================================================================
+   Presenter notes
+   ========================================================================== */
+
+.story-notes {
+  position: relative;
+  z-index: 7;
+  block-size: 100dvh;
+  max-block-size: 100%;
+  width: var(--story-notes-w);
+  overflow: hidden;
+  border-left: 1px solid var(--border-1);
+  background: var(--surface-0);
+  display: grid;
+  grid-template-rows: auto minmax(0, 1fr) auto;
+  min-height: 0;
+}
+
+.story-deck:not([data-notes="open"]) .story-notes {
+  display: none;
+}
+
+.story-notes-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  padding: var(--space-3) var(--space-4);
+  border-bottom: 1px solid var(--border-1);
+}
+
+.story-notes-body {
+  overflow-y: auto;
+  overflow-x: hidden;
+  min-height: 0;
+  padding: var(--space-4);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-5);
+}
+
+.story-notes-foot {
+  border-top: 1px solid var(--border-1);
+  padding: var(--space-3) var(--space-4);
+}
+
+.story-notes-list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+}
+
+.story-note {
+  display: grid;
+  grid-template-columns: 22px minmax(0, 1fr);
+  gap: var(--space-2);
+  font-size: var(--text-sm);
+  line-height: 1.45;
+  color: var(--text-2);
+}
+
+.story-note-index {
+  font-family: var(--font-mono);
+  font-size: var(--text-xs);
+  color: var(--accent);
+  padding-top: 2px;
+}
+
+.story-notes-section-title {
+  font-family: var(--font-mono);
+  font-size: var(--text-xs);
+  letter-spacing: var(--tracking-label);
+  text-transform: uppercase;
+  color: var(--text-4);
+}
+
+.story-qa {
+  border-left: 2px solid var(--border-2);
+  padding-left: var(--space-3);
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.story-qa-q {
+  font-size: var(--text-sm);
+  color: var(--text-1);
+  font-weight: 600;
+  line-height: 1.4;
+}
+
+.story-qa-a {
+  font-size: var(--text-sm);
+  color: var(--text-3);
+  line-height: 1.45;
+}
+
+/* ==========================================================================
+   Help overlay
+   ========================================================================== */
+
+.story-help-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 120;
+  background: rgb(6 7 10 / 76%);
+  display: grid;
+  place-items: center;
+  padding: var(--space-8);
+}
+
+.story-help {
+  width: min(760px, 100%);
+  max-height: min(78dvh, 720px);
+  display: grid;
+  grid-template-rows: auto minmax(0, 1fr) auto;
+  min-height: 0;
+  background: var(--surface-1);
+  border: 1px solid var(--border-2);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-4);
+  overflow: hidden;
+}
+
+.story-help-body {
+  overflow-y: auto;
+  min-height: 0;
+  padding: var(--space-5) var(--space-6);
+}
+
+.story-keymap {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--space-3) var(--space-6);
+}
+
+.story-keyrow {
+  display: grid;
+  grid-template-columns: 116px minmax(0, 1fr);
+  gap: var(--space-3);
+  align-items: baseline;
+  font-size: var(--text-sm);
+  padding-bottom: var(--space-2);
+  border-bottom: 1px solid var(--border-1);
+}
+
+.story-keyrow-keys {
+  display: flex;
+  gap: 4px;
+  flex-wrap: wrap;
+}
+
+.story-deck kbd,
+.story-help kbd {
+  font-size: var(--text-xs);
+}
+
+/* ==========================================================================
+   Reveal primitives
+   ========================================================================== */
+
+/*
+ * Every reveal is a state, not an animation. The component sets
+ * data-shown="true|false" from the scene's reveal step counter, and CSS
+ * transitions between the two states. That makes every scene seek safe: any
+ * step can be jumped to directly and the result is identical.
+ */
+
+.rv {
+  opacity: 0;
+  transform: translateY(10px);
+  transition:
+    opacity var(--story-reveal) var(--ease-out) var(--rv-delay, 0ms),
+    transform var(--story-reveal) var(--ease-out) var(--rv-delay, 0ms);
+}
+
+.rv[data-shown="true"] {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+.rv-flat {
+  transform: none;
+}
+
+.rv-flat[data-shown="true"] {
+  transform: none;
+}
+
+.rv-left {
+  transform: translateX(-22px);
+}
+
+.rv-right {
+  transform: translateX(22px);
+}
+
+.rv-left[data-shown="true"],
+.rv-right[data-shown="true"] {
+  transform: translateX(0);
+}
+
+.rv-rise {
+  transform: translateY(26px) scaleY(0.94);
+  transform-origin: bottom center;
+}
+
+.rv-rise[data-shown="true"] {
+  transform: translateY(0) scaleY(1);
+}
+
+.rv-scale {
+  transform: scale(0.94);
+}
+
+.rv-scale[data-shown="true"] {
+  transform: scale(1);
+}
+
+/* Stroke draw. Elements carry pathLength="1", so the dash units are
+   normalised and one rule draws any geometry. */
+.rv-draw {
+  stroke-dasharray: 1;
+  stroke-dashoffset: 1;
+  transition: stroke-dashoffset var(--story-draw) var(--ease-out) var(--rv-delay, 0ms);
+}
+
+.rv-draw[data-shown="true"] {
+  stroke-dashoffset: 0;
+}
+
+/* A cross fade between two states of one object. Used for the scene 8 morph
+   and the scene 7 overlay change, where the geometry holds and only the
+   meaning changes.
+ *
+ * The faded out state is `visibility: hidden` and not merely transparent.
+ * Two of these layers occupy the same absolutely positioned box, so a
+ * transparent one still answers a hit test and still exposes its buttons to
+ * the keyboard: on scene 9 and scene 14 the layer the audience cannot see was
+ * sitting on top of the layer they can, which made a real control unpressable
+ * and made the deck's own hidden controls look reachable. Visibility takes the
+ * faded out layer out of hit testing and out of the focus order, which is what
+ * its `aria-hidden="true"` already claims.
+ *
+ * Visibility is a discrete property, so it is transitioned with a zero
+ * duration and a delay equal to the opacity transition. The fade out is
+ * therefore unchanged to the eye: the layer becomes unhittable at the moment
+ * it becomes invisible, not before.
+ */
+.rv-fade {
+  opacity: 0;
+  visibility: hidden;
+  transition:
+    opacity var(--duration-slow) var(--ease-in-out) var(--rv-delay, 0ms),
+    visibility 0s linear calc(var(--rv-delay, 0ms) + var(--duration-slow));
+}
+
+.rv-fade[data-shown="true"] {
+  opacity: 1;
+  visibility: visible;
+  transition:
+    opacity var(--duration-slow) var(--ease-in-out) var(--rv-delay, 0ms),
+    visibility 0s linear 0s;
+}
+
+/* Travel. A fragment moves from a scattered position to a docked one. The
+   destination is the element's natural place, so the travel is expressed as
+   the offset it starts from, which keeps the final layout authoritative. */
+.rv-travel {
+  opacity: 0;
+  transform: translate(var(--from-x, 0px), var(--from-y, 0px)) scale(var(--from-s, 1));
+  transition:
+    opacity var(--duration-base) var(--ease-out) var(--rv-delay, 0ms),
+    transform 900ms var(--ease-spatial) var(--rv-delay, 0ms);
+}
+
+.rv-travel[data-shown="true"] {
+  opacity: 1;
+  transform: translate(0, 0) scale(1);
+}
+
+/* The one declared loop. Marks a thing that is not resolved. */
+@keyframes story-breath {
+  0%,
+  100% {
+    opacity: 0.58;
+  }
+  50% {
+    opacity: 1;
+  }
+}
+
+.story-breath[data-shown="true"] {
+  animation: story-breath 2400ms var(--ease-in-out) infinite;
+}
+
+/* ==========================================================================
+   Scene composition primitives
+   ========================================================================== */
+
+.story-panel {
+  background: var(--surface-1);
+  border: 1px solid var(--border-1);
+  border-radius: var(--radius-md);
+  padding: var(--space-4);
+  min-width: 0;
+}
+
+.story-panel[data-tone="ai"] {
+  border-left: 3px solid var(--accent);
+}
+
+.story-panel[data-tone="human"] {
+  border-left: 3px solid var(--human);
+}
+
+.story-panel[data-tone="evidence"] {
+  border-left: 3px solid var(--evidence);
+}
+
+.story-panel[data-tone="risk"] {
+  border-left: 3px solid var(--risk);
+}
+
+.story-panel[data-tone="gap"] {
+  border-left: 3px solid var(--gap);
+}
+
+.story-panel[data-tone="data"] {
+  border-left: 3px solid var(--data);
+}
+
+.story-panel-title {
+  font-family: var(--font-mono);
+  font-size: var(--text-xs);
+  letter-spacing: var(--tracking-label);
+  text-transform: uppercase;
+  color: var(--text-4);
+  display: block;
+  margin-bottom: var(--space-2);
+}
+
+/* The glyph that accompanies a chip's colour is a text node, so it is held to
+   the same floor as every other text node in the deck. */
+.story-deck .chip-glyph {
+  font-size: 1em;
+  flex-shrink: 0;
+}
+
+/* A chip carries a label, not a paragraph. In a narrow column a long label
+   would otherwise set the height of the whole row. */
+.story-deck .chip,
+.story-deck .pill {
+  max-width: 100%;
+  max-height: 3.2em;
+  overflow: hidden;
+  align-items: flex-start;
+}
+
+/* Line clamps. The deck prefers a clamped sentence to a shrunk composition:
+   a scene that scales to sixty percent to fit one long paragraph has made
+   every other word on the slide smaller to accommodate it. */
+.clamp-1,
+.clamp-4,
+.clamp-5 {
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  min-width: 0;
+}
+
+.clamp-1 {
+  -webkit-line-clamp: 1;
+}
+
+.clamp-4 {
+  -webkit-line-clamp: 4;
+}
+
+.clamp-5 {
+  -webkit-line-clamp: 5;
+}
+
+.story-body {
+  font-size: var(--text-sm);
+  line-height: 1.42;
+  color: var(--text-2);
+}
+
+.story-body-dim {
+  font-size: var(--text-sm);
+  line-height: 1.42;
+  color: var(--text-3);
+}
+
+/* A known against not known pair, given equal visual weight on purpose. */
+.story-known-pair {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--space-3);
+  min-width: 0;
+}
+
+.story-rule-list {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding-left: var(--space-3);
+  border-left: 2px solid var(--border-2);
+}
+
+.story-rule-list[data-tone="evidence"] {
+  border-left-color: var(--evidence);
+}
+
+.story-rule-list[data-tone="human"] {
+  border-left-color: var(--human);
+}
+
+.story-rule-list[data-tone="ai"] {
+  border-left-color: var(--accent);
+}
+
+.story-rule-list[data-tone="risk"] {
+  border-left-color: var(--risk);
+}
+
+.story-rule-list > li {
+  font-size: var(--text-sm);
+  line-height: 1.38;
+  color: var(--text-2);
+}
+
+/* A metric, always with its basis label attached. The basis is part of the
+   number, not a footnote, so it is rendered in the same block. */
+.story-metric {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  min-width: 0;
+}
+
+.story-metric-value {
+  font-family: var(--font-display);
+  font-size: var(--text-lg);
+  line-height: 1.05;
+  color: var(--text-1);
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+}
+
+.story-metric[data-scale="lg"] .story-metric-value {
+  font-size: var(--text-xl);
+}
+
+.story-metric[data-scale="sm"] .story-metric-value {
+  font-size: var(--text-md);
+}
+
+.story-metric-label {
+  font-size: var(--text-xs);
+  color: var(--text-3);
+  line-height: 1.3;
+}
+
+.story-basis {
+  font-family: var(--font-mono);
+  font-size: var(--text-xs);
+  letter-spacing: var(--tracking-wide);
+  color: var(--text-4);
+  border: 1px dotted var(--border-2);
+  border-radius: var(--radius-sm);
+  padding: 0 5px;
+  align-self: flex-start;
+  /* The basis must not wrap, and where it cannot fit it ends in an ellipsis
+     rather than running past the edge of its card. */
+  white-space: nowrap;
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.story-basis[data-basis="measured-in-simulation"] {
+  color: var(--cyan);
+  border-color: var(--cyan-edge);
+}
+
+.story-basis[data-basis="illustrative"] {
+  color: var(--text-4);
+}
+
+.story-basis[data-basis="client-input-required"] {
+  color: var(--amber);
+  border-color: var(--amber-edge);
+}
+
+/* Regulatory label at the point of display. Inline, compact, never a page
+   footer. */
+.story-reg {
+  font-family: var(--font-mono);
+  font-size: var(--text-xs);
+  letter-spacing: var(--tracking-wide);
+  color: var(--text-4);
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  border-left: 2px solid var(--border-2);
+  padding-left: 8px;
+}
+
+/* Struck tiles: the systems no longer opened. */
+.story-struck {
+  position: relative;
+  font-family: var(--font-mono);
+  font-size: var(--text-xs);
+  color: var(--text-4);
+  border: 1px solid var(--border-1);
+  border-radius: var(--radius-sm);
+  padding: 3px 8px;
+  opacity: 0.45;
+  transition: opacity var(--duration-base) var(--ease-out);
+}
+
+.story-struck[data-shown="true"] {
+  opacity: 0.8;
+}
+
+.story-struck::after {
+  content: "";
+  position: absolute;
+  inset-inline: 6px;
+  inset-block-start: 50%;
+  height: 1px;
+  background: var(--red);
+  transform: scaleX(0);
+  transform-origin: left center;
+  transition: transform var(--duration-base) var(--ease-out) var(--rv-delay, 0ms);
+}
+
+.story-struck[data-shown="true"]::after {
+  transform: scaleX(1);
+}
+
+/* Two columns that must never be staggered or unequal. Scene 10 and 11 both
+   depend on this, and it is an assertion rather than a style. */
+.story-equal-pair {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--space-4);
+  align-items: stretch;
+  min-width: 0;
+}
+
+.story-equal-pair > * {
+  min-width: 0;
+}
+
+/* The background work reveal. Counts with the awaiting release figure beside
+   the completed figure, never after it. */
+.story-background {
+  display: grid;
+  gap: var(--space-3);
+  border: 1px dashed var(--border-2);
+  border-radius: var(--radius-md);
+  padding: var(--space-3) var(--space-4);
+  background: var(--surface-0);
+}
+
+.story-background-lanes {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-4);
+  flex-wrap: wrap;
+  min-width: 0;
+}
+
+.story-background-lanes .story-metric {
+  max-width: 24ch;
+}
+
+.story-lane-count {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 68px;
+}
+
+.story-lane-count b {
+  font-family: var(--font-display);
+  font-size: var(--text-lg);
+  color: var(--text-1);
+  font-variant-numeric: tabular-nums;
+  line-height: 1;
+}
+
+.story-lane-count[data-zero="true"] b {
+  color: var(--human);
+}
+
+.story-lane-count span {
+  font-family: var(--font-mono);
+  font-size: var(--text-xs);
+  color: var(--text-4);
+}
+
+/* ==========================================================================
+   Scene 1: convergence
+   ========================================================================== */
+
+.conv-field {
+  position: relative;
+  height: 100%;
+  min-height: 0;
+}
+
+/*
+ * A fragment starts where it actually arrived from, scattered, and travels to
+ * a converged position near the centre. The travel is the thesis of the deck
+ * in one gesture: the same facts, gathered, become one decision. The source
+ * line drops away on arrival, because a converged object states its
+ * provenance once rather than eight times.
+ */
+.conv-fragment {
+  position: absolute;
+  max-width: 230px;
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  padding: 6px 9px;
+  border: 1px solid var(--border-1);
+  border-radius: var(--radius-sm);
+  background: var(--surface-0);
+  opacity: 0;
+  transform: translate(var(--from-x, 0px), var(--from-y, 0px)) scale(1);
+  transition:
+    opacity var(--duration-slow) var(--ease-out) var(--rv-delay, 0ms),
+    transform 1300ms var(--ease-spatial);
+}
+
+.conv-fragment[data-entered="true"] {
+  opacity: 0.66;
+}
+
+/* The converged seat is the element's own left and top. The scattered state
+   is a transform away from it, so the resolved composition is authoritative
+   and cannot drift with the motion. */
+.conv-fragment[data-converged="true"] {
+  opacity: 0.3;
+  transform: translate(0, 0) scale(0.86);
+}
+
+.conv-fragment-label {
+  font-family: var(--font-mono);
+  font-size: var(--text-xs);
+  color: var(--text-2);
+  line-height: 1.25;
+}
+
+.conv-fragment-source {
+  font-size: var(--text-xs);
+  color: var(--text-disabled);
+  line-height: 1.25;
+  max-height: 4em;
+  overflow: hidden;
+  transition:
+    opacity var(--duration-base) var(--ease-out),
+    max-height var(--duration-slow) var(--ease-out);
+}
+
+/* The source drops away on arrival, and the box tightens around the fragment
+   that is left. A converged object states its provenance once rather than
+   eight times. */
+.conv-fragment[data-converged="true"] .conv-fragment-source {
+  opacity: 0;
+  max-height: 0;
+}
+
+.conv-card {
+  position: absolute;
+  inset-inline: 0;
+  inset-block-start: 50%;
+  transform: translateY(-50%);
+  width: min(700px, 100%);
+  margin: 0 auto;
+  background: var(--surface-2);
+  border: 1px solid var(--border-2);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-3);
+  padding: var(--space-5);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+}
+
+.conv-card.rv-scale {
+  transform: translateY(-50%) scale(0.94);
+}
+
+.conv-card.rv-scale[data-shown="true"] {
+  transform: translateY(-50%) scale(1);
+}
+
+.conv-question {
+  font-family: var(--font-display);
+  font-size: var(--text-lg);
+  line-height: 1.22;
+  color: var(--text-1);
+  font-weight: 600;
+}
+
+.conv-unknown {
+  font-size: var(--text-sm);
+  line-height: 1.4;
+  color: var(--amber);
+  border-left: 2px solid var(--amber);
+  padding-left: var(--space-3);
+}
+
+/* ==========================================================================
+   Scene 2: signal clutter
+   ========================================================================== */
+
+/* Four by two, deliberately not aligned. No card touches another and no line
+   connects any two of them: the absence of connection is the content. */
+.clutter-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: var(--space-3);
+  align-items: start;
+  min-width: 0;
+}
+
+.clutter-card {
+  background: var(--surface-1);
+  border: 1px solid var(--border-1);
+  border-radius: var(--radius-md);
+  padding: var(--space-3);
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  min-width: 0;
+  overflow: hidden;
+  transition:
+    opacity var(--story-reveal) var(--ease-out) var(--rv-delay, 0ms),
+    transform var(--story-reveal) var(--ease-out) var(--rv-delay, 0ms),
+    border-color var(--duration-base) var(--ease-out);
+}
+
+.clutter-card[data-linked="true"] {
+  border-color: var(--red-edge);
+}
+
+.clutter-card[data-focus="dim"] {
+  opacity: 0.28;
+}
+
+.clutter-card[data-nudge="a"] {
+  margin-top: 10px;
+}
+
+.clutter-card[data-nudge="b"] {
+  margin-top: 22px;
+}
+
+.clutter-card[data-nudge="c"] {
+  margin-top: 4px;
+}
+
+.clutter-kind {
+  font-family: var(--font-mono);
+  font-size: var(--text-xs);
+  letter-spacing: var(--tracking-wide);
+  color: var(--text-4);
+}
+
+.clutter-label {
+  font-size: var(--text-base);
+  line-height: 1.22;
+  color: var(--text-1);
+  font-weight: 600;
+}
+
+.clutter-detail {
+  font-size: var(--text-xs);
+  line-height: 1.34;
+  color: var(--text-3);
+}
+
+.clutter-carried {
+  font-size: var(--text-xs);
+  color: var(--text-4);
+  margin-top: auto;
+  padding-top: 4px;
+  border-top: 1px solid var(--border-1);
+}
+
+/*
+ * The itemised cost of handling, paired.
+ *
+ * One row per signal down a single column is two and a half times the height
+ * the swap region declares, and the overflow was clipped: the last three
+ * signals' cost of handling did not exist for the room. Two columns state the
+ * same eight items in half the height, at the deck's own type floor.
+ */
+.clutter-cost-list {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 2px var(--space-4);
+  align-content: start;
+  min-width: 0;
+}
+
+.clutter-connection {
+  border: 1px solid var(--red-edge);
+  background: var(--red-tint);
+  border-radius: var(--radius-md);
+  padding: var(--space-3) var(--space-4);
+  font-size: var(--text-sm);
+  line-height: 1.4;
+  color: var(--text-2);
+}
+
+/* ==========================================================================
+   Scene 3: decision cards
+   ========================================================================== */
+
+.decision-row {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: var(--space-4);
+  /* Top aligned, so a closed card is a short card. Stretching every card to
+     the height of the open one leaves two tall empty boxes on the slide. */
+  align-items: start;
+  min-width: 0;
+}
+
+.decision-card {
+  background: var(--surface-1);
+  border: 1px solid var(--border-1);
+  border-radius: var(--radius-md);
+  padding: var(--space-4);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  min-width: 0;
+}
+
+.decision-question {
+  font-size: var(--text-md);
+  line-height: 1.24;
+  color: var(--text-1);
+  font-weight: 600;
+}
+
+.decision-foot {
+  margin-top: auto;
+  padding-top: var(--space-2);
+  border-top: 1px solid var(--border-1);
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+/*
+ * The collapse. Eight notifications, laid out in the provenance strip that is
+ * their destination, and offset back out to where they were scattered a
+ * moment ago. Driving the motion from the destination rather than from the
+ * start is what keeps the final layout authoritative: the strip is the real
+ * layout and the scatter is a transform on top of it, so the resolved state
+ * cannot drift.
+ */
+.collapse-chip {
+  transform-origin: center;
+  transition:
+    transform 900ms var(--ease-spatial) var(--rv-delay, 0ms),
+    opacity var(--duration-base) var(--ease-out) var(--rv-delay, 0ms),
+    border-color var(--duration-base) var(--ease-out);
+}
+
+.collapse-chip[data-collapsed="false"] {
+  transform: translate(var(--sx, 0px), var(--sy, 0px)) scale(1.4);
+  border-color: var(--border-2);
+  color: var(--text-2);
+  z-index: 3;
+}
+
+.collapse-chip[data-collapsed="true"] {
+  transform: translate(0, 0) scale(1);
+}
+
+/* The read only statement. The brief writes nothing, and that is a property
+   of the design rather than a caveat about it. */
+.read-only-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-family: var(--font-mono);
+  font-size: var(--text-xs);
+  letter-spacing: var(--tracking-wide);
+  color: var(--cyan);
+  border: 1px solid var(--cyan-edge);
+  background: var(--cyan-tint);
+  border-radius: var(--radius-sm);
+  padding: 2px 9px;
+}
+
+/* The provenance strip along the lower edge: the same signals, nothing new. */
+.prov-strip {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+  align-items: center;
+}
+
+.prov-chip {
+  font-family: var(--font-mono);
+  font-size: var(--text-xs);
+  color: var(--text-4);
+  border: 1px solid var(--border-1);
+  border-radius: var(--radius-sm);
+  padding: 1px 7px;
+  background: var(--surface-0);
+  white-space: nowrap;
+  /* An object reference is long and must not wrap, so where it cannot fit its
+     container it ends in an ellipsis rather than running past the edge of a
+     card. The full value is on the element's title attribute. */
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* ==========================================================================
+   Scene 4: work lane ladder
+   ========================================================================== */
+
+.lane-ladder {
+  display: flex;
+  flex-direction: column-reverse;
+  gap: var(--space-2);
+  min-width: 0;
+}
+
+.lane {
+  position: relative;
+  display: grid;
+  grid-template-columns: 168px repeat(4, minmax(0, 1fr));
+  gap: var(--space-3);
+  align-items: start;
+  background: var(--surface-1);
+  border: 1px solid var(--border-1);
+  border-radius: var(--radius-md);
+  padding: var(--space-3);
+  overflow: clip;
+  min-width: 0;
+}
+
+/* The fill sweep is the lane's shared share, drawn. Lane 4 has no fill rule
+   at all, which is the argument: the absence is the content. */
+.lane-fill {
+  position: absolute;
+  inset-block: 0;
+  inset-inline-start: 0;
+  width: 0;
+  background: var(--accent-tint);
+  border-right: 1px solid var(--accent-edge);
+  transition: width 520ms var(--ease-out) var(--rv-delay, 0ms);
+  pointer-events: none;
+}
+
+.lane-fill[data-shown="true"] {
+  width: var(--fill, 0%);
+}
+
+/*
+ * The shared share, rendered at the fill edge as the storyboard asks, and
+ * absolutely positioned so it contributes no height. A metric in its own grid
+ * column wraps its basis label and then sets the height of every lane in the
+ * ladder, which is how one small number ends up shrinking a whole scene.
+ */
+.lane-share {
+  position: absolute;
+  inset-block-start: 6px;
+  inset-inline-start: 0;
+  transform: translateX(-100%);
+  padding-inline-end: 8px;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 1px;
+  pointer-events: none;
+  z-index: 2;
+  transition: inset-inline-start 520ms var(--ease-out) var(--rv-delay, 0ms);
+}
+
+.lane-share[data-shown="true"] {
+  inset-inline-start: var(--fill, 0%);
+}
+
+.lane-share-value {
+  font-family: var(--font-display);
+  font-size: var(--text-md);
+  font-weight: 600;
+  color: var(--text-1);
+  line-height: 1;
+  font-variant-numeric: tabular-nums;
+}
+
+.lane[data-unautomated="true"] {
+  border-left: 3px solid var(--human);
+  background: var(--surface-0);
+}
+
+.lane-ident {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  position: relative;
+  z-index: 1;
+}
+
+.lane-number {
+  font-family: var(--font-mono);
+  font-size: var(--text-xs);
+  color: var(--text-4);
+}
+
+.lane-label {
+  font-family: var(--font-display);
+  font-size: var(--text-md);
+  color: var(--text-1);
+  font-weight: 600;
+  line-height: 1.1;
+}
+
+.lane-col {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  min-width: 0;
+}
+
+.lane-col-title {
+  font-family: var(--font-mono);
+  font-size: var(--text-xs);
+  letter-spacing: var(--tracking-wide);
+  color: var(--text-4);
+}
+
+.lane-col-body {
+  font-size: var(--text-xs);
+  line-height: 1.36;
+  color: var(--text-2);
+}
+
+.lane-judgment {
+  grid-column: 1 / -1;
+  position: relative;
+  z-index: 1;
+  font-size: var(--text-sm);
+  line-height: 1.4;
+  color: var(--human);
+  border-top: 1px solid var(--amber-edge);
+  padding-top: var(--space-2);
+}
+
+/* ==========================================================================
+   Scene 5: lens switcher
+   ========================================================================== */
+
+/* The frame persists for the whole scene. That is the entire visual argument,
+   so the frame is structural and the centre is the only thing that changes. */
+.lens-env {
+  display: grid;
+  grid-template-columns: 210px minmax(0, 1fr) 272px;
+  grid-template-rows: auto minmax(0, 1fr) auto;
+  gap: var(--space-3);
+  /* Bound to the stage rather than to its content. The frame is the argument
+     of this scene, so the frame is what holds its size. */
+  height: 100cqh;
+  min-height: 0;
+  border: 1px solid var(--border-2);
+  border-radius: var(--radius-md);
+  padding: var(--space-3);
+  background: var(--surface-0);
+}
+
+.lens-topbar {
+  grid-column: 1 / -1;
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  padding-bottom: var(--space-2);
+  border-bottom: 1px solid var(--border-1);
+}
+
+.lens-auditstrip {
+  grid-column: 1 / -1;
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  padding-top: var(--space-2);
+  border-top: 1px solid var(--border-1);
+  font-family: var(--font-mono);
+  font-size: var(--text-xs);
+  color: var(--text-4);
+}
+
+.lens-rail {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-height: 0;
+  overflow: clip;
+}
+
+.lens-option {
+  text-align: left;
+  border: 1px solid var(--border-1);
+  border-radius: var(--radius-sm);
+  background: var(--surface-1);
+  padding: 6px 8px;
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  transition:
+    border-color var(--duration-fast) var(--ease-out),
+    background var(--duration-fast) var(--ease-out);
+}
+
+.lens-option:hover {
+  border-color: var(--border-strong);
+}
+
+.lens-option[aria-pressed="true"] {
+  border-color: var(--accent-edge);
+  background: var(--accent-tint);
+}
+
+.lens-option b {
+  font-size: var(--text-xs);
+  color: var(--text-1);
+  font-weight: 600;
+  line-height: 1.2;
+}
+
+.lens-option span {
+  font-family: var(--font-mono);
+  font-size: var(--text-xs);
+  color: var(--text-4);
+}
+
+.lens-centre {
+  display: grid;
+  grid-template-rows: auto minmax(0, 1fr);
+  gap: var(--space-3);
+  min-height: 0;
+  min-width: 0;
+  overflow: clip;
+  border: 1px solid var(--border-1);
+  border-radius: var(--radius-md);
+  background: var(--surface-1);
+  padding: var(--space-4);
+}
+
+.lens-question {
+  font-family: var(--font-display);
+  font-size: var(--text-md);
+  line-height: 1.28;
+  color: var(--text-1);
+  border-left: 2px solid var(--accent);
+  padding-left: var(--space-3);
+}
+
+/*
+ * The schematic box, and the height cap that has to be real.
+ *
+ * The drawing is width driven SVG, so `height: auto` makes its height a
+ * function of how wide the centre column is. A `max-height: 100%` on the SVG
+ * does not cap it, because the SVG is wrapped in an auto height stack and a
+ * percentage against an indefinite height resolves to none. At 1366 by 768
+ * that left the drawing 398px tall in a 170px box, and the 228px of phantom
+ * height pushed the drawing's own caption off the bottom of the slide.
+ *
+ * So the box states its rows, the drawing takes the flexible one at a real
+ * 100% height, and its `preserveAspectRatio="xMidYMid meet"` letterboxes it
+ * inside that row. The composition scales instead of overflowing, and the
+ * caption keeps its place.
+ */
+.lens-schematic {
+  min-height: 0;
+  display: grid;
+  grid-template-rows: minmax(0, 1fr);
+  place-items: center;
+  overflow: clip;
+}
+
+.lens-schematic > * {
+  min-height: 0;
+  max-height: 100%;
+  display: grid;
+  grid-template-rows: minmax(0, 1fr) auto;
+  justify-items: center;
+}
+
+.lens-schematic svg {
+  width: 100%;
+  height: 100%;
+  min-height: 0;
+  max-height: 100%;
+}
+
+.lens-side {
+  min-height: 0;
+  display: grid;
+  grid-template-rows: minmax(0, 1fr) minmax(0, 1fr);
+  gap: var(--space-2);
+}
+
+.lens-side > .story-panel {
+  min-height: 0;
+  overflow: clip;
+}
+
+.lens-side .story-rule-list > li {
+  font-size: var(--text-xs);
+  line-height: 1.3;
+}
+
+/* ==========================================================================
+   Scene 6: decision queue
+   ========================================================================== */
+
+.queue-list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  min-width: 0;
+}
+
+.queue-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1.25fr) minmax(0, 1fr) 210px;
+  gap: var(--space-4);
+  background: var(--surface-1);
+  border: 1px solid var(--border-1);
+  border-radius: var(--radius-md);
+  padding: var(--space-3) var(--space-4);
+  min-width: 0;
+}
+
+.queue-headline {
+  font-size: var(--text-md);
+  line-height: 1.24;
+  color: var(--text-1);
+  font-weight: 600;
+}
+
+/* ==========================================================================
+   Scene 7 and 8: chain and morph
+   ========================================================================== */
+
+.morph-stack {
+  position: relative;
+  height: 100cqh;
+  min-height: 0;
+}
+
+.morph-layer {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  overflow: clip;
+}
+
+/* The positional morph overlay. Node coordinates hold while labels and edge
+   semantics cross fade, which is what makes the switch legible. */
+.morph-svg {
+  width: 100%;
+  height: 100%;
+}
+
+.morph-node rect {
+  transition:
+    fill var(--duration-slow) var(--ease-in-out),
+    stroke var(--duration-slow) var(--ease-in-out);
+}
+
+.challenge-ask {
+  display: grid;
+  grid-template-columns: 30px minmax(0, 1fr);
+  gap: var(--space-3);
+  border: 1px solid var(--border-1);
+  border-radius: var(--radius-sm);
+  background: var(--surface-1);
+  padding: var(--space-2) var(--space-3);
+  min-width: 0;
+}
+
+.challenge-order {
+  font-family: var(--font-mono);
+  font-size: var(--text-base);
+  color: var(--accent);
+}
+
+.delta-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  gap: var(--space-3);
+  border-top: 1px solid var(--border-1);
+  padding-top: var(--space-2);
+  min-width: 0;
+}
+
+.delta-side {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.delta-side[data-side="asserted"] {
+  border-left: 2px solid var(--human);
+  padding-left: var(--space-2);
+}
+
+.delta-side[data-side="observed"] {
+  border-left: 2px solid var(--data);
+  padding-left: var(--space-2);
+}
+
+/* ==========================================================================
+   Scene 9 and 11: the five by five grid
+   ========================================================================== */
+
+.grid5 {
+  width: 100%;
+  height: auto;
+  max-height: 100%;
+}
+
+.grid5-cell {
+  fill: var(--surface-1);
+  stroke: var(--border-1);
+  stroke-width: 1;
+}
+
+.grid5-appetite {
+  stroke: var(--amber);
+  stroke-width: 2;
+  fill: none;
+}
+
+.grid5-node {
+  transition: opacity var(--story-reveal) var(--ease-out);
+}
+
+/* The position node never moves when evidence arrives. Evidence changes the
+   argument; a human changes the rating. This is a build rule. */
+.grid5-node circle {
+  transition: none;
+}
+
+.grid5-bracket {
+  stroke: var(--text-3);
+  fill: none;
+  stroke-width: 1.5;
+}
+
+.delta-list {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  min-width: 0;
+}
+
+.delta-unchanged {
+  display: flex;
+  align-items: baseline;
+  gap: var(--space-2);
+  font-size: var(--text-xs);
+  color: var(--text-4);
+  border: 1px solid var(--border-1);
+  border-radius: var(--radius-sm);
+  background: var(--surface-0);
+  padding: 2px 8px;
+}
+
+.change-entry {
+  border: 1px solid var(--border-1);
+  border-radius: var(--radius-sm);
+  background: var(--surface-1);
+  padding: var(--space-2) var(--space-3);
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  min-width: 0;
+  transition: border-color var(--duration-fast) var(--ease-out);
+}
+
+.change-entry[data-selected="true"] {
+  border-color: var(--accent-edge);
+  background: var(--accent-tint);
+}
+
+.change-state {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 16px minmax(0, 1fr);
+  gap: var(--space-2);
+  align-items: baseline;
+  font-size: var(--text-xs);
+  min-width: 0;
+}
+
+.change-arrow {
+  font-family: var(--font-mono);
+  color: var(--accent);
+  text-align: center;
+}
+
+/* Evidence beams. A conclusion is joined to the sources it rests on, drawn
+   rather than footnoted. */
+.beam-layer {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  overflow: visible;
+}
+
+.beam {
+  stroke: var(--evidence);
+  stroke-width: 1.5;
+  fill: none;
+  opacity: 0.85;
+}
+
+.beam[data-kind="inferred"] {
+  stroke: var(--human);
+  stroke-dasharray: 5 4;
+}
+
+/* ==========================================================================
+   Scene 10: workshop table
+   ========================================================================== */
+
+/* A table plane, no more than eight degrees. Restraint is the point: this is
+   an enterprise room, not a product render. */
+.table-plane {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: var(--space-3);
+  padding: var(--space-3);
+  border: 1px solid var(--border-1);
+  border-radius: var(--radius-md);
+  background: var(--surface-0);
+  transform: perspective(1400px) rotateX(7deg);
+  transform-origin: center bottom;
+}
+
+.fact-card {
+  background: var(--green-tint);
+  border: 1px solid var(--green-edge);
+  border-radius: var(--radius-sm);
+  padding: var(--space-2) var(--space-3);
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 0;
+}
+
+.contested-question {
+  font-family: var(--font-display);
+  font-size: var(--text-lg);
+  line-height: 1.2;
+  color: var(--text-1);
+  text-align: center;
+  font-weight: 600;
+  text-wrap: balance;
+}
+
+.position-column {
+  background: var(--surface-1);
+  border: 1px solid var(--border-1);
+  border-radius: var(--radius-md);
+  padding: var(--space-3) var(--space-4);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  min-width: 0;
+}
+
+/* A statement in the room that raises a contradiction against an established
+   fact. The flag is an object, not a tone of voice. */
+.contradiction-flag {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-family: var(--font-mono);
+  font-size: var(--text-xs);
+  color: var(--red);
+  border: 1px solid var(--red-edge);
+  background: var(--red-tint);
+  border-radius: var(--radius-sm);
+  padding: 1px 7px;
+}
+
+.cannot-resolve {
+  border: 1px solid var(--amber-edge);
+  background: var(--amber-tint);
+  border-radius: var(--radius-md);
+  padding: var(--space-3) var(--space-4);
+  font-size: var(--text-sm);
+  line-height: 1.4;
+  color: var(--text-2);
+}
+
+/* ==========================================================================
+   Scene 12: event fan out
+   ========================================================================== */
+
+.spine-wrap {
+  position: relative;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 96px minmax(0, 1fr);
+  gap: 0 var(--space-3);
+  min-width: 0;
+}
+
+.spine-rail {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.spine-line {
+  position: absolute;
+  inset-block: 0;
+  inset-inline-start: 50%;
+  margin-inline-start: -1px;
+  width: 2px;
+  background: var(--border-2);
+}
+
+/*
+ * One grid row per arrival. The arrival docks in column one or column three
+ * and the opposite cell stays empty, so the spine reads as a single
+ * descending time line rather than as two parallel lists. Row and column are
+ * assigned explicitly by the component, which keeps the layout independent of
+ * document order and therefore stable under any reveal step.
+ */
+.spine-tick {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  position: relative;
+  padding-top: 8px;
+  font-family: var(--font-mono);
+  font-size: var(--text-xs);
+  color: var(--text-4);
+}
+
+.spine-dot {
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+  border: 2px solid var(--border-strong);
+  background: var(--bg);
+  flex-shrink: 0;
+}
+
+.spine-dot[data-class="VF"] {
+  border-color: var(--evidence);
+}
+
+.spine-dot[data-class="SS"] {
+  border-color: var(--human);
+}
+
+.spine-dot[data-class="TI"] {
+  border-color: var(--data);
+}
+
+.arrival {
+  border: 1px solid var(--border-1);
+  border-radius: var(--radius-sm);
+  background: var(--surface-1);
+  padding: var(--space-2) var(--space-3);
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  min-width: 0;
+}
+
+.arrival[data-class="VF"] {
+  border-left: 3px solid var(--evidence);
+}
+
+.arrival[data-class="SS"] {
+  border-left: 3px solid var(--human);
+}
+
+.arrival[data-class="TI"] {
+  border-left: 3px solid var(--data);
+}
+
+.arrival-time {
+  font-family: var(--font-mono);
+  font-size: var(--text-xs);
+  color: var(--text-1);
+}
+
+/* An inference states the specific reason it could be wrong. Mandatory, so it
+   is a required block and not an optional tooltip. */
+.inference-limit {
+  font-size: var(--text-xs);
+  line-height: 1.34;
+  color: var(--amber);
+  border-left: 2px solid var(--amber);
+  padding-left: var(--space-2);
+}
+
+/* Reclassification shows both states. History is added, never overwritten. */
+.reclass {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-family: var(--font-mono);
+  font-size: var(--text-xs);
+  color: var(--text-3);
+}
+
+.reclass s {
+  color: var(--text-4);
+  text-decoration-color: var(--text-disabled);
+}
+
+/* Entity tolerance lanes. One lane per entity, never one line for three. */
+.tolerance-lane {
+  display: grid;
+  grid-template-columns: 218px minmax(0, 1fr);
+  gap: var(--space-3);
+  align-items: center;
+  min-width: 0;
+}
+
+.tolerance-track {
+  position: relative;
+  height: 30px;
+  border: 1px solid var(--border-1);
+  border-radius: var(--radius-sm);
+  background: var(--surface-0);
+  overflow: clip;
+}
+
+.tolerance-consumed {
+  position: absolute;
+  inset-block: 0;
+  inset-inline-start: 0;
+  width: var(--consumed, 0%);
+  background: var(--cyan-tint);
+  border-right: 1px solid var(--cyan);
+  transition: width 900ms linear;
+}
+
+.tolerance-consumed[data-state="breached"] {
+  background: var(--red-tint);
+  border-right-color: var(--red);
+}
+
+.tolerance-consumed[data-state="at-threshold"] {
+  background: var(--amber-tint);
+  border-right-color: var(--amber);
+}
+
+.tolerance-cutoff {
+  position: absolute;
+  inset-block: -2px;
+  inset-inline-start: var(--at, 0%);
+  width: 2px;
+  background: var(--pink);
+}
+
+/* The fallback block is drawn at its true lead time, positioned where it
+   would have to start. Where it is longer than the runway, the geometry says
+   so without a sentence. */
+.tolerance-fallback {
+  position: absolute;
+  inset-block: 6px;
+  inset-inline-start: var(--at, 0%);
+  width: var(--len, 0%);
+  border: 1px dashed var(--amber);
+  border-radius: 2px;
+  background: rgb(243 179 76 / 8%);
+}
+
+.tolerance-legend {
+  font-family: var(--font-mono);
+  font-size: var(--text-xs);
+  color: var(--text-4);
+}
+
+/* ==========================================================================
+   Scene 13: six lens grid
+   ========================================================================== */
+
+.lens-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 128px minmax(0, 1fr);
+  gap: var(--space-2) var(--space-3);
+  min-width: 0;
+}
+
+.lens-panel {
+  text-align: left;
+  border: 1px solid var(--border-1);
+  border-radius: var(--radius-md);
+  background: var(--surface-1);
+  padding: var(--space-2) var(--space-3);
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  min-width: 0;
+  transition:
+    border-color var(--duration-fast) var(--ease-out),
+    background var(--duration-fast) var(--ease-out),
+    opacity var(--story-reveal) var(--ease-out) var(--rv-delay, 0ms);
+}
+
+.lens-panel[data-selected="true"] {
+  border-color: var(--accent-edge);
+  background: var(--accent-tint);
+}
+
+/* Present in all six panels, and the same size in each, so none of the six is
+   the hero. */
+.uncomfortable {
+  font-size: var(--text-xs);
+  line-height: 1.34;
+  color: var(--human);
+  border-left: 2px solid var(--human);
+  padding-left: var(--space-2);
+  margin-top: auto;
+}
+
+.conflict-open {
+  border: 1px solid var(--amber-edge);
+  background: var(--amber-tint);
+  border-radius: var(--radius-md);
+  padding: var(--space-3) var(--space-4);
+  min-width: 0;
+}
+
+/* ==========================================================================
+   Scene 14: portfolio thread
+   ========================================================================== */
+
+.thread-rail {
+  display: grid;
+  grid-auto-flow: column;
+  grid-auto-columns: minmax(0, 1fr);
+  gap: 0;
+  align-items: stretch;
+  min-width: 0;
+}
+
+.thread-node {
+  position: relative;
+  border: 1px solid var(--border-1);
+  border-radius: var(--radius-sm);
+  background: var(--surface-1);
+  padding: var(--space-2);
+  margin-inline: 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  min-width: 0;
+}
+
+.thread-node[data-basis="inferred"] {
+  border-style: dashed;
+  border-color: var(--amber-edge);
+}
+
+.readiness {
+  position: relative;
+  height: 62px;
+  border: 1px solid var(--border-1);
+  border-radius: var(--radius-md);
+  background: var(--surface-0);
+}
+
+.readiness-mark {
+  position: absolute;
+  inset-block: 0;
+  inset-inline-start: var(--at, 0%);
+  width: 2px;
+  background: var(--text-3);
+}
+
+.readiness-mark[data-kind="papers"] {
+  background: var(--red);
+}
+
+.readiness-mark[data-kind="committee"] {
+  background: var(--accent);
+}
+
+.readiness-mark[data-kind="arrival"] {
+  background: var(--amber);
+}
+
+.readiness-label {
+  position: absolute;
+  inset-block-start: 4px;
+  inset-inline-start: calc(var(--at, 0%) + 6px);
+  font-family: var(--font-mono);
+  font-size: var(--text-xs);
+  color: var(--text-3);
+  max-width: 220px;
+  line-height: 1.25;
+}
+
+.committee-question {
+  font-family: var(--font-display);
+  font-size: var(--text-lg);
+  line-height: 1.24;
+  color: var(--text-1);
+  font-weight: 600;
+  border-left: 3px solid var(--accent);
+  padding-left: var(--space-4);
+  text-wrap: pretty;
+}
+
+/* ==========================================================================
+   Scene 15: authority ladder
+   ========================================================================== */
+
+.ladder {
+  display: grid;
+  grid-template-columns: 52px minmax(0, 1fr) 352px;
+  gap: var(--space-3);
+  min-width: 0;
+  align-items: stretch;
+}
+
+.ladder-bands {
+  display: flex;
+  flex-direction: column-reverse;
+  gap: 5px;
+  min-width: 0;
+}
+
+.ladder-band {
+  text-align: left;
+  display: grid;
+  grid-template-columns: 150px minmax(0, 1fr) minmax(0, 1fr) minmax(0, 1.1fr);
+  gap: var(--space-3);
+  border: 1px solid var(--border-1);
+  border-radius: var(--radius-sm);
+  background: var(--surface-1);
+  padding: var(--space-2) var(--space-3);
+  min-width: 0;
+  transition:
+    border-color var(--duration-fast) var(--ease-out),
+    background var(--duration-fast) var(--ease-out),
+    opacity var(--story-reveal) var(--ease-out) var(--rv-delay, 0ms);
+}
+
+.ladder-band[data-selected="true"] {
+  border-color: var(--accent-edge);
+  background: var(--accent-tint);
+}
+
+/* The hand back position is a rail across all five levels, not a step above
+   them, because it is available from every one of them. */
+.ladder-rail {
+  position: relative;
+  border: 1px solid var(--amber-edge);
+  background: var(--amber-tint);
+  border-radius: var(--radius-sm);
+  min-height: 0;
+  overflow: clip;
+}
+
+/* Absolutely positioned, so a vertical string cannot size the ladder's grid
+   row. The rail is a marker across the five levels, not a column of content. */
+.ladder-rail-text {
+  position: absolute;
+  inset: 6px 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  writing-mode: vertical-rl;
+  transform: rotate(180deg);
+  font-family: var(--font-mono);
+  font-size: var(--text-xs);
+  letter-spacing: var(--tracking-wide);
+  color: var(--human);
+  white-space: nowrap;
+  overflow: hidden;
+}
+
+/* Reach is bounded, and the boundary moves with the level. Dimming is the
+   mechanism made visible. */
+.class-chip {
+  font-family: var(--font-mono);
+  font-size: var(--text-xs);
+  border: 1px solid var(--border-1);
+  border-radius: var(--radius-sm);
+  padding: 0 6px;
+  color: var(--text-disabled);
+  background: var(--surface-0);
+  transition:
+    color var(--duration-base) var(--ease-out),
+    border-color var(--duration-base) var(--ease-out),
+    background var(--duration-base) var(--ease-out);
+  white-space: nowrap;
+}
+
+.class-chip[data-reachable="true"] {
+  color: var(--accent);
+  border-color: var(--accent-edge);
+  background: var(--accent-tint);
+}
+
+.refused-item {
+  position: relative;
+  font-size: var(--text-xs);
+  line-height: 1.34;
+  color: var(--text-3);
+  padding-left: var(--space-4);
+}
+
+.refused-item::before {
+  content: "x";
+  position: absolute;
+  inset-inline-start: 0;
+  font-family: var(--font-mono);
+  color: var(--red);
+}
+
+/* ==========================================================================
+   Scene 16: phase roadmap
+   ========================================================================== */
+
+.phase-rail {
+  display: grid;
+  grid-template-columns: repeat(6, minmax(0, 1fr));
+  gap: var(--space-2);
+  min-width: 0;
+}
+
+.phase {
+  border: 1px solid var(--border-1);
+  border-radius: var(--radius-md);
+  background: var(--surface-1);
+  padding: var(--space-3);
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  min-width: 0;
+}
+
+.phase-number {
+  font-family: var(--font-mono);
+  font-size: var(--text-xs);
+  color: var(--accent);
+}
+
+.phase-name {
+  font-family: var(--font-display);
+  font-size: var(--text-base);
+  color: var(--text-1);
+  font-weight: 600;
+  line-height: 1.16;
+}
+
+/* The read only bracket spans phases one and two. It is drawn early, because
+   removing the largest objection early is worth more than saving it. */
+.readonly-bracket {
+  grid-column: 1 / 3;
+  position: relative;
+  height: 26px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid var(--cyan-edge);
+  border-bottom: none;
+  border-radius: var(--radius-sm) var(--radius-sm) 0 0;
+  background: var(--cyan-tint);
+  font-family: var(--font-mono);
+  font-size: var(--text-xs);
+  color: var(--cyan);
+}
+
+.closing-ask {
+  font-family: var(--font-display);
+  font-size: var(--text-xl);
+  line-height: 1.2;
+  color: var(--text-1);
+  font-weight: 600;
+  text-wrap: balance;
+}
+
+/* ==========================================================================
+   Failure path. Never blank on failure.
+   ========================================================================== */
+
+/*
+ * The chain carried from the source findings: renderError, then renderStatic,
+ * then a static fallback drawing. A scene that throws still shows its title,
+ * its key message, its stage note and a static frame, so the presenter keeps
+ * talking and the audience sees a composed slide rather than a white box.
+ */
+.scene-fallback {
+  display: grid;
+  place-content: center;
+  gap: var(--space-4);
+  height: 100%;
+  min-height: 0;
+  border: 1px dashed var(--border-2);
+  border-radius: var(--radius-md);
+  padding: var(--space-6);
+  text-align: center;
+}
+
+.scene-fallback-note {
+  font-family: var(--font-mono);
+  font-size: var(--text-xs);
+  color: var(--text-4);
+}
+
+.scene-error-tag {
+  font-family: var(--font-mono);
+  font-size: var(--text-xs);
+  color: var(--red);
+  border: 1px solid var(--red-edge);
+  background: var(--red-tint);
+  border-radius: var(--radius-sm);
+  padding: 1px 7px;
+}
+
+/* ==========================================================================
+   Full screen
+   ========================================================================== */
+
+/*
+ * In full screen the deck is the only thing on the display, so the chrome
+ * tightens and the stage gains the space. :fullscreen is applied to the deck
+ * element itself, which is what the F key requests.
+ */
+.story-deck:fullscreen,
+.story-deck:-webkit-full-screen {
+  --story-bar-h: 42px;
+  --story-foot-h: 48px;
+  --story-pad-x: 54px;
+  background: var(--bg);
+}
+
+.story-deck:fullscreen .story-controlbar {
+  opacity: 0.35;
+  transition: opacity var(--duration-base) var(--ease-out);
+}
+
+.story-deck:fullscreen .story-controlbar:hover,
+.story-deck:fullscreen .story-controlbar:focus-within {
+  opacity: 1;
+}
+
+/* ==========================================================================
+   Responsive. Explicit rules for the three projected sizes, so nothing
+   overflows at 1920x1080, 1440x900 or 1366x768.
+   ========================================================================== */
+
+/* 1920 by 1080 is the reference. No overrides are needed at that size. */
+
+/* 1440 by 900. Narrower measure, tighter chrome, same 14px type floor. */
+@media (width <= 1600px) {
+  .story-deck {
+    --story-measure: 1320px;
+    --story-pad-x: 36px;
+    --text-2xl: 2.125rem; /* 34px */
+    --text-xl: 1.625rem; /* 26px */
+    --text-lg: 1.3125rem; /* 21px */
+  }
+
+  .story-deck[data-notes="open"] {
+    --story-notes-w: 352px;
+  }
+
+  .lane {
+    grid-template-columns: 150px repeat(4, minmax(0, 1fr));
+  }
+
+  .ladder-band {
+    grid-template-columns: 136px minmax(0, 1fr) minmax(0, 1fr) minmax(0, 1.1fr);
+  }
+
+  .ladder {
+    grid-template-columns: 46px minmax(0, 1fr) 306px;
+  }
+
+  .lens-env {
+    grid-template-columns: 190px minmax(0, 1fr) 232px;
+  }
+}
+
+/* 1366 by 768. The tightest target. Chrome shrinks, the stage does not. */
+@media (width <= 1400px) {
+  .story-deck {
+    --story-measure: 1300px;
+    --story-pad-x: 24px;
+    --story-bar-h: 42px;
+    --story-foot-h: 50px;
+    --text-2xl: 1.9375rem; /* 31px */
+    --text-xl: 1.5rem; /* 24px */
+    --text-lg: 1.25rem; /* 20px */
+    --text-md: 1.0625rem; /* 17px */
+    --text-base: 0.9375rem; /* 15px */
+    --text-sm: 0.9375rem; /* 15px */
+    --text-xs: 0.875rem; /* 14px. The floor holds. */
+  }
+
+  .story-deck[data-notes="open"] {
+    --story-notes-w: 320px;
+  }
+
+  .story-chapter-name {
+    display: none;
+  }
+
+  .clutter-grid {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: var(--space-2);
+  }
+
+  .clutter-card[data-nudge="b"] {
+    margin-top: 12px;
+  }
+
+  .queue-row {
+    grid-template-columns: minmax(0, 1.2fr) minmax(0, 1fr) 176px;
+  }
+
+  .thread-node {
+    margin-inline: 8px;
+  }
+}
+
+/* Short viewports. The gap and the capped rows tighten, which is exactly the
+   fix the source repository recorded for 800px and below. */
+@media (height <= 900px) {
+  .story-deck {
+    --screen-gap: 9px;
+    --story-hdr-max: 112px;
+  }
+
+  .scene-screen {
+    padding-block: 10px 12px;
+  }
+
+  .scene-footer {
+    padding-top: 8px;
+  }
+}
+
+@media (height <= 800px) {
+  .story-deck {
+    --screen-gap: 8px;
+    --story-hdr-max: 98px;
+    --story-foot-max: 40px;
+    --story-bar-h: 40px;
+    --story-foot-h: 46px;
+  }
+
+  .story-scene[data-chrome="lean"],
+  .story-scene[data-chrome="bare"] {
+    --story-hdr-max: 68px;
+  }
+
+  .scene-screen {
+    padding-block: 8px 10px;
+  }
+
+  /*
+   * Density, not a smaller type scale.
+   *
+   * On a 1366 by 768 projector the stage is about 520px tall. The 14px floor
+   * is not negotiable and letting the stage scale to sixty percent would
+   * breach it just as surely, only less visibly. So the lever is one line
+   * less per clamped block, tighter leading and tighter padding.
+   */
+  .story-deck .clamp-5 {
+    -webkit-line-clamp: 4;
+  }
+
+  .story-deck .clamp-4 {
+    -webkit-line-clamp: 3;
+  }
+
+  .story-deck .clamp-3 {
+    -webkit-line-clamp: 2;
+  }
+
+  .story-deck .story-body,
+  .story-deck .story-body-dim {
+    line-height: 1.3;
+  }
+
+  .story-deck .story-rule-list > li,
+  .story-deck .lane-col-body,
+  .story-deck .clutter-detail {
+    line-height: 1.24;
+  }
+
+  .story-deck .story-rule-list {
+    gap: 3px;
+  }
+
+  /*
+   * Scene 5's two reference lists, clamped rather than cut.
+   *
+   * Ten sentences of roughly 110 characters in a 228px column need about
+   * 420px, and the two cells they sit in are 184px each on a 768px stage.
+   * Unclamped, the lists ran two whole items past the bottom of the panel and
+   * off the bottom of the slide, so the room saw three of five and could not
+   * tell that two were missing. Two lines each puts every item on screen with
+   * a visible ellipsis where it continues, which is the deck's stated lever:
+   * a clamped sentence in preference to a shrunk composition. The full text
+   * stays in the accessible tree and in the presenter notes.
+   */
+  .story-deck .lens-side .story-rule-list > li {
+    display: -webkit-box;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 2;
+    overflow: hidden;
+    min-width: 0;
+  }
+
+  .story-deck .story-panel {
+    padding: var(--space-2) var(--space-3);
+  }
+
+  .story-deck .story-panel-title {
+    margin-bottom: 3px;
+  }
+
+  .story-deck .decision-card,
+  .story-deck .position-column,
+  .story-deck .phase,
+  .story-deck .queue-row,
+  .story-deck .lane,
+  .story-deck .clutter-card,
+  .story-deck .ladder-band {
+    padding: var(--space-2) var(--space-3);
+  }
+
+  .story-deck .stack-3 {
+    gap: var(--space-2);
+  }
+
+  .story-deck .stack-4 {
+    gap: var(--space-3);
+  }
+
+  /* The two ladders are the densest compositions in the deck. Their
+     supporting prose drops to one line, and the set is still complete. */
+  .story-deck .ladder-band .lane-col-body,
+  .story-deck .lane .lane-col-body {
+    -webkit-line-clamp: 2;
+  }
+
+  /* The irregular grid offsets are a deliberate effect on a tall viewport and
+     a waste of height on a short one. */
+  .story-deck .clutter-card[data-nudge] {
+    margin-top: 0;
+  }
+
+  .story-deck .clutter-card {
+    gap: 3px;
+  }
+
+  /*
+   * On a short viewport the per band authority chips are dropped and the
+   * header strip carries the same information. The strip already lights and
+   * dims the reachable set for the selected level, which is the mechanism the
+   * scene exists to show, so nothing is lost and two wrapped chip rows per
+   * band are recovered.
+   */
+  .story-deck .ladder-band .class-chip {
+    display: none;
+  }
+}
+
+/* Narrow or very short: one column for the paired layouts, so nothing is
+   squeezed below its legible width. */
+@media (width <= 1100px) {
+  .decision-row,
+  .phase-rail,
+  .clutter-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .lens-env {
+    grid-template-columns: minmax(0, 1fr);
+    grid-template-rows: auto auto minmax(0, 1fr) auto;
+  }
+
+  .lens-grid,
+  .spine-wrap {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .queue-row,
+  .lane,
+  .ladder-band {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .ladder {
+    grid-template-columns: 46px minmax(0, 1fr);
+  }
+}
+
+/* ==========================================================================
+   Motion neutralisation. Layer one of two.
+   ========================================================================== */
+
+/*
+ * Presenter safe mode and export mode. The component jumps the reveal step
+ * counter to its final value, and this rule collapses every duration so the
+ * final state is painted on the first frame. A screenshot taken at any moment
+ * is therefore identical, which is what the PDF and PowerPoint export
+ * depends on.
+ */
+.story-deck[data-safe="true"] *,
+.story-deck[data-safe="true"] *::before,
+.story-deck[data-safe="true"] *::after {
+  transition-duration: 1ms !important;
+  transition-delay: 0ms !important;
+  animation-duration: 1ms !important;
+  animation-delay: 0ms !important;
+  animation-iteration-count: 1 !important;
+}
+
+/* The one loop is suppressed entirely in safe mode: a breathing element
+   photographs at an arbitrary opacity, which is not deterministic. */
+.story-deck[data-safe="true"] .story-breath[data-shown="true"] {
+  animation: none !important;
+  opacity: 1 !important;
+}
+
+/* The in product motion pause. globals.css establishes the attribute; this
+   adds the deck specific consequences. */
+.story-deck[data-motion="paused"] .story-breath[data-shown="true"] {
+  animation-play-state: paused !important;
+  opacity: 1;
+}
+
+.story-deck[data-motion="paused"] .scene-root {
+  transition: none;
+}
+
+/* The operating system preference. globals.css already collapses durations
+   globally; these rules make sure a reveal lands on its end state rather than
+   on a half transitioned one. */
+@media (prefers-reduced-motion: reduce) {
+  .story-deck .rv,
+  .story-deck .rv-fade,
+  .story-deck .rv-travel,
+  .story-deck .rv-draw,
+  .story-deck .lane-fill,
+  .story-deck .tolerance-consumed,
+  .story-deck .story-progress-fill,
+  .story-deck .scene-root {
+    transition: none !important;
+  }
+
+  .story-deck .story-breath[data-shown="true"] {
+    animation: none !important;
+    opacity: 1;
+  }
+}
+
+/* ==========================================================================
+   Print. A first class path, not an afterthought.
+   ========================================================================== */
+
+@media print {
+  .story-chapterbar,
+  .story-controlbar,
+  .story-progress,
+  .story-zone,
+  .story-help-backdrop {
+    display: none !important;
+  }
+
+  .story-deck {
+    display: block;
+    block-size: auto;
+    overflow: visible;
+  }
+
+  .story-scene {
+    block-size: auto;
+    max-block-size: none;
+    overflow: visible;
+    padding: 18pt 24pt;
+    page-break-after: always;
+    break-after: page;
+  }
+
+  .scene-stage {
+    contain: none;
+    container-type: normal;
+    height: auto;
+  }
+
+  .scene-fit {
+    position: static;
+  }
+
+  .scene-root {
+    transform: none;
+  }
+
+  .rv,
+  .rv-fade,
+  .rv-travel {
+    opacity: 1 !important;
+    visibility: visible !important;
+    transform: none !important;
+  }
+
+
+  .rv-draw {
+    stroke-dashoffset: 0 !important;
+  }
+
+  .story-notes {
+    display: block;
+    block-size: auto;
+    width: auto;
+    border-left: none;
+  }
+}

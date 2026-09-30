@@ -1,0 +1,845 @@
+@import "./tokens.css";
+
+/* ==========================================================================
+   Reset and base
+   ========================================================================== */
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+* {
+  margin: 0;
+  padding: 0;
+}
+
+html {
+  font-size: 16px;
+  -webkit-text-size-adjust: 100%;
+}
+
+body {
+  background: var(--bg);
+  color: var(--text-2);
+  font-family: var(--font-body);
+  font-size: var(--text-base);
+  line-height: var(--leading-normal);
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+  min-height: 100vh;
+}
+
+h1, h2, h3, h4, h5, h6 {
+  font-family: var(--font-display);
+  color: var(--text-1);
+  font-weight: 600;
+  line-height: var(--leading-tight);
+  letter-spacing: var(--tracking-tight);
+  text-wrap: balance;
+}
+
+h1 { font-size: var(--text-2xl); }
+h2 { font-size: var(--text-xl); }
+h3 { font-size: var(--text-lg); }
+h4 { font-size: var(--text-md); }
+h5 { font-size: var(--text-base); }
+h6 { font-size: var(--text-sm); }
+
+p { text-wrap: pretty; }
+
+a {
+  color: var(--accent);
+  text-decoration: none;
+}
+
+a:hover { text-decoration: underline; }
+
+button, input, select, textarea {
+  font: inherit;
+  color: inherit;
+}
+
+button { background: none; border: none; cursor: pointer; }
+
+ul, ol { list-style: none; }
+
+code, kbd, samp, pre {
+  font-family: var(--font-mono);
+  font-size: 0.925em;
+}
+
+svg { display: block; }
+
+/* Visible focus everywhere. Never removed, only restyled. */
+:focus-visible {
+  outline: none;
+  box-shadow: var(--focus-ring);
+  border-radius: var(--radius-sm);
+}
+
+::selection {
+  background: var(--accent-strong);
+  color: #fff;
+}
+
+/* Scrollbars, styled to sit inside the dark surfaces */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: var(--border-2) transparent;
+}
+
+::-webkit-scrollbar { width: 10px; height: 10px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb {
+  background: var(--border-2);
+  border-radius: var(--radius-pill);
+  border: 2px solid transparent;
+  background-clip: content-box;
+}
+::-webkit-scrollbar-thumb:hover { background-color: var(--border-strong); }
+
+/* ==========================================================================
+   Accessibility helpers
+   ========================================================================== */
+
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+  border: 0;
+}
+
+.skip-link {
+  position: absolute;
+  left: var(--space-4);
+  top: -3rem;
+  z-index: 200;
+  padding: var(--space-2) var(--space-4);
+  background: var(--accent-strong);
+  color: #fff;
+  border-radius: var(--radius-md);
+  transition: top var(--duration-fast) var(--ease-out);
+}
+
+.skip-link:focus { top: var(--space-4); }
+
+/* Honour the operating system preference, and an in-product override. */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+[data-motion="paused"] *,
+[data-motion="paused"] *::before,
+[data-motion="paused"] *::after {
+  animation-play-state: paused !important;
+  transition-duration: 0.001ms !important;
+}
+
+/* ==========================================================================
+   Typography utilities
+   ========================================================================== */
+
+.display { font-family: var(--font-display); letter-spacing: var(--tracking-tight); }
+.mono { font-family: var(--font-mono); }
+
+.label {
+  font-family: var(--font-mono);
+  font-size: var(--text-xs);
+  letter-spacing: var(--tracking-label);
+  text-transform: uppercase;
+  color: var(--text-4);
+  font-weight: 500;
+}
+
+.meta {
+  font-family: var(--font-mono);
+  font-size: var(--text-xs);
+  color: var(--text-4);
+  letter-spacing: var(--tracking-wide);
+}
+
+.lede {
+  font-size: var(--text-md);
+  color: var(--text-3);
+  line-height: var(--leading-relaxed);
+  max-width: 68ch;
+}
+
+.muted { color: var(--text-4); }
+.dim { color: var(--text-3); }
+.strong-text { color: var(--text-1); font-weight: 600; }
+
+/* ==========================================================================
+   Panels and cards
+   ========================================================================== */
+
+.panel {
+  background: var(--surface-1);
+  border: 1px solid var(--border-1);
+  border-radius: var(--radius-lg);
+}
+
+.panel-flush {
+  background: var(--surface-0);
+  border: 1px solid var(--border-1);
+  border-radius: var(--radius-lg);
+}
+
+.panel-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3);
+  padding: var(--space-4) var(--space-5);
+  border-bottom: 1px solid var(--border-1);
+}
+
+.panel-body { padding: var(--space-5); }
+
+.panel-title {
+  font-family: var(--font-display);
+  font-size: var(--text-base);
+  font-weight: 600;
+  color: var(--text-1);
+  letter-spacing: var(--tracking-normal);
+}
+
+.card {
+  background: var(--surface-1);
+  border: 1px solid var(--border-1);
+  border-radius: var(--radius-lg);
+  padding: var(--space-4);
+  transition:
+    border-color var(--duration-fast) var(--ease-out),
+    background var(--duration-fast) var(--ease-out),
+    transform var(--duration-fast) var(--ease-out);
+}
+
+.card-interactive { cursor: pointer; text-align: left; width: 100%; display: block; }
+
+.card-interactive:hover {
+  border-color: var(--border-2);
+  background: var(--surface-2);
+}
+
+.card-interactive[aria-pressed="true"],
+.card-interactive[data-selected="true"] {
+  border-color: var(--pink);
+  background: var(--pink-tint);
+}
+
+/* A card whose left edge carries the semantic state. */
+.card-edge { border-left-width: 3px; }
+.card-edge[data-tone="accent"] { border-left-color: var(--accent); }
+.card-edge[data-tone="cyan"] { border-left-color: var(--cyan); }
+.card-edge[data-tone="green"] { border-left-color: var(--green); }
+.card-edge[data-tone="amber"] { border-left-color: var(--amber); }
+.card-edge[data-tone="red"] { border-left-color: var(--red); }
+.card-edge[data-tone="neutral"] { border-left-color: var(--border-2); }
+
+/* ==========================================================================
+   Chips, badges, pills
+   ========================================================================== */
+
+.chip {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  padding: 2px var(--space-2);
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--border-1);
+  background: var(--surface-2);
+  color: var(--text-3);
+  font-family: var(--font-mono);
+  font-size: var(--text-xs);
+  letter-spacing: var(--tracking-wide);
+  white-space: nowrap;
+}
+
+.chip[data-tone="accent"] { border-color: var(--accent-edge); background: var(--accent-tint); color: var(--accent-text); }
+.chip[data-tone="cyan"] { border-color: var(--cyan-edge); background: var(--cyan-tint); color: var(--cyan); }
+.chip[data-tone="green"] { border-color: var(--green-edge); background: var(--green-tint); color: var(--green); }
+.chip[data-tone="amber"] { border-color: var(--amber-edge); background: var(--amber-tint); color: var(--amber); }
+.chip[data-tone="red"] { border-color: var(--red-edge); background: var(--red-tint); color: var(--red); }
+.chip[data-tone="pink"] { border-color: var(--pink); background: var(--pink-tint); color: var(--pink); }
+
+/* Non-colour cue: every tone also carries a leading glyph. */
+.chip-glyph { font-size: 0.9em; opacity: 0.9; }
+
+.pill {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  padding: var(--space-1) var(--space-3);
+  border-radius: var(--radius-pill);
+  border: 1px solid var(--border-1);
+  background: var(--surface-2);
+  font-size: var(--text-sm);
+  color: var(--text-3);
+}
+
+/* ==========================================================================
+   Buttons
+   ========================================================================== */
+
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-2);
+  padding: var(--space-2) var(--space-4);
+  min-height: 34px;
+  border-radius: var(--radius-md);
+  border: 1px solid var(--border-2);
+  background: var(--surface-2);
+  color: var(--text-1);
+  font-size: var(--text-sm);
+  font-weight: 500;
+  transition:
+    background var(--duration-fast) var(--ease-out),
+    border-color var(--duration-fast) var(--ease-out),
+    color var(--duration-fast) var(--ease-out);
+  white-space: nowrap;
+}
+
+.btn:hover:not(:disabled) { background: var(--surface-3); border-color: var(--border-strong); }
+
+.btn:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+  color: var(--text-disabled);
+}
+
+.btn-primary {
+  background: var(--accent-strong);
+  border-color: var(--accent);
+  color: #fff;
+}
+
+.btn-primary:hover:not(:disabled) { background: var(--accent); border-color: var(--accent); }
+
+.btn-ghost { background: transparent; border-color: transparent; color: var(--text-3); }
+.btn-ghost:hover:not(:disabled) { background: var(--surface-2); border-color: var(--border-1); color: var(--text-1); }
+
+.btn-quiet { background: transparent; border-color: var(--border-1); color: var(--text-2); }
+
+/* A decision button. Human judgment is amber by contract. */
+.btn-decide {
+  border-color: var(--amber-edge);
+  background: var(--amber-tint);
+  color: var(--amber);
+  font-weight: 600;
+}
+
+.btn-decide:hover:not(:disabled) { background: rgb(243 179 76 / 20%); border-color: var(--amber); }
+
+.btn-danger { border-color: var(--red-edge); background: var(--red-tint); color: var(--red); }
+
+.btn-sm { min-height: 28px; padding: var(--space-1) var(--space-3); font-size: var(--text-xs); }
+.btn-lg { min-height: 44px; padding: var(--space-3) var(--space-6); font-size: var(--text-base); }
+
+.btn-block { width: 100%; }
+
+/* ==========================================================================
+   Form controls
+   ========================================================================== */
+
+.field { display: flex; flex-direction: column; gap: var(--space-2); }
+
+.field-label {
+  font-family: var(--font-mono);
+  font-size: var(--text-xs);
+  letter-spacing: var(--tracking-label);
+  text-transform: uppercase;
+  color: var(--text-4);
+}
+
+.input,
+.textarea,
+.select {
+  background: var(--surface-0);
+  border: 1px solid var(--border-1);
+  border-radius: var(--radius-md);
+  padding: var(--space-2) var(--space-3);
+  color: var(--text-1);
+  font-size: var(--text-sm);
+  width: 100%;
+  transition: border-color var(--duration-fast) var(--ease-out);
+}
+
+.input:hover, .textarea:hover, .select:hover { border-color: var(--border-2); }
+.textarea { resize: vertical; min-height: 84px; line-height: var(--leading-normal); }
+
+.select {
+  appearance: none;
+  padding-right: var(--space-8);
+  background-image: linear-gradient(45deg, transparent 50%, var(--text-4) 50%),
+    linear-gradient(135deg, var(--text-4) 50%, transparent 50%);
+  background-position: calc(100% - 16px) 50%, calc(100% - 11px) 50%;
+  background-size: 5px 5px, 5px 5px;
+  background-repeat: no-repeat;
+}
+
+/* Segmented control, used for autonomy, language and mode */
+.segmented {
+  display: inline-flex;
+  padding: 2px;
+  gap: 2px;
+  background: var(--surface-0);
+  border: 1px solid var(--border-1);
+  border-radius: var(--radius-md);
+}
+
+.segmented-option {
+  padding: var(--space-1) var(--space-3);
+  border-radius: var(--radius-sm);
+  font-size: var(--text-xs);
+  font-family: var(--font-mono);
+  letter-spacing: var(--tracking-wide);
+  color: var(--text-4);
+  transition: background var(--duration-fast) var(--ease-out), color var(--duration-fast) var(--ease-out);
+}
+
+.segmented-option:hover { color: var(--text-2); background: var(--surface-2); }
+
+.segmented-option[aria-pressed="true"],
+.segmented-option[aria-selected="true"] {
+  background: var(--accent-tint);
+  /* Small text on an accent tint requires the readable accent variant. */
+  color: var(--accent-text);
+  box-shadow: inset 0 0 0 1px var(--accent-edge);
+}
+
+/* ==========================================================================
+   Tables
+   ========================================================================== */
+
+.table-wrap {
+  overflow: auto;
+  border: 1px solid var(--border-1);
+  border-radius: var(--radius-lg);
+  background: var(--surface-0);
+}
+
+.table { width: 100%; border-collapse: collapse; font-size: var(--text-sm); }
+
+.table thead th {
+  position: sticky;
+  top: 0;
+  z-index: 1;
+  background: var(--surface-2);
+  color: var(--text-4);
+  font-family: var(--font-mono);
+  font-size: var(--text-xs);
+  letter-spacing: var(--tracking-label);
+  text-transform: uppercase;
+  font-weight: 500;
+  text-align: left;
+  padding: var(--space-3) var(--space-4);
+  border-bottom: 1px solid var(--border-1);
+  white-space: nowrap;
+}
+
+.table tbody td {
+  padding: var(--space-3) var(--space-4);
+  border-bottom: 1px solid var(--border-1);
+  color: var(--text-2);
+  vertical-align: top;
+}
+
+.table tbody tr:last-child td { border-bottom: none; }
+.table tbody tr:hover td { background: var(--surface-1); }
+.table td.num, .table th.num { text-align: right; font-family: var(--font-mono); }
+
+/* ==========================================================================
+   Layout utilities
+   ========================================================================== */
+
+.stack { display: flex; flex-direction: column; }
+.stack-1 { gap: var(--space-1); }
+.stack-2 { gap: var(--space-2); }
+.stack-3 { gap: var(--space-3); }
+.stack-4 { gap: var(--space-4); }
+.stack-5 { gap: var(--space-5); }
+.stack-6 { gap: var(--space-6); }
+.stack-8 { gap: var(--space-8); }
+
+.row { display: flex; align-items: center; }
+.row-2 { gap: var(--space-2); }
+.row-3 { gap: var(--space-3); }
+.row-4 { gap: var(--space-4); }
+.row-6 { gap: var(--space-6); }
+.row-wrap { flex-wrap: wrap; }
+.row-between { justify-content: space-between; }
+.row-start { align-items: flex-start; }
+.row-baseline { align-items: baseline; }
+
+.grow { flex: 1 1 auto; min-width: 0; }
+.shrink-0 { flex-shrink: 0; }
+
+.grid { display: grid; gap: var(--space-4); }
+.grid-2 { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+.grid-3 { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+.grid-4 { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+
+.divider { height: 1px; background: var(--border-1); border: none; }
+.divider-v { width: 1px; align-self: stretch; background: var(--border-1); }
+
+.truncate { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+.clamp-2 {
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.clamp-3 {
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.scroll-y { overflow-y: auto; overflow-x: hidden; min-height: 0; }
+
+/* ==========================================================================
+   Product specific primitives
+   ========================================================================== */
+
+/* The permanent synthetic data disclosure. Discreet but always present. */
+.synthetic-label {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  font-family: var(--font-mono);
+  font-size: var(--text-xs);
+  letter-spacing: var(--tracking-wide);
+  color: var(--text-4);
+  border: 1px dashed var(--border-2);
+  border-radius: var(--radius-sm);
+  padding: 2px var(--space-2);
+  white-space: nowrap;
+}
+
+/* The mandatory label on every regulatory reference. */
+.regulatory-note {
+  font-family: var(--font-mono);
+  font-size: var(--text-xs);
+  color: var(--text-4);
+  font-style: normal;
+  letter-spacing: var(--tracking-wide);
+  border-top: 1px solid var(--border-1);
+  padding-top: var(--space-2);
+  margin-top: var(--space-2);
+  display: block;
+}
+
+/* Provenance classification. Fact, statement and inference never share a style. */
+.provenance {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-family: var(--font-mono);
+  font-size: var(--text-xs);
+  letter-spacing: var(--tracking-wide);
+  padding: 1px var(--space-2);
+  border-radius: var(--radius-sm);
+  border: 1px solid transparent;
+}
+
+.provenance[data-kind="verified-fact"] { color: var(--green); background: var(--green-tint); border-color: var(--green-edge); }
+.provenance[data-kind="approved-record"] { color: var(--cyan); background: var(--cyan-tint); border-color: var(--cyan-edge); }
+.provenance[data-kind="stakeholder-statement"] { color: var(--amber); background: var(--amber-tint); border-color: var(--amber-edge); }
+.provenance[data-kind="model-inference"] { color: var(--accent-text); background: var(--accent-tint); border-color: var(--accent-edge); }
+.provenance[data-kind="conflicting-evidence"] { color: var(--red); background: var(--red-tint); border-color: var(--red-edge); }
+.provenance[data-kind="telemetry"] { color: var(--cyan); background: var(--cyan-tint); border-color: var(--cyan-edge); }
+
+/* Confidence meter. A bar, not a radial gauge. */
+.confidence {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  font-family: var(--font-mono);
+  font-size: var(--text-xs);
+  color: var(--text-4);
+}
+
+.confidence-track {
+  width: 56px;
+  height: 4px;
+  border-radius: var(--radius-pill);
+  background: var(--surface-3);
+  overflow: hidden;
+}
+
+.confidence-fill { height: 100%; border-radius: var(--radius-pill); background: var(--cyan); }
+.confidence-fill[data-band="low"] { background: var(--red); }
+.confidence-fill[data-band="medium"] { background: var(--amber); }
+.confidence-fill[data-band="high"] { background: var(--green); }
+
+/* Empty state */
+.empty-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-3);
+  padding: var(--space-12) var(--space-6);
+  text-align: center;
+  color: var(--text-4);
+  border: 1px dashed var(--border-1);
+  border-radius: var(--radius-lg);
+}
+
+/* Ambient background. Extremely subtle, never a glowing blob. */
+.ambient {
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+  background:
+    radial-gradient(ellipse 80% 50% at 15% -10%, rgb(180 76 255 / 7%), transparent 60%),
+    radial-gradient(ellipse 60% 40% at 90% 0%, rgb(85 199 232 / 5%), transparent 60%);
+}
+
+/* A keyboard hint */
+kbd {
+  display: inline-block;
+  padding: 1px 6px;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--border-2);
+  border-bottom-width: 2px;
+  background: var(--surface-2);
+  font-size: var(--text-xs);
+  color: var(--text-3);
+  line-height: 1.5;
+}
+
+/* ==========================================================================
+   Dialogs
+   ========================================================================== */
+
+.dialog-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 100;
+  background: rgb(6 7 10 / 72%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: var(--space-6);
+}
+
+.dialog {
+  background: var(--surface-1);
+  border: 1px solid var(--border-2);
+  border-radius: var(--radius-xl);
+  box-shadow: var(--shadow-4);
+  width: min(720px, 100%);
+  max-height: min(84vh, 900px);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.dialog-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: var(--space-4);
+  padding: var(--space-5) var(--space-6);
+  border-bottom: 1px solid var(--border-1);
+}
+
+.dialog-body { padding: var(--space-6); overflow-y: auto; min-height: 0; }
+
+.dialog-foot {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: var(--space-3);
+  padding: var(--space-4) var(--space-6);
+  border-top: 1px solid var(--border-1);
+  background: var(--surface-0);
+}
+
+/* Evidence drawer, slides from the right rail */
+.drawer {
+  position: fixed;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 110;
+  width: min(560px, 92vw);
+  background: var(--surface-1);
+  border-left: 1px solid var(--border-2);
+  box-shadow: var(--shadow-4);
+  display: flex;
+  flex-direction: column;
+}
+
+/* ==========================================================================
+   Motion primitives
+   ========================================================================== */
+
+@keyframes fade-up {
+  from { opacity: 0; transform: translateY(8px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes fade-in {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes pulse-ring {
+  0% { box-shadow: 0 0 0 0 rgb(226 112 122 / 42%); }
+  70% { box-shadow: 0 0 0 10px rgb(226 112 122 / 0%); }
+  100% { box-shadow: 0 0 0 0 rgb(226 112 122 / 0%); }
+}
+
+@keyframes sweep {
+  from { transform: translateX(-100%); }
+  to { transform: translateX(240%); }
+}
+
+.animate-fade-up { animation: fade-up var(--duration-base) var(--ease-out) both; }
+.animate-fade-in { animation: fade-in var(--duration-base) var(--ease-out) both; }
+
+/* The live event marker. Used only for the 14:05 event, never decoratively. */
+.event-pulse { animation: pulse-ring 2.4s var(--ease-in-out) infinite; }
+
+/* Agent activity indicator */
+.activity-bar {
+  position: relative;
+  height: 2px;
+  background: var(--surface-3);
+  overflow: hidden;
+  border-radius: var(--radius-pill);
+}
+
+.activity-bar::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  width: 40%;
+  background: linear-gradient(90deg, transparent, var(--accent), transparent);
+  animation: sweep 1.4s var(--ease-in-out) infinite;
+}
+
+/* ==========================================================================
+   Responsive
+   ========================================================================== */
+
+@media (width <= 1440px) {
+  :root {
+    --right-rail-width: 336px;
+    --left-rail-width: 208px;
+  }
+}
+
+@media (width <= 1366px) {
+  :root {
+    --right-rail-width: 312px;
+    --left-rail-width: 64px;
+    --text-base: 0.875rem;
+  }
+}
+
+@media (width <= 900px) {
+  .grid-3, .grid-4 { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+
+@media (width <= 640px) {
+  .grid-2, .grid-3, .grid-4 { grid-template-columns: minmax(0, 1fr); }
+}
+
+/* ==========================================================================
+   Entry screen
+   ========================================================================== */
+
+/*
+ * The entry screen must fit a projected viewport, so the headline scales with
+ * the available height rather than sitting at a fixed size. The clamp keeps it
+ * readable at 768 pixels of height and lets it reach its intended size on a
+ * full 1080 display.
+ */
+.entry-headline {
+  font-size: clamp(2.25rem, 5.2vh + 1rem, 4rem);
+}
+
+@media (height <= 820px) {
+  .entry-shell {
+    padding-top: var(--space-4);
+    padding-bottom: var(--space-4);
+  }
+}
+
+/* ==========================================================================
+   Workday top bar
+   ========================================================================== */
+
+/*
+ * Items that may be dropped when the top bar runs out of width.
+ *
+ * The bar carries the role, the entity, the clock, the scenario, the dominant
+ * work lane, the autonomy selector, the AI mode, the world view toggle and the
+ * language toggle. At 1366 pixels that does not fit, and the failure mode
+ * before this rule existed was that the rightmost items were laid out beyond
+ * the viewport with no scrollbar, so a presenter could neither see nor reach
+ * the world view toggle.
+ *
+ * What is dropped is chosen by what a presenter can do without: the lane chip
+ * and the mode chip are informational and both appear in the control room. The
+ * autonomy selector, the world view toggle and the language toggle are never
+ * dropped, because the product's argument depends on reaching them.
+ */
+@media (width <= 1560px) {
+  .workday-topbar .topbar-optional {
+    display: none;
+  }
+}
+
+@media (width <= 1400px) {
+  .workday-topbar {
+    gap: var(--space-2);
+  }
+}
+
+/*
+ * The workday shell is a fixed viewport application shell, so the document
+ * itself must not scroll. Content is reached through the three inner
+ * scrollers: the left rail, the centre workspace and the intelligence rail.
+ *
+ * This rule exists because the shell alone was not enough. With the shell at
+ * `height: 100dvh; overflow: hidden` and every tall region inside a scroller,
+ * the document still reported 1435px of scrollable overflow and the window
+ * genuinely scrolled, which carried the permanent synthetic data disclosure
+ * off the top of the screen. No unclipped element could be found below the
+ * fold, and hiding any one of the three sibling scrollers collapsed the
+ * reported height back to the viewport, which is the signature of a layout
+ * artefact rather than real content. Rather than depend on that behaviour,
+ * the root is constrained directly, which is also simply the correct
+ * statement about this layout.
+ */
+html:has(.workday-shell-root),
+html:has(.workday-shell-root) body {
+  height: 100%;
+  min-height: 0;
+  overflow: hidden;
+}
