@@ -755,8 +755,14 @@ kbd {
 
 @media (width <= 1366px) {
   :root {
-    --right-rail-width: 312px;
-    --left-rail-width: 64px;
+    /*
+     * The left rail keeps a readable width at the narrowest projected size.
+     * Collapsing it to an icon strip clipped its labels and its two action
+     * buttons, and the space is better taken from the intelligence rail,
+     * which scrolls and has more slack.
+     */
+    --right-rail-width: 300px;
+    --left-rail-width: 184px;
     --text-base: 0.875rem;
   }
 }
@@ -842,4 +848,29 @@ html:has(.workday-shell-root) body {
   height: 100%;
   min-height: 0;
   overflow: hidden;
+}
+
+/* ==========================================================================
+   Workday left rail
+   ========================================================================== */
+
+/*
+ * At 1366 the rail was collapsed to a 64 pixel icon strip, which clipped the
+ * acting-as block and the action buttons into fragments such as
+ * "Operat Risk Partne".
+ *
+ * The fix is to give the rail enough width rather than to hide its contents.
+ * An earlier attempt hid them, which would have removed the background work
+ * reveal and the reset control from the narrowest projected size, and both are
+ * required features. The width comes out of the intelligence rail instead,
+ * which has more slack.
+ *
+ * Only the acting professional's department line is dropped, because the name
+ * and job title carry the same information and the role switcher in the top
+ * bar names the role anyway.
+ */
+@media (width <= 1400px) {
+  .workday-rail .rail-detail .meta:last-child {
+    display: none;
+  }
 }

@@ -203,7 +203,7 @@ export function WorkdayShell({ roleId, children, intelligenceRail, activeNav = "
         {/* Left rail */}
         <nav
           aria-label="Work areas"
-          className="scroll-y"
+          className="scroll-y workday-rail"
           style={{
             borderRight: "1px solid var(--border-1)",
             background: "var(--surface-0)",
@@ -245,7 +245,7 @@ export function WorkdayShell({ roleId, children, intelligenceRail, activeNav = "
 
           <div className="divider" style={{ margin: "var(--space-4) var(--space-2)" }} />
 
-          <div className="stack stack-2" style={{ padding: "0 var(--space-3)" }}>
+          <div className="stack stack-2 rail-detail" style={{ padding: "0 var(--space-3)" }}>
             <span className="label">Acting as</span>
             <span className="strong-text" style={{ fontSize: "var(--text-sm)" }}>
               {holder?.name ?? role?.holderUserId}
@@ -256,7 +256,7 @@ export function WorkdayShell({ roleId, children, intelligenceRail, activeNav = "
 
           <div className="divider" style={{ margin: "var(--space-4) var(--space-2)" }} />
 
-          <div className="stack stack-2" style={{ padding: "0 var(--space-3)" }}>
+          <div className="stack stack-2 rail-detail" style={{ padding: "0 var(--space-3)" }}>
             <BackgroundWorkReveal
               language={language}
               counts={{
