@@ -3,6 +3,60 @@ import type { NextConfig } from "next";
 const nextConfig: NextConfig = {
   reactStrictMode: true,
   /*
+   * Redirects for deprecated flagship-role routes.
+   *
+   * V3.2 reduces the flagship nav to Home, Processes and Decisions. Routes
+   * that were primary items before (workbench, meetings, mail, calendar,
+   * collaboration, assistant) now redirect so any bookmarks or external links
+   * still resolve. permanent: false allows the destinations to change again
+   * without forcing browsers to cache the 308 forever.
+   *
+   * Only rcsa and tprm are flagship roles. Preview roles keep their routes
+   * as-is; they redirect to the role home where a stub page does not exist.
+   */
+  async redirects() {
+    const flagship = ["rcsa", "tprm"] as const;
+    const rules: { source: string; destination: string; permanent: boolean }[] = [];
+
+    for (const role of flagship) {
+      rules.push(
+        {
+          source: `/workday/${role}/workbench`,
+          destination: `/workday/${role}/processes`,
+          permanent: false,
+        },
+        {
+          source: `/workday/${role}/meetings`,
+          destination: `/workday/${role}/processes`,
+          permanent: false,
+        },
+        {
+          source: `/workday/${role}/mail`,
+          destination: `/workday/${role}`,
+          permanent: false,
+        },
+        {
+          source: `/workday/${role}/calendar`,
+          destination: `/workday/${role}`,
+          permanent: false,
+        },
+        {
+          source: `/workday/${role}/collaboration`,
+          destination: `/workday/${role}/processes`,
+          permanent: false,
+        },
+        {
+          source: `/workday/${role}/assistant`,
+          destination: `/workday/${role}?partner=open`,
+          permanent: false,
+        },
+      );
+    }
+
+    return rules;
+  },
+
+  /*
    * The output directory is overridable.
    *
    * A production build and the development server both write to `.next` by

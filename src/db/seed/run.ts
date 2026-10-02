@@ -77,6 +77,13 @@ import {
 
 import * as institution from "@/scenario/data/institution";
 import * as thirdParty from "@/scenario/data/third-party";
+import {
+  tprmOnboardingSuppliers,
+  tprmOnboardingServices,
+  tprmOnboardingContracts,
+  tprmOnboardingContractObligations,
+  tprmOnboardingEvidenceDocuments,
+} from "@/db/seed/tprm-onboarding";
 import * as risk from "@/scenario/data/risk";
 import * as assurance from "@/scenario/data/assurance";
 import * as eventData from "@/scenario/data/event";
@@ -295,13 +302,13 @@ export function seedScenario(runId: string = DEFAULT_RUN_ID): SeedSummary {
     total += insertAll(policies, institution.policies, counts, "policies");
 
     /* Third party and resilience */
-    total += insertAll(suppliers, thirdParty.suppliers, counts, "suppliers");
+    total += insertAll(suppliers, [...thirdParty.suppliers, ...tprmOnboardingSuppliers], counts, "suppliers");
     total += insertAll(subprocessors, thirdParty.subprocessors, counts, "subprocessors");
-    total += insertAll(services, thirdParty.services, counts, "services");
+    total += insertAll(services, [...thirdParty.services, ...tprmOnboardingServices], counts, "services");
     total += insertAll(serviceDependencies, thirdParty.serviceDependencies, counts, "serviceDependencies");
     total += insertAll(impactTolerances, thirdParty.impactTolerances, counts, "impactTolerances");
-    total += insertAll(contracts, thirdParty.contracts, counts, "contracts");
-    total += insertAll(contractObligations, thirdParty.contractObligations, counts, "contractObligations");
+    total += insertAll(contracts, [...thirdParty.contracts, ...tprmOnboardingContracts], counts, "contracts");
+    total += insertAll(contractObligations, [...thirdParty.contractObligations, ...tprmOnboardingContractObligations], counts, "contractObligations");
 
     /* Risk and control */
     total += insertAll(processes, risk.processes, counts, "processes");
@@ -334,7 +341,11 @@ export function seedScenario(runId: string = DEFAULT_RUN_ID): SeedSummary {
      * retrieval system that can only quote half of the corpus is worse than
      * one that quotes all of it.
      */
-    const allEvidenceDocuments = [...evidence.evidenceDocuments, ...generatedEvidenceDocuments];
+    const allEvidenceDocuments = [
+      ...evidence.evidenceDocuments,
+      ...generatedEvidenceDocuments,
+      ...tprmOnboardingEvidenceDocuments,
+    ];
     total += insertAll(evidenceDocuments, allEvidenceDocuments, counts, "evidenceDocuments");
     const chunks = allEvidenceDocuments.flatMap((doc: { id: string; body: string }) =>
       chunkDocument(doc.id, runId, doc.body),

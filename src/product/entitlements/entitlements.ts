@@ -88,6 +88,7 @@ export interface AdminArea {
     | "integrations"
     | "mappings"
     | "role-packs"
+    | "role-apps"
     | "authority"
     | "deployment";
   label: { en: string; de: string };
@@ -130,6 +131,12 @@ export const SETTINGS_AREAS: readonly AdminArea[] = [
     href: "/settings/role-packs",
     icon: "role-packs",
     label: { en: "Role packs", de: "Rollenpakete" },
+    adminFeature: null,
+  },
+  {
+    href: "/settings/role-apps",
+    icon: "role-apps",
+    label: { en: "Role apps", de: "Rollen-Apps" },
     adminFeature: null,
   },
   {

@@ -3,35 +3,27 @@
 /**
  * The navigation rail. 56px collapsed.
  *
- * Five primary items, three secondary behind a disclosure, and the product and
- * trust items at the foot. The V2 rail listed nine items of equal weight,
- * which the brief identifies as part of the problem: a user scanning nine
- * equal icons has to decide which is the work and which is the product.
+ * Three primary items covering the flagship analyst day: Home, Processes and
+ * Decisions. The V3.2 brief reduces the rail to what flagship roles (rcsa,
+ * tprm) actually use. Deprecated routes (workbench, meetings, mail, calendar,
+ * collaboration, assistant) now redirect at the Next.js config level so the
+ * rail never points at them.
  *
- * Here `Home`, `My work`, `Decisions`, `Workbench` and `Meetings` are the
- * analyst's day. Mail, calendar and collaboration are real but secondary, so
- * they sit behind `More`. Trust, the control room and settings are product
- * surfaces and sit at the foot, visually separated.
+ * Trust and Settings are product surfaces, not analyst work, so they have
+ * moved out of the primary rail. The collapse/expand control stays at the
+ * foot where it was.
  *
  * It takes counts as props and fetches nothing.
  */
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { useState } from "react";
 import {
-  IconCalendarMonth,
   IconChevronsLeft,
   IconChevronsRight,
-  IconDots,
   IconGavel,
   IconHome,
-  IconMail,
-  IconMessages,
-  IconSettings,
-  IconShieldCheck,
-  IconTopologyStar3,
-  IconUsers,
+  IconSitemap,
   type Icon,
 } from "@tabler/icons-react";
 import type { Language } from "@/i18n/labels";
@@ -45,15 +37,8 @@ export interface NavigationCounts {
 
 const LABELS = {
   home: { en: "Home", de: "Start" },
+  processes: { en: "Processes", de: "Prozesse" },
   decisions: { en: "Decisions", de: "Entscheidungen" },
-  workbench: { en: "Workbench", de: "Arbeitsbereich" },
-  meetings: { en: "Meetings", de: "Sitzungen" },
-  more: { en: "More", de: "Mehr" },
-  mail: { en: "Mail", de: "Post" },
-  calendar: { en: "Calendar", de: "Kalender" },
-  collaboration: { en: "Collaboration", de: "Zusammenarbeit" },
-  trust: { en: "Trust", de: "Vertrauen" },
-  settings: { en: "Settings", de: "Einstellungen" },
   collapse: { en: "Collapse", de: "Einklappen" },
   expand: { en: "Expand", de: "Ausklappen" },
 } as const;
@@ -61,18 +46,12 @@ const LABELS = {
 type LabelKey = keyof typeof LABELS;
 
 /*
- * Four primary items, and every one of them resolves.
+ * Three primary items, and every one of them resolves.
  *
- * There were five, and the second was `My work` pointing at
- * `/workday/<role>/my-work`, which does not exist and never did. It carried a
- * live count badge, so the most prominent unvisited item in the rail was a
- * link to a 404, on all six roles. The queue it implied is the role home,
- * which is the item directly above it.
- *
- * Five was the number in the brief and four is what the routes support. A
- * fifth primary item will be correct when there is a fifth route for it to
- * point at; a rail that lies about where it can take you is worse than a
- * short rail.
+ * Home is the focus queue. Processes is the new landing for role-specific
+ * process work (RCSA cycle, third-party onboarding). Decisions is the
+ * authority queue. All three have V3 implementations; the rail does not point
+ * at anything that does not exist.
  */
 const PRIMARY: Array<{
   key: LabelKey;
@@ -81,15 +60,8 @@ const PRIMARY: Array<{
   count?: (counts: NavigationCounts) => number;
 }> = [
   { key: "home", icon: IconHome, segment: "", count: (c) => c.myWork },
+  { key: "processes", icon: IconSitemap, segment: "/processes" },
   { key: "decisions", icon: IconGavel, segment: "/decisions", count: (c) => c.decisions },
-  { key: "workbench", icon: IconTopologyStar3, segment: "/workbench" },
-  { key: "meetings", icon: IconUsers, segment: "/meetings" },
-];
-
-const SECONDARY: Array<{ key: LabelKey; icon: Icon; segment: string; count?: (c: NavigationCounts) => number }> = [
-  { key: "mail", icon: IconMail, segment: "/mail", count: (c) => c.mail },
-  { key: "calendar", icon: IconCalendarMonth, segment: "/calendar" },
-  { key: "collaboration", icon: IconMessages, segment: "/collaboration" },
 ];
 
 export function WorkdayNavigation({
@@ -103,7 +75,6 @@ export function WorkdayNavigation({
 }) {
   const chrome = useWorkdayChrome();
   const pathname = usePathname();
-  const [moreOpen, setMoreOpen] = useState(false);
 
   const base = `/workday/${roleId}`;
   const label = (key: LabelKey) => (language === "de" ? LABELS[key].de : LABELS[key].en);
@@ -154,52 +125,9 @@ export function WorkdayNavigation({
     <nav className="wd-nav" aria-label={language === "de" ? "Arbeitsbereiche" : "Work areas"}>
       <ul className="wd-nav-list">{PRIMARY.map(item)}</ul>
 
-      <ul className="wd-nav-list">
-        <li>
-          <button
-            type="button"
-            className="wd-nav-item"
-            aria-expanded={moreOpen}
-            onClick={() => setMoreOpen((open) => !open)}
-            title={chrome.navExpanded ? undefined : label("more")}
-            aria-label={label("more")}
-          >
-            <span className="wd-nav-icon" aria-hidden="true">
-              <IconDots size={20} stroke={1.7} />
-            </span>
-            <span className="wd-nav-label">{label("more")}</span>
-          </button>
-        </li>
-        {moreOpen ? SECONDARY.map(item) : null}
-      </ul>
-
       <div className="wd-nav-spacer" />
 
       <ul className="wd-nav-list">
-        <li>
-          <Link
-            href="/trust"
-            className="wd-nav-item"
-            title={chrome.navExpanded ? undefined : label("trust")}
-          >
-            <span className="wd-nav-icon" aria-hidden="true">
-              <IconShieldCheck size={20} stroke={1.7} />
-            </span>
-            <span className="wd-nav-label">{label("trust")}</span>
-          </Link>
-        </li>
-        <li>
-          <Link
-            href="/settings/organisation"
-            className="wd-nav-item"
-            title={chrome.navExpanded ? undefined : label("settings")}
-          >
-            <span className="wd-nav-icon" aria-hidden="true">
-              <IconSettings size={20} stroke={1.7} />
-            </span>
-            <span className="wd-nav-label">{label("settings")}</span>
-          </Link>
-        </li>
         <li>
           <button
             type="button"

@@ -9,6 +9,16 @@ The V3.1 role home keeps one fixed mental model for all six professions: `Now`
 This document says what goes inside that model for each role: the objects, the
 column names, the vocabulary, and what counts as a decision.
 
+**Flagship roles (fully wired, production-shaped):** RCSA (Operational Risk
+Partner) and TPRM (Third-Party Risk Manager). Both have a routed process page,
+a production-shaped role app, and a seeded in-progress run.
+
+**Preview roles (role home and AI partner, no process page yet):**
+Control Assurance Specialist, Incident and Resilience Lead, Regulatory Change
+Manager, NFR Portfolio Lead. The focus queue and decision handling are complete;
+the role app registry contains preview-status entries for these roles but no
+entryRoute is set on any of them.
+
 Everything below is grounded in rows that exist in `data/nfr-workos.db` under
 `run-001` and in the code that assembles the queue. Where a figure is quoted, it
 is quoted with the identifier it came from, so a reader can open the record. The

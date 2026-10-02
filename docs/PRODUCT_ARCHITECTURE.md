@@ -66,14 +66,17 @@ Six packs, one per professional function. Each pack is a complete vertical: its 
 roles it serves, the governed tools it may call, the screens it contributes, the evaluation cases
 that must pass for it, and the connector packs it depends on to be useful.
 
-| Pack | Primary role | Contains |
-|---|---|---|
-| `rcsa-operational-risk` | `rcsa` | Process, risk, control, assessment and indicator objects. Off cycle reassessment, challenge preparation, residual risk positions. Fourteen governed tools including `updateAssessment` and `proposeAndRecordResidualRisk`. |
-| `third-party-risk` | `tprm` | Supplier, service, contract and obligation objects. Exposure through subprocessors and fourth parties, submission comparison against the contract, criticality and restriction decisions. |
-| `control-assurance` | `control-assurance` | Control, test, exception and finding objects. Test populations where every override is evidenced, exception classification separating systemic from isolated, findings whose severity a human decides. |
-| `incident-operational-resilience` | `incident-resilience` | Incident, service and loss objects. Chronology with provenance per entry, impact tolerance headroom, recovery option trade offs, a supervisory notification recommendation that notifies nobody. |
-| `regulatory-change` | `regulatory-change` | Obligation and policy objects. Applicability decided per legal entity, which is the mechanism that keeps an EU requirement off the Swiss entity. |
-| `nfr-governance` | `nfr-governance` | Decision, approval, theme and meeting objects. One matter as every contributing function sees it, portfolio materiality, committee agenda order, the end of day account. |
+**2 flagship packs** have production-shaped role apps and fully wired process pages.
+**4 preview packs** have the role home, decision queue and AI partner, with role apps in preview status.
+
+| Pack | Primary role | Depth | Contains |
+|---|---|---|---|
+| `rcsa-operational-risk` | `rcsa` | Flagship | Process, risk, control, assessment and indicator objects. Off cycle reassessment, challenge preparation, residual risk positions. Fourteen governed tools including `updateAssessment` and `proposeAndRecordResidualRisk`. |
+| `third-party-risk` | `tprm` | Flagship | Supplier, service, contract and obligation objects. Exposure through subprocessors and fourth parties, submission comparison against the contract, criticality and restriction decisions. |
+| `control-assurance` | `control-assurance` | Preview | Control, test, exception and finding objects. Test populations where every override is evidenced, exception classification separating systemic from isolated, findings whose severity a human decides. |
+| `incident-operational-resilience` | `incident-resilience` | Preview | Incident, service and loss objects. Chronology with provenance per entry, impact tolerance headroom, recovery option trade offs, a supervisory notification recommendation that notifies nobody. |
+| `regulatory-change` | `regulatory-change` | Preview | Obligation and policy objects. Applicability decided per legal entity, which is the mechanism that keeps an EU requirement off the Swiss entity. |
+| `nfr-governance` | `nfr-governance` | Preview | Decision, approval, theme and meeting objects. One matter as every contributing function sees it, portfolio materiality, committee agenda order, the end of day account. |
 
 Every tool name in every pack is a key in `TOOL_REGISTRY` and every screen is a route that exists.
 `tests/unit/product.test.ts` asserts both. A pack listing a tool the product does not have is a
@@ -106,7 +109,36 @@ matrix, the audit trail, the evaluation suite, the guardrails, the jurisdiction 
 the disclosure primitives. Every deployment has them. A product that sold its own accountability
 layer as an upgrade would be making the wrong thing optional.
 
-### 1.5 Deployment profile
+### 1.5 Role apps
+
+A role app is a packaged, stage-gated process inside a function pack, operated
+by the AI partner on behalf of a named role. It is finer-grained than a
+function pack: a function pack is the licensing unit; a role app is one specific
+workflow within it.
+
+The contracts, run model and registry are at:
+
+| File | Contents |
+|---|---|
+| `src/role-apps/contracts.ts` | `RoleAppDefinition`, `RoleProcessDefinition`, `RoleAppRun` types |
+| `src/role-apps/registry.ts` | The full catalogue (installed and preview) |
+| `src/role-apps/rcsa/definition.ts` | RCSA Cycle Assistant definition and seeded run |
+| `src/role-apps/tprm/definition.ts` | Third-Party Onboarding definition and seeded run |
+
+**Installed apps** (production-shaped, routed):
+
+- `rcsa-cycle-assistant` inside `nfr-operational-risk`, entry at `/workday/rcsa/processes/rcsa-cycle`
+- `tprm-third-party-onboarding` inside `nfr-third-party-risk`, entry at `/workday/tprm/process/tprm-third-party-onboarding`
+
+**Preview apps** (in registry, not yet routed): RCSA Event-Driven Reassessment,
+RCSA Rapid Assessment, TPRM Periodic Reassessment, TPRM Exit Planning, TPRM
+Fourth-Party Deep Dive.
+
+An administrator can see all defined apps at `/settings/role-apps`. A run is
+currently in-memory (seeded on startup); a persistent `role_app_runs` table is
+the next engineering step.
+
+### 1.6 Deployment profile
 
 Four shapes. One of them is what this repository runs. See `docs/DEPLOYMENT_PROFILES.md`.
 

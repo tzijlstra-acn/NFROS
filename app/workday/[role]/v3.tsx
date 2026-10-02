@@ -1,9 +1,15 @@
 /**
- * The role home, V3.1.
+ * The role home, V3.2.
  *
  * Thin. The frame, the header, the navigation and the bottom bar come from
  * `layout.tsx` and are already on screen before this renders, which is the
  * point of the layout. This supplies the main region only.
+ *
+ * Preview roles (control-assurance, incident-resilience, regulatory-change,
+ * nfr-governance) are not part of the current two-role interactive release.
+ * When a preview-role URL is visited, the layout still renders (providing the
+ * frame) but this component replaces the main region with the PreviewRolePage
+ * rather than the full workday experience.
  *
  * The queue and the detail come from repositories that already existed and
  * are already tested. Nothing about the domain is recomputed here.
@@ -13,6 +19,8 @@ import { notFound } from "next/navigation";
 import { isDatabaseReady } from "@/db/client";
 import { ROLE_IDS, type RoleId } from "@/db/schema/core";
 import { getRole } from "@/db/repositories/workday";
+import { getRoleRelease } from "@/product/release/role-release";
+import { PreviewRolePage } from "@/components/workday-v3/PreviewRolePage";
 import {
   buildFocusHeadline,
   buildFocusQueueView,
@@ -40,6 +48,16 @@ export default async function RoleHomeV3({
 }) {
   const { role } = await params;
   const roleId = parseRole(role);
+
+  /*
+   * Preview roles are defined in the release model. Visiting one shows a
+   * dedicated page rather than a partially functional workday. The layout
+   * still wraps this output, so the header and chrome remain consistent.
+   */
+  const releaseInfo = getRoleRelease(roleId);
+  if (releaseInfo && releaseInfo.status === "preview") {
+    return <PreviewRolePage role={releaseInfo} />;
+  }
 
   if (!isDatabaseReady()) return <NotSeeded />;
   const state = getScenarioState();

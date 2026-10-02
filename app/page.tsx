@@ -10,7 +10,6 @@
 import Link from "next/link";
 import { getPublicHealth } from "@/server/config/runtime";
 import { isDatabaseReady } from "@/db/client";
-import { getRoles, getUser, getEntity } from "@/db/repositories/workday";
 import { getScenarioState } from "@/scenario/engine/state";
 import { PRODUCT_COPY, t, type Language } from "@/i18n/labels";
 import { SyntheticLabel } from "@/components/evidence/primitives";
@@ -24,7 +23,6 @@ export default function EntryPage() {
   const seeded = isDatabaseReady();
   const state = seeded ? getScenarioState() : null;
   const language = (state?.language ?? "en") as Language;
-  const roles = seeded ? getRoles() : [];
 
   return (
     /*
@@ -113,10 +111,9 @@ export default function EntryPage() {
 
         {/* ---- Status panel ---- */}
         {/*
-          * This column carries the runtime status, the mode selector and six
-          * role cards, which together are taller than a projected viewport.
+          * This column carries the runtime status and the mode selector.
           * It scrolls internally so the proposition on the left keeps its full
-          * size rather than being compressed to accommodate a list.
+          * size. Role selection has moved to the dedicated /workday page.
           */}
         <div className="stack stack-4 scroll-y" style={{ maxHeight: "100%", paddingRight: "var(--space-2)" }}>
           <div className="panel">
@@ -199,37 +196,7 @@ export default function EntryPage() {
             </div>
           </div>
 
-          {seeded ? (
-            <div className="panel">
-              <div className="panel-head">
-                <span className="panel-title">Six professional lenses</span>
-              </div>
-              <div className="panel-body stack stack-2">
-                {roles.map((role) => {
-                  const holder = getUser(role.holderUserId);
-                  const entity = getEntity(role.entityId);
-                  return (
-                    <Link
-                      key={role.id}
-                      href={`/workday/${role.id}`}
-                      className="card card-interactive card-edge"
-                      data-tone={role.deeplyInteractive ? "accent" : "neutral"}
-                      style={{ padding: "var(--space-3)" }}
-                    >
-                      <div className="stack stack-1">
-                        <span className="strong-text" style={{ fontSize: "var(--text-sm)" }}>
-                          {language === "de" ? role.titleDe : role.title}
-                        </span>
-                        <span className="meta">
-                          {holder?.name} &middot; {entity?.shortName}
-                        </span>
-                      </div>
-                    </Link>
-                  );
-                })}
-              </div>
-            </div>
-          ) : (
+          {!seeded ? (
             <div className="panel">
               <div className="panel-head">
                 <span className="panel-title">Setup required</span>
@@ -253,7 +220,7 @@ export default function EntryPage() {
                 </pre>
               </div>
             </div>
-          )}
+          ) : null}
         </div>
       </div>
 

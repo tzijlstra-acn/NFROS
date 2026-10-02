@@ -28,6 +28,7 @@ import {
   IconBuildingBank,
   IconCheck,
   IconCircleOff,
+  IconLayoutGrid,
   IconPackages,
   IconPalette,
   IconPlugConnected,
@@ -70,6 +71,7 @@ const AREA_ICONS: Record<AdminArea["icon"], typeof IconBuildingBank> = {
   integrations: IconPlugConnected,
   mappings: IconArrowsShuffle,
   "role-packs": IconPackages,
+  "role-apps": IconLayoutGrid,
   authority: IconShieldLock,
   deployment: IconServer2,
 };

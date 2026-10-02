@@ -37,7 +37,7 @@ export function SectionStub({
         style={{
           marginTop: "var(--wd-6)",
           fontSize: "var(--wd-text-sm)",
-          color: "var(--wd-text-tertiary)",
+          color: "var(--wd-text-muted)",
         }}
       >
         {pick(COPY.soon, language)}
@@ -47,7 +47,7 @@ export function SectionStub({
           display: "block",
           marginTop: "var(--wd-8)",
           fontSize: 12,
-          color: "var(--wd-text-tertiary)",
+          color: "var(--wd-text-muted)",
         }}
       >
         Synthetic institution and data

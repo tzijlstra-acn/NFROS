@@ -76,6 +76,7 @@ Then open:
 | The previous interface, for comparison | http://localhost:3000/workday/rcsa?ui=v1 |
 | Administration, organisation | http://localhost:3000/settings/organisation |
 | Administration, integrations | http://localhost:3000/settings/integrations |
+| Administration, role apps | http://localhost:3000/settings/role-apps |
 | Control room | http://localhost:3000/control-room |
 | Trust and authority | http://localhost:3000/trust |
 | Value model | http://localhost:3000/value |
@@ -91,15 +92,16 @@ read the same database, the same scenario run, the same repositories, the same
 server actions and the same authority gate; only the presentation differs.
 
 ```text
-?ui=v2    Interactive Workday V2, the default
+?ui=v3.1  Interactive Workday V3.1/V3.2, the default
+?ui=v2    Interactive Workday V2
 ?ui=v1    the previous interface
-NFR_WORKDAY_UI=v1|v2    pins a version for a deployment
+NFR_WORKDAY_UI=v1|v2|v3.1    pins a version for a deployment
 ```
 
-V2 is a compact product interface: Geist typography, a graphite palette, a 48px
-top bar, a 58px icon rail, a persistent AI Partner, a live day player with play
-and catch up, and the former intelligence rail as a contextual drawer. V1 is
-retained as a fallback for the transition and is not a supported variant.
+V3.1 is the current default: a role-native home page, an integrated process
+map, and a role app registry. V2 is a compact product interface with Geist
+typography, a graphite palette, a 48px top bar, a persistent AI Partner and a
+live day player. V1 is retained as a fallback and is not a supported variant.
 
 At 1366x768 the V2 work object has 80.5 percent of the viewport against 45.6
 percent in V1. The reasoning and the full measurements are in
@@ -120,9 +122,12 @@ The same day, the same event, six different professional questions.
 | `/workday/regulatory-change` | Regulatory Change Manager | Tobias Reinhardt | Arcadia Bank AG | Source to obligation to control lineage |
 | `/workday/nfr-governance` | NFR Portfolio Lead | Dr. Katharina Vogt | Arcadia Bank AG | One event, six lenses, one decision thread |
 
-The first four are deeply interactive. The last two have complete journeys with
-less interaction depth, and the interface says so rather than implying
-otherwise.
+**2 flagship roles** (RCSA, TPRM) have fully wired process pages, role-native
+homes, and production-shaped role apps. **4 preview roles** (control-assurance,
+incident-resilience, regulatory-change, nfr-governance) have the role home,
+the decision queue and the AI partner, with the process map and role apps in
+preview status. The interface labels each role's depth honestly rather than
+implying parity.
 
 ### The shared day
 
@@ -154,6 +159,40 @@ priorities, the specialist agent and the decision rights.
 | Core Risk Practice | Assess | Beurteilen | Function specific |
 | Human Judgment and Challenge | Decide | Entscheiden | Function specific |
 | Controlled Execution and Assurance | Execute | Umsetzen | Governed and traceable |
+
+---
+
+## Role app architecture
+
+A role app is a packaged, stage-gated process that the AI partner guides a
+named role through. It is distinct from a function pack (the licensing unit)
+and from a connector pack (the data source family).
+
+```
+Function pack    what a deployment has licensed
+  Role app       a specific process within that function
+    Run          one live instance of that process, for one subject
+```
+
+The type contracts are in `src/role-apps/contracts.ts`. The installed
+definitions are in `src/role-apps/rcsa/definition.ts` and
+`src/role-apps/tprm/definition.ts`. The full catalogue, including preview
+apps, is in `src/role-apps/registry.ts`.
+
+Two apps are installed and production-shaped:
+
+- **RCSA Cycle Assistant** (`rcsa-cycle-assistant`) at
+  `/workday/rcsa/processes/rcsa-cycle`
+- **Third-Party Onboarding** (`tprm-third-party-onboarding`) at
+  `/workday/tprm/process/tprm-third-party-onboarding`
+
+Five preview apps appear in the administrator registry view at
+`/settings/role-apps` but do not yet have routed process pages.
+
+The process route segment (`processes`) is in `V3_NATIVE_SEGMENTS` in
+`src/workday/contracts.ts`, which means all sub-routes beneath it
+(`/workday/rcsa/processes/rcsa-cycle`, etc.) resolve correctly without needing
+individual entries.
 
 ---
 
