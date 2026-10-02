@@ -60,7 +60,7 @@ export default async function WorkdayRoleLayout({
    * pages, so wrapping them here would produce two headers, and the whole
    * point of keeping them is an honest comparison.
    */
-  if (version !== "v3.1") return children;
+  if (version !== "v3.3") return children;
 
   const cookieStore = await cookies();
 

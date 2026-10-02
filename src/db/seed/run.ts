@@ -86,6 +86,7 @@ import {
   aiRoutinesData,
   meetingMinutesData,
 } from "@/db/seed/role-app-runtime";
+import { seedAuditChain } from "@/db/seed/audit-chain";
 
 import * as institution from "@/scenario/data/institution";
 import * as thirdParty from "@/scenario/data/third-party";
@@ -148,6 +149,7 @@ export interface SeedSummary {
  * yesterday's conclusions already on the record.
  */
 const RUN_SCOPED_TABLES = [
+  "background_job_attempts", "background_jobs",
   "role_app_stage_tasks", "role_app_stage_runs", "role_app_artifacts", "role_app_events",
   "role_app_runs", "action_updates", "ai_routines", "meeting_minutes",
   "execution_receipt_lines", "approvals", "tool_calls", "agent_messages", "agent_runs",
@@ -161,7 +163,7 @@ const RUN_SCOPED_TABLES = [
   "contract_obligations", "contracts", "impact_tolerances", "service_dependencies", "services",
   "subprocessors", "suppliers",
   "timeline_role_moments", "timeline_events", "roles", "users", "legal_entities",
-  "audit_events",
+  "audit_chain_records", "audit_events",
 ] as const;
 
 function clearRun(runId: string): void {
@@ -426,6 +428,10 @@ export function seedScenario(runId: string = DEFAULT_RUN_ID): SeedSummary {
   const partner = seedAiPartner(runId);
   counts["aiPartner"] = partner.rowsWritten;
   total += partner.rowsWritten;
+
+  const auditChain = seedAuditChain(runId);
+  counts["auditChainRecords"] = auditChain.recordsWritten;
+  total += auditChain.recordsWritten;
 
   return {
     rowsWritten: total,

@@ -33,6 +33,8 @@
 
 import { NextResponse, type NextRequest } from "next/server";
 import { isV3NativePath, resolveWorkdayUi } from "@/workday/contracts";
+import { verifyAndExtract } from "@/identity/session";
+import { DEMO_SESSION_COOKIE, PILOT_SESSION_COOKIE } from "@/identity/cookies";
 
 /** The request header the workday layout and the page dispatcher read. */
 export const UI_HEADER = "x-nfr-workday-ui";
@@ -40,7 +42,10 @@ export const UI_HEADER = "x-nfr-workday-ui";
 /** The cookie that remembers a reviewer's choice across navigation. */
 export const UI_COOKIE = "nfr-workday-ui";
 
-export function middleware(request: NextRequest) {
+/** The header carrying the resolved product mode for downstream layouts. */
+export const PRODUCT_MODE_HEADER = "x-product-mode";
+
+export async function middleware(request: NextRequest) {
   const fromQuery = request.nextUrl.searchParams.get("ui");
   const fromCookie = request.cookies.get(UI_COOKIE)?.value;
 
@@ -64,12 +69,35 @@ export function middleware(request: NextRequest) {
    * the bug: the layout saw V3.1 and built the V3 frame, the page found no V3
    * component and rendered the V2 shell, and the document carried both.
    */
-  const effective = version === "v3.1" && !isV3NativePath(request.nextUrl.pathname)
+  const effective = version === "v3.3" && !isV3NativePath(request.nextUrl.pathname)
     ? "v2"
     : version;
 
   const headers = new Headers(request.headers);
   headers.set(UI_HEADER, effective);
+
+  /*
+   * Session awareness: read whichever signed session cookie is present and
+   * forward the product mode as a request header so layouts can read it
+   * without querying a database or calling next/headers.
+   *
+   * Verification happens here (Edge runtime, no DB access). If the signature
+   * is valid the mode is forwarded; if absent or tampered the header is omitted
+   * and individual pages handle their own auth requirements.
+   */
+  const envMode = process.env["PRODUCT_MODE"] ?? "demonstration";
+
+  const demoCookieRaw = request.cookies.get(DEMO_SESSION_COOKIE)?.value;
+  const pilotCookieRaw = request.cookies.get(PILOT_SESSION_COOKIE)?.value;
+
+  const hasValidDemoSession = demoCookieRaw ? (await verifyAndExtract(demoCookieRaw)) !== null : false;
+  const hasValidPilotSession = pilotCookieRaw ? (await verifyAndExtract(pilotCookieRaw)) !== null : false;
+
+  if (hasValidPilotSession && envMode === "design-partner") {
+    headers.set(PRODUCT_MODE_HEADER, "design-partner");
+  } else if (hasValidDemoSession) {
+    headers.set(PRODUCT_MODE_HEADER, envMode === "offline-evaluation" ? "offline-evaluation" : "demonstration");
+  }
 
   const response = NextResponse.next({ request: { headers } });
 

@@ -27,7 +27,7 @@ import type { ConnectorMode, FreshnessState } from "@/db/schema/integration";
    Feature flag
    ========================================================================== */
 
-export const WORKDAY_UI_VERSIONS = ["v1", "v2", "v3.1"] as const;
+export const WORKDAY_UI_VERSIONS = ["v1", "v2", "v3.3"] as const;
 
 /**
  * The route segments that have a V3.1 implementation of their own.
@@ -75,7 +75,7 @@ export type WorkdayUiVersion = (typeof WORKDAY_UI_VERSIONS)[number];
  * this constant is the single switch for that decision rather than a change
  * spread across the route files.
  */
-export const DEFAULT_WORKDAY_UI: WorkdayUiVersion = "v3.1";
+export const DEFAULT_WORKDAY_UI: WorkdayUiVersion = "v3.3";
 
 /**
  * The version a reviewer means by "the current one".
@@ -84,14 +84,15 @@ export const DEFAULT_WORKDAY_UI: WorkdayUiVersion = "v3.1";
  * the word "current" moves, and an alias moves with it; a literal would have
  * to be found and changed everywhere it was written down.
  */
-export const CURRENT_WORKDAY_UI: WorkdayUiVersion = "v3.1";
+export const CURRENT_WORKDAY_UI: WorkdayUiVersion = "v3.3";
 
 /** Aliases accepted in the query string, resolved before validation. */
 const UI_ALIASES: Record<string, WorkdayUiVersion> = {
   current: CURRENT_WORKDAY_UI,
-  v3: "v3.1",
-  "v3.1": "v3.1",
-  latest: "v3.1",
+  v3: "v3.3",
+  "v3.1": "v3.3",
+  "v3.3": "v3.3",
+  latest: "v3.3",
 };
 
 export function isWorkdayUiVersion(value: unknown): value is WorkdayUiVersion {

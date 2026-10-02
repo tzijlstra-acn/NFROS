@@ -1,0 +1,42 @@
+name: Release Candidate
+
+on:
+  push:
+    tags:
+      - "v[0-9]+.[0-9]+.[0-9]+"
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: "npm"
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Quality gate
+        run: |
+          npm run typecheck
+          npm run lint
+          npm run check:copy
+          npm run scan:secrets
+          npm run test:unit
+          npm run test:integration
+
+      - name: Build
+        run: npm run build
+        env:
+          NEXT_TELEMETRY_DISABLED: 1
+
+      - name: Structural evaluations
+        run: npm run eval:structural
+        continue-on-error: true
+
+      - name: Create release package
+        run: npm run release:package

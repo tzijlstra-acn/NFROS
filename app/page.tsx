@@ -96,6 +96,11 @@ export default function EntryPage() {
             <Link href="/workday" className="btn btn-lg">
               Enter the interactive day
             </Link>
+            {process.env["PRODUCT_MODE"] === "design-partner" ? (
+              <Link href="/pilot" className="btn btn-lg">
+                Design partner workspace
+              </Link>
+            ) : null}
           </div>
 
           <p

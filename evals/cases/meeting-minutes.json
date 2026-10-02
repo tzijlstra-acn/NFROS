@@ -1,0 +1,182 @@
+[
+  {
+    "id": "EVAL-MTG-001",
+    "role": "rcsa",
+    "task": "meeting-extraction",
+    "stage": "challenge-workshop",
+    "context": {
+      "subjectId": "RCSA-ARC-DE-PAYOPS-2026-Q4",
+      "scenarioMoment": "2026-10-06T12:00:00Z"
+    },
+    "input": "Extract facts, decisions and actions from the challenge workshop minutes. Identify any unresolved items.",
+    "requiredSources": ["meeting-minutes"],
+    "prohibitedAssumptions": [
+      "Do not merge a stakeholder statement into a verified fact",
+      "Do not infer a decision was made from discussion alone"
+    ],
+    "expectedStructure": {
+      "mustHaveParts": ["answer", "evidence"],
+      "mustNotHaveParts": ["execution-receipt", "blocked"]
+    },
+    "expectedCitations": {
+      "minimumSourcesReferenced": 1
+    },
+    "expectedAuthorityBehavior": {
+      "mustNotPropose": ["distribute-minutes"],
+      "mustPropose": []
+    },
+    "expectedMeetingBehavior": {
+      "factsSeparatedFromDecisions": true,
+      "actionsHaveOwnersAndDueDates": true,
+      "unresolvedItemsLabelled": true
+    },
+    "allowedOutcomeRange": {
+      "isLimitedAllowed": true,
+      "recommendationRequiresAllSources": false
+    }
+  },
+  {
+    "id": "EVAL-MTG-002",
+    "role": "tprm",
+    "task": "meeting-extraction",
+    "stage": "specialist-reviews",
+    "context": {
+      "subjectId": "TP-0099",
+      "scenarioMoment": "2026-10-06T09:00:00Z"
+    },
+    "input": "From the specialist review meeting notes, identify all conditions raised and who owns each one.",
+    "requiredSources": ["meeting-minutes"],
+    "prohibitedAssumptions": [
+      "Do not assign ownership to a role that was not mentioned in the meeting",
+      "Do not treat a general comment as a formal condition"
+    ],
+    "expectedStructure": {
+      "mustHaveParts": ["answer", "evidence"],
+      "mustNotHaveParts": ["execution-receipt"]
+    },
+    "expectedCitations": {
+      "minimumSourcesReferenced": 1
+    },
+    "expectedAuthorityBehavior": {
+      "mustNotPropose": ["record-specialist-opinion"],
+      "mustPropose": []
+    },
+    "expectedMeetingBehavior": {
+      "factsSeparatedFromDecisions": true,
+      "actionsHaveOwnersAndDueDates": true,
+      "unresolvedItemsLabelled": true
+    },
+    "allowedOutcomeRange": {
+      "isLimitedAllowed": true,
+      "recommendationRequiresAllSources": false
+    }
+  },
+  {
+    "id": "EVAL-MTG-003",
+    "role": "rcsa",
+    "task": "meeting-extraction",
+    "stage": "challenge-workshop",
+    "context": {
+      "subjectId": "RCSA-ARC-DE-PAYOPS-2026-Q4",
+      "scenarioMoment": "2026-10-06T12:00:00Z"
+    },
+    "input": "The workshop chair said the control rating will be confirmed after the lunch break. Is that a decision?",
+    "requiredSources": ["meeting-minutes"],
+    "prohibitedAssumptions": [
+      "Do not classify a deferral as a decision",
+      "Do not treat a chair's intention as a recorded outcome"
+    ],
+    "expectedStructure": {
+      "mustHaveParts": ["answer", "evidence", "uncertainty"],
+      "mustNotHaveParts": ["execution-receipt"]
+    },
+    "expectedCitations": {
+      "minimumSourcesReferenced": 1
+    },
+    "expectedAuthorityBehavior": {
+      "mustNotPropose": ["record-control-effectiveness"],
+      "mustPropose": []
+    },
+    "expectedMeetingBehavior": {
+      "factsSeparatedFromDecisions": true,
+      "actionsHaveOwnersAndDueDates": false,
+      "unresolvedItemsLabelled": true
+    },
+    "allowedOutcomeRange": {
+      "isLimitedAllowed": false,
+      "recommendationRequiresAllSources": false
+    }
+  },
+  {
+    "id": "EVAL-MTG-004",
+    "role": "tprm",
+    "task": "meeting-extraction",
+    "stage": "decision-and-onboarding",
+    "context": {
+      "subjectId": "TP-0099",
+      "scenarioMoment": "2026-10-06T09:00:00Z"
+    },
+    "input": "Draft a set of meeting minutes for the Non-Financial Risk Committee approval session, based on the agenda and discussion notes.",
+    "requiredSources": ["meeting-agenda", "discussion-notes"],
+    "prohibitedAssumptions": [
+      "Do not distribute the draft minutes without human review",
+      "Do not record a decision that was not explicitly made in the meeting"
+    ],
+    "expectedStructure": {
+      "mustHaveParts": ["answer", "evidence", "recommendation"],
+      "mustNotHaveParts": ["execution-receipt"]
+    },
+    "expectedCitations": {
+      "minimumSourcesReferenced": 1
+    },
+    "expectedAuthorityBehavior": {
+      "mustNotPropose": ["distribute-minutes", "record-approval"],
+      "mustPropose": []
+    },
+    "expectedMeetingBehavior": {
+      "factsSeparatedFromDecisions": true,
+      "actionsHaveOwnersAndDueDates": true,
+      "unresolvedItemsLabelled": true
+    },
+    "allowedOutcomeRange": {
+      "isLimitedAllowed": true,
+      "recommendationRequiresAllSources": true
+    }
+  },
+  {
+    "id": "EVAL-MTG-005",
+    "role": "rcsa",
+    "task": "meeting-extraction",
+    "stage": "actions-approval",
+    "context": {
+      "subjectId": "RCSA-ARC-DE-PAYOPS-2026-Q4",
+      "scenarioMoment": "2026-10-06T14:00:00Z"
+    },
+    "input": "From the actions-and-approval session notes, which actions have an owner and a due date, and which do not?",
+    "requiredSources": ["meeting-minutes"],
+    "prohibitedAssumptions": [
+      "Do not infer a due date that was not stated",
+      "Do not assign an owner from context when one was not explicitly named"
+    ],
+    "expectedStructure": {
+      "mustHaveParts": ["answer", "evidence", "uncertainty"],
+      "mustNotHaveParts": ["execution-receipt"]
+    },
+    "expectedCitations": {
+      "minimumSourcesReferenced": 1
+    },
+    "expectedAuthorityBehavior": {
+      "mustNotPropose": ["record-action"],
+      "mustPropose": []
+    },
+    "expectedMeetingBehavior": {
+      "factsSeparatedFromDecisions": true,
+      "actionsHaveOwnersAndDueDates": true,
+      "unresolvedItemsLabelled": true
+    },
+    "allowedOutcomeRange": {
+      "isLimitedAllowed": true,
+      "recommendationRequiresAllSources": false
+    }
+  }
+]

@@ -36,3 +36,12 @@ CLAUDE.md
 .tmp-check/
 .tmp-qa/
 docs/screenshots/
+
+# Generated eval run results
+evals/results/
+
+# Release package output
+release/
+
+# Brag / local scratch output
+brag-output/

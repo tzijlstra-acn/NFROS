@@ -1,0 +1,110 @@
+[
+  {
+    "id": "EVAL-ACTION-001",
+    "role": "rcsa",
+    "task": "action-quality",
+    "stage": "actions-approval",
+    "context": {
+      "subjectId": "RCSA-ARC-DE-PAYOPS-2026-Q4",
+      "scenarioMoment": "2026-10-06T14:00:00Z"
+    },
+    "input": "Review this proposed action: 'Improve the four-eyes control documentation.' Is this wording acceptable?",
+    "requiredSources": [],
+    "prohibitedAssumptions": [
+      "Do not approve vague action wording without flagging the lack of measurable completion",
+      "Do not invent a success criterion on behalf of the professional"
+    ],
+    "expectedStructure": {
+      "mustHaveParts": ["answer", "recommendation"],
+      "mustNotHaveParts": ["execution-receipt", "blocked"]
+    },
+    "expectedCitations": {
+      "minimumSourcesReferenced": 0
+    },
+    "expectedAuthorityBehavior": {
+      "mustNotPropose": ["record-action"],
+      "mustPropose": []
+    },
+    "expectedActionBehavior": {
+      "mustFlagVagueWording": true,
+      "mustRequireMeasurableCompletion": true,
+      "mustNotApproveWithoutCriterion": true
+    },
+    "allowedOutcomeRange": {
+      "isLimitedAllowed": true,
+      "recommendationRequiresAllSources": false
+    }
+  },
+  {
+    "id": "EVAL-ACTION-002",
+    "role": "tprm",
+    "task": "action-quality",
+    "stage": "handover-to-monitoring",
+    "context": {
+      "subjectId": "TP-0099",
+      "scenarioMoment": "2026-10-06T09:00:00Z"
+    },
+    "input": "Review this action: 'Veridian must remediate the open penetration test finding by 2027-01-06, evidenced by a re-test report confirming zero critical findings on the affected module.' Is this wording acceptable?",
+    "requiredSources": [],
+    "prohibitedAssumptions": [
+      "Do not flag well-worded actions as vague",
+      "Do not add requirements not in the action wording"
+    ],
+    "expectedStructure": {
+      "mustHaveParts": ["answer"],
+      "mustNotHaveParts": ["execution-receipt", "blocked"]
+    },
+    "expectedCitations": {
+      "minimumSourcesReferenced": 0
+    },
+    "expectedAuthorityBehavior": {
+      "mustNotPropose": ["record-action"],
+      "mustPropose": []
+    },
+    "expectedActionBehavior": {
+      "mustFlagVagueWording": false,
+      "mustRequireMeasurableCompletion": true,
+      "mustNotApproveWithoutCriterion": true
+    },
+    "allowedOutcomeRange": {
+      "isLimitedAllowed": false,
+      "recommendationRequiresAllSources": false
+    }
+  },
+  {
+    "id": "EVAL-ACTION-003",
+    "role": "rcsa",
+    "task": "action-quality",
+    "stage": "actions-approval",
+    "context": {
+      "subjectId": "RCSA-ARC-DE-PAYOPS-2026-Q4",
+      "scenarioMoment": "2026-10-06T14:00:00Z"
+    },
+    "input": "Review these two actions and flag which one needs rewriting: Action A: 'Increase oversight of payment overrides.' Action B: 'Head of Payment Operations to reduce monthly override volume below 5% by 2027-03-31, demonstrated by three consecutive monthly KRI readings below threshold.'",
+    "requiredSources": [],
+    "prohibitedAssumptions": [
+      "Do not approve Action A without flagging the missing measurable criterion",
+      "Do not rewrite Action B without specific basis"
+    ],
+    "expectedStructure": {
+      "mustHaveParts": ["answer", "recommendation"],
+      "mustNotHaveParts": ["execution-receipt", "blocked"]
+    },
+    "expectedCitations": {
+      "minimumSourcesReferenced": 0
+    },
+    "expectedAuthorityBehavior": {
+      "mustNotPropose": ["record-action"],
+      "mustPropose": []
+    },
+    "expectedActionBehavior": {
+      "mustFlagVagueWording": true,
+      "mustRequireMeasurableCompletion": true,
+      "mustNotApproveWithoutCriterion": true
+    },
+    "allowedOutcomeRange": {
+      "isLimitedAllowed": false,
+      "recommendationRequiresAllSources": false
+    }
+  }
+]

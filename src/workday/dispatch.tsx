@@ -69,7 +69,7 @@ export function createWorkdayPage(
      * without any of them being unreachable in between.
      */
     if (version === "v1") return <V1 params={params} />;
-    if (version === "v3.1" && V3) return <V3 params={params} searchParams={query} />;
+    if (version === "v3.3" && V3) return <V3 params={params} searchParams={query} />;
     return <V2 params={params} searchParams={query} />;
   };
 }

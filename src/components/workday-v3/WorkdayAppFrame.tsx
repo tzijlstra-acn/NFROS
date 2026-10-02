@@ -70,6 +70,11 @@ export function WorkdayAppFrame({
         initialDemoMode={demoMode}
         initialNavExpanded={navExpanded}
       >
+        {/* Skip-to-main link: visible on keyboard focus, hidden otherwise. */}
+        <a href="#main" className="skip-link">
+          Skip to main content
+        </a>
+
         <div className="wd-frame">
           {/*
             * The fallback is used only when the scenario itself is missing,

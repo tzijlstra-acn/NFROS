@@ -32,8 +32,10 @@ import {
   IconPackages,
   IconPalette,
   IconPlugConnected,
+  IconRocket,
   IconServer2,
   IconShieldLock,
+  IconSparkles,
 } from "@tabler/icons-react";
 import { Chip, Data, RegulatoryNote, SectionHead } from "@/components/workday-v2/primitives";
 import type { AdminArea } from "@/product";
@@ -74,6 +76,8 @@ const AREA_ICONS: Record<AdminArea["icon"], typeof IconBuildingBank> = {
   "role-apps": IconLayoutGrid,
   authority: IconShieldLock,
   deployment: IconServer2,
+  "ai-quality": IconSparkles,
+  pilot: IconRocket,
 };
 
 export function SettingsNav({

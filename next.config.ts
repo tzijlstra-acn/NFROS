@@ -2,6 +2,10 @@ import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
   reactStrictMode: true,
+  // Standalone output is required for the multi-stage Dockerfile runner stage.
+  // It copies only the minimal server files into .next/standalone so the
+  // container image does not need node_modules at runtime.
+  output: "standalone",
   /*
    * Redirects for deprecated flagship-role routes.
    *

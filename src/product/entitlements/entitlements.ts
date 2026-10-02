@@ -90,7 +90,9 @@ export interface AdminArea {
     | "role-packs"
     | "role-apps"
     | "authority"
-    | "deployment";
+    | "deployment"
+    | "ai-quality"
+    | "pilot";
   label: { en: string; de: string };
   /**
    * The capability that governs the area, or null for the role packs screen.
@@ -150,6 +152,18 @@ export const SETTINGS_AREAS: readonly AdminArea[] = [
     icon: "deployment",
     label: { en: "Deployment", de: "Betrieb" },
     adminFeature: "deployment-settings",
+  },
+  {
+    href: "/settings/ai-quality",
+    icon: "ai-quality",
+    label: { en: "AI quality", de: "KI-Qualitat" },
+    adminFeature: null,
+  },
+  {
+    href: "/settings/pilot",
+    icon: "pilot",
+    label: { en: "Pilot readiness", de: "Pilot-Bereitschaft" },
+    adminFeature: null,
   },
 ];
 
