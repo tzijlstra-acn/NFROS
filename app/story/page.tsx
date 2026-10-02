@@ -25,6 +25,7 @@
 
 import type { Metadata } from "next";
 import Link from "next/link";
+import { Suspense } from "react";
 import {
   STORY_CHAPTERS,
   STORY_SCENES,
@@ -36,7 +37,12 @@ import { StoryDeck } from "@/components/presentation/StoryDeck";
 import { PresentationV21 } from "@/presentation-v2-1/components/PresentationV21";
 import { PresentationV22 } from "@/presentation-v2-2/components/PresentationV22";
 import { PresentationV23 } from "@/presentation-v2-3/components/PresentationV23";
+import { PresentationV24 } from "@/presentation-v2-4/components/PresentationV24";
 import "@/styles/presentation.css";
+
+const SLIDE_LOADING_FALLBACK = (
+  <div style={{ background: "#F5F6F8", width: "100%", height: "100vh" }} />
+);
 
 export const dynamic = "force-dynamic";
 
@@ -79,6 +85,19 @@ export default async function StoryPage({
   //   ?deck=legacy, ?deck=v1, ?deck=v2      -> original 16-scene StoryDeck
   const deckVersion = firstValue(params, "deck") ?? "current";
 
+  if (deckVersion === "v2.4") {
+    const coreParam = firstValue(params, "core") ?? "1";
+    const initialCoreSlide = Math.max(1, Math.floor(Number(coreParam)));
+    return (
+      <Suspense fallback={SLIDE_LOADING_FALLBACK}>
+        <PresentationV24
+          initialCoreSlide={initialCoreSlide}
+          exportMode={exportMode}
+        />
+      </Suspense>
+    );
+  }
+
   if (deckVersion === "v2.3" || deckVersion === "current") {
     // V2.3 URL scheme: core=N (1-based), appendix=app-XX, from=slide-XX
     // Backward compat: slide=N still works (used by export scripts)
@@ -87,12 +106,14 @@ export default async function StoryPage({
     const initialAppendixId = firstValue(params, "appendix") ?? null;
     const initialFrom = firstValue(params, "from") ?? null;
     return (
-      <PresentationV23
-        initialCoreSlide={initialCoreSlide}
-        initialAppendixId={initialAppendixId}
-        initialFrom={initialFrom}
-        exportMode={exportMode}
-      />
+      <Suspense fallback={SLIDE_LOADING_FALLBACK}>
+        <PresentationV23
+          initialCoreSlide={initialCoreSlide}
+          initialAppendixId={initialAppendixId}
+          initialFrom={initialFrom}
+          exportMode={exportMode}
+        />
+      </Suspense>
     );
   }
 
@@ -103,12 +124,14 @@ export default async function StoryPage({
     const initialAppendixId = firstValue(params, "appendix") ?? null;
     const initialFrom = firstValue(params, "from") ?? null;
     return (
-      <PresentationV22
-        initialCoreSlide={initialCoreSlide}
-        initialAppendixId={initialAppendixId}
-        initialFrom={initialFrom}
-        exportMode={exportMode}
-      />
+      <Suspense fallback={SLIDE_LOADING_FALLBACK}>
+        <PresentationV22
+          initialCoreSlide={initialCoreSlide}
+          initialAppendixId={initialAppendixId}
+          initialFrom={initialFrom}
+          exportMode={exportMode}
+        />
+      </Suspense>
     );
   }
 
@@ -117,7 +140,11 @@ export default async function StoryPage({
       1,
       Math.floor(Number(firstValue(params, "slide") ?? "1"))
     );
-    return <PresentationV21 initialSlide={initialSlide} exportMode={exportMode} />;
+    return (
+      <Suspense fallback={SLIDE_LOADING_FALLBACK}>
+        <PresentationV21 initialSlide={initialSlide} exportMode={exportMode} />
+      </Suspense>
+    );
   }
 
   // Export mode implies presenter safe mode. A capture of a scene that is

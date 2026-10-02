@@ -1,76 +1,68 @@
-﻿"use client";
+"use client";
 
 import { motion, useReducedMotion } from "motion/react";
 import { CoreSlide23 } from "../../data/types";
-import {
-  PresentationStatement,
-  PresentationLabel,
-  PresentationMeta,
-} from "../../typography";
+import { PresentationStatement, PresentationLabel, PresentationMeta } from "../../typography";
 
 type Props = {
   slide: CoreSlide23;
   exportMode?: boolean;
 };
 
-// Signal line definitions: each has start/end in viewBox coords (0 0 960 540)
-const SIGNAL_LINES = [
-  { id: "top",    x1: 60,  y1: 80,  x2: 480, y2: 270 },
-  { id: "mid",    x1: 20,  y1: 270, x2: 480, y2: 270 },
-  { id: "bot",    x1: 60,  y1: 460, x2: 480, y2: 270 },
+const VW = 1920;
+const VH = 1080;
+
+// Three signal streams converge from the left edge to the focal card at center-left
+const STREAMS = [
+  { id: "top", x1: 0, y1: 160, x2: 800, y2: 540 },
+  { id: "mid", x1: 0, y1: 540, x2: 800, y2: 540 },
+  { id: "bot", x1: 0, y1: 920, x2: 800, y2: 540 },
 ] as const;
 
-// Packet positions along each line (0=start, 1=end), last one is purple
-const PACKET_OFFSETS = [0.2, 0.45, 0.70, 1.0] as const;
+// Packet phases along each stream — 3 packets per stream at different offsets
+const PACKET_PHASES = [0.15, 0.45, 0.75] as const;
+
+function streamLength(s: (typeof STREAMS)[number]) {
+  return Math.hypot(s.x2 - s.x1, s.y2 - s.y1);
+}
 
 function lerp(a: number, b: number, t: number) {
   return a + (b - a) * t;
 }
 
-function PacketDot({
-  x1,
-  y1,
-  x2,
-  y2,
-  t,
-  purple,
-  exportMode,
-  delay,
+function Packet({
+  stream,
+  phase,
+  streamIdx,
+  phaseIdx,
+  skip,
 }: {
-  x1: number;
-  y1: number;
-  x2: number;
-  y2: number;
-  t: number;
-  purple: boolean;
-  exportMode: boolean;
-  delay: number;
+  stream: (typeof STREAMS)[number];
+  phase: number;
+  streamIdx: number;
+  phaseIdx: number;
+  skip: boolean;
 }) {
-  const cx = lerp(x1, x2, t);
-  const cy = lerp(y1, y2, t);
+  const cx = lerp(stream.x1, stream.x2, phase);
+  const cy = lerp(stream.y1, stream.y2, phase);
+  const isPurple = phaseIdx === PACKET_PHASES.length - 1;
+  const fill = isPurple ? "var(--pv23-brand-purple)" : "var(--pv23-border-strong)";
+  const size = isPurple ? 12 : 8;
 
-  if (exportMode) {
-    return (
-      <rect
-        x={cx - 4}
-        y={cy - 4}
-        width={8}
-        height={8}
-        fill={purple ? "var(--pv23-brand-purple)" : "var(--pv23-border-strong)"}
-      />
-    );
+  if (skip) {
+    return <rect x={cx - size / 2} y={cy - size / 2} width={size} height={size} fill={fill} opacity={isPurple ? 1 : 0.5} />;
   }
 
   return (
     <motion.rect
-      x={cx - 4}
-      y={cy - 4}
-      width={8}
-      height={8}
-      fill={purple ? "var(--pv23-brand-purple)" : "var(--pv23-border-strong)"}
+      x={cx - size / 2}
+      y={cy - size / 2}
+      width={size}
+      height={size}
+      fill={fill}
       initial={{ opacity: 0 }}
-      animate={{ opacity: 1 }}
-      transition={{ duration: 0.3, delay }}
+      animate={{ opacity: isPurple ? 1 : 0.6 }}
+      transition={{ duration: 0.3, delay: 0.2 + streamIdx * 0.15 + phaseIdx * 0.1 }}
     />
   );
 }
@@ -85,144 +77,139 @@ export function HeroSignalSlide({ slide, exportMode = false }: Props) {
     "Every material decision remains yours.",
   ];
 
+  const cardX = 720;
+  const cardY = 410;
+  const cardW = 340;
+  const cardH = 260;
+
   return (
     <div
       style={{
         position: "absolute",
         inset: 0,
         background: "var(--pv23-canvas)",
-        display: "flex",
-        alignItems: "center",
-        justifyContent: "center",
         overflow: "hidden",
       }}
     >
-      {/* SVG signal streams -- left 50% */}
-      <div style={{ position: "absolute", inset: 0, pointerEvents: "none" }}>
-        <svg
-          viewBox="0 0 960 540"
-          width="50%"
-          height="100%"
-          style={{ position: "absolute", left: 0, top: 0 }}
-          aria-hidden="true"
-        >
-          {/* Lines */}
-          {SIGNAL_LINES.map((ln) => (
-            <line
-              key={ln.id}
-              x1={ln.x1}
-              y1={ln.y1}
-              x2={ln.x2}
-              y2={ln.y2}
-              stroke="var(--pv23-border-strong)"
-              strokeWidth={1}
-            />
-          ))}
-
-          {/* Packets */}
-          {SIGNAL_LINES.map((ln, li) =>
-            PACKET_OFFSETS.map((t, pi) => (
-              <PacketDot
-                key={`${ln.id}-${pi}`}
-                x1={ln.x1}
-                y1={ln.y1}
-                x2={ln.x2}
-                y2={ln.y2}
-                t={t}
-                purple={pi === PACKET_OFFSETS.length - 1}
-                exportMode={skipAnim}
-                delay={li * 0.15 + pi * 0.1}
-              />
-            ))
-          )}
-
-          {/* "Now" card in centre (around 480,270) */}
-          <rect
-            x={390}
-            y={210}
-            width={180}
-            height={120}
-            fill="var(--pv23-surface)"
-            stroke="var(--pv23-border)"
-            strokeWidth={1}
-          />
-          {/* Purple top border on card */}
-          <rect
-            x={390}
-            y={210}
-            width={180}
-            height={3}
-            fill="var(--pv23-brand-purple)"
-          />
-          {/* "Now" label text */}
-          <text
-            x={480}
-            y={236}
-            textAnchor="middle"
-            fill="var(--pv23-brand-purple)"
-            fontFamily="Arial, sans-serif"
-            fontSize={11}
-            fontWeight={700}
-            letterSpacing="0.06em"
-          >
-            NOW
-          </text>
-          {/* Work item text */}
-          <text
-            x={400}
-            y={260}
-            fill="var(--pv23-neutral-mid)"
-            fontFamily="Arial, sans-serif"
-            fontSize={9}
-          >
-            Quarterly RCSA review
-          </text>
-          <text
-            x={400}
-            y={274}
-            fill="var(--pv23-neutral-mid)"
-            fontFamily="Arial, sans-serif"
-            fontSize={9}
-          >
-            ready for input
-          </text>
-        </svg>
-      </div>
-
-      {/* Now card overlay -- centred between SVG and text */}
-      <div
-        style={{
-          position: "absolute",
-          left: "46%",
-          top: "50%",
-          transform: "translate(-50%, -50%)",
-          width: 180,
-          background: "var(--pv23-surface)",
-          border: "1px solid var(--pv23-border)",
-          borderRadius: 0,
-          overflow: "hidden",
-        }}
+      {/* Full-canvas SVG signal diagram */}
+      <svg
+        viewBox={`0 0 ${VW} ${VH}`}
+        width="100%"
+        height="100%"
+        style={{ position: "absolute", inset: 0 }}
+        aria-hidden="true"
       >
-        <div style={{ height: 3, background: "var(--pv23-brand-purple)" }} />
-        <div style={{ padding: "12px 14px", display: "flex", flexDirection: "column", gap: 6 }}>
-          <PresentationLabel color="var(--pv23-brand-purple)">Now</PresentationLabel>
-          <PresentationMeta color="var(--pv23-neutral-mid)">
-            Quarterly RCSA review ready for input
-          </PresentationMeta>
-        </div>
-      </div>
+        {/* Stream lines */}
+        {STREAMS.map((s, si) => {
+          const len = streamLength(s);
+          if (skipAnim) {
+            return (
+              <line
+                key={s.id}
+                x1={s.x1} y1={s.y1} x2={s.x2} y2={s.y2}
+                stroke="var(--pv23-border-strong)"
+                strokeWidth={si === 1 ? 3 : 2}
+              />
+            );
+          }
+          return (
+            <motion.line
+              key={s.id}
+              x1={s.x1} y1={s.y1} x2={s.x2} y2={s.y2}
+              stroke="var(--pv23-border-strong)"
+              strokeWidth={si === 1 ? 3 : 2}
+              strokeDasharray={len}
+              strokeDashoffset={len}
+              animate={{ strokeDashoffset: 0 }}
+              transition={{ duration: 0.7, ease: [0.4, 0, 0.2, 1], delay: 0.1 + si * 0.08 }}
+            />
+          );
+        })}
 
-      {/* Right side text */}
+        {/* Travelling packets */}
+        {STREAMS.map((s, si) =>
+          PACKET_PHASES.map((phase, pi) => (
+            <Packet key={`${s.id}-${pi}`} stream={s} phase={phase} streamIdx={si} phaseIdx={pi} skip={skipAnim} />
+          ))
+        )}
+
+        {/* Focal card — white surface with purple top bar */}
+        <rect x={cardX} y={cardY} width={cardW} height={cardH} fill="var(--pv23-surface)" />
+        <rect x={cardX} y={cardY} width={cardW} height={6} fill="var(--pv23-brand-purple)" />
+
+        {/* Purple connector line: card → right text area */}
+        <line
+          x1={cardX + cardW}
+          y1={cardY + cardH / 2}
+          x2={1100}
+          y2={VH / 2}
+          stroke="var(--pv23-brand-purple)"
+          strokeWidth={2}
+          opacity={0.3}
+        />
+      </svg>
+
+      {/* Card HTML content — layered over the SVG card rect */}
+      {skipAnim ? (
+        <div
+          style={{
+            position: "absolute",
+            left: `${(cardX / VW) * 100}%`,
+            top: `${(cardY / VH) * 100}%`,
+            width: `${(cardW / VW) * 100}%`,
+            height: `${(cardH / VH) * 100}%`,
+            padding: "28px 32px",
+            display: "flex",
+            flexDirection: "column",
+            gap: 16,
+            justifyContent: "center",
+          }}
+        >
+          <PresentationLabel color="var(--pv23-brand-purple)">NOW</PresentationLabel>
+          <PresentationMeta color="var(--pv23-neutral-mid)">Quarterly RCSA review</PresentationMeta>
+          <PresentationMeta color="var(--pv23-neutral-mid)">ready for your input</PresentationMeta>
+          <div style={{ borderTop: "1px solid var(--pv23-border)", paddingTop: 12, marginTop: 4 }}>
+            <PresentationMeta color="var(--pv23-text-secondary)">2 supporting documents attached</PresentationMeta>
+          </div>
+        </div>
+      ) : (
+        <motion.div
+          style={{
+            position: "absolute",
+            left: `${(cardX / VW) * 100}%`,
+            top: `${(cardY / VH) * 100}%`,
+            width: `${(cardW / VW) * 100}%`,
+            height: `${(cardH / VH) * 100}%`,
+            padding: "28px 32px",
+            display: "flex",
+            flexDirection: "column",
+            gap: 16,
+            justifyContent: "center",
+          }}
+          initial={{ opacity: 0, scale: 0.96 }}
+          animate={{ opacity: 1, scale: 1 }}
+          transition={{ duration: 0.4, ease: [0, 0, 0.2, 1], delay: 0.6 }}
+        >
+          <PresentationLabel color="var(--pv23-brand-purple)">NOW</PresentationLabel>
+          <PresentationMeta color="var(--pv23-neutral-mid)">Quarterly RCSA review</PresentationMeta>
+          <PresentationMeta color="var(--pv23-neutral-mid)">ready for your input</PresentationMeta>
+          <div style={{ borderTop: "1px solid var(--pv23-border)", paddingTop: 12, marginTop: 4 }}>
+            <PresentationMeta color="var(--pv23-text-secondary)">2 supporting documents attached</PresentationMeta>
+          </div>
+        </motion.div>
+      )}
+
+      {/* Right-side statement lines */}
       <div
         style={{
           position: "absolute",
-          right: "var(--pv23-20)",
+          right: "6%",
           top: "50%",
           transform: "translateY(-50%)",
-          width: "40%",
+          width: "36%",
           display: "flex",
           flexDirection: "column",
-          gap: "var(--pv23-8)",
+          gap: 40,
         }}
       >
         {lines.map((line, i) =>
@@ -233,9 +220,9 @@ export function HeroSignalSlide({ slide, exportMode = false }: Props) {
           ) : (
             <motion.div
               key={i}
-              initial={{ opacity: 0, y: 24 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.5, ease: [0, 0, 0.2, 1], delay: 0.3 + i * 0.35 }}
+              initial={{ opacity: 0, x: 32 }}
+              animate={{ opacity: 1, x: 0 }}
+              transition={{ duration: 0.55, ease: [0, 0, 0.2, 1], delay: 0.9 + i * 0.35 }}
             >
               <PresentationStatement color="var(--pv23-text)">{line}</PresentationStatement>
             </motion.div>

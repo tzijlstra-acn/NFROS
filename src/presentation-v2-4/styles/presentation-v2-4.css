@@ -1,0 +1,232 @@
+/*
+ * NFROS Presentation V2.4 slide stylesheet.
+ * Self-contained. Do not import V2.2 or V2.3 stylesheets.
+ * No Tailwind utility classes.
+ * No double-hyphen or em dash in any string value.
+ */
+
+@import "./tokens.css";
+
+/* ---------------------------------------------------------------------------
+ * Deck container
+ * ------------------------------------------------------------------------ */
+
+.pv24-deck {
+  width: 100vw;
+  height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  background-color: var(--pv24-canvas);
+  font-family: var(--pv24-font-family);
+  color: var(--pv24-text);
+}
+
+/* ---------------------------------------------------------------------------
+ * Slide canvas (1920 x 1080)
+ * ------------------------------------------------------------------------ */
+
+.pv24-slide {
+  position: absolute;
+  width: var(--pv24-slide-w);
+  height: var(--pv24-slide-h);
+  transform-origin: top left;
+  background-color: var(--pv24-surface);
+  overflow: hidden;
+}
+
+/* ---------------------------------------------------------------------------
+ * Slide header
+ * ------------------------------------------------------------------------ */
+
+.pv24-slide-header {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  padding: var(--pv24-12) var(--pv24-16) var(--pv24-8) var(--pv24-16);
+  display: flex;
+  flex-direction: column;
+  gap: var(--pv24-3);
+  background-color: var(--pv24-surface);
+  z-index: 2;
+}
+
+/* ---------------------------------------------------------------------------
+ * Section label
+ * ------------------------------------------------------------------------ */
+
+.pv24-section-label {
+  font-family: var(--pv24-font-mono);
+  font-size: var(--pv24-section-label-size);
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+  color: var(--pv24-accent);
+  line-height: 1.2;
+}
+
+/* ---------------------------------------------------------------------------
+ * Title
+ * ------------------------------------------------------------------------ */
+
+.pv24-title {
+  font-size: var(--pv24-title-size);
+  font-weight: 600;
+  line-height: 1.08;
+  letter-spacing: -0.02em;
+  color: var(--pv24-text);
+  text-wrap: balance;
+  margin: 0;
+}
+
+/* ---------------------------------------------------------------------------
+ * Subtitle
+ * ------------------------------------------------------------------------ */
+
+.pv24-subtitle {
+  font-size: var(--pv24-subtitle-size);
+  font-weight: 400;
+  line-height: 1.3;
+  color: var(--pv24-text-secondary);
+  text-wrap: balance;
+  margin: 0;
+}
+
+/* ---------------------------------------------------------------------------
+ * Exhibit area
+ * ------------------------------------------------------------------------ */
+
+.pv24-exhibit-area {
+  position: absolute;
+  top: 240px;
+  left: 0;
+  right: 0;
+  bottom: 60px;
+  overflow: hidden;
+}
+
+.pv24-exhibit {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+}
+
+/* ---------------------------------------------------------------------------
+ * Source note (bottom-left)
+ * ------------------------------------------------------------------------ */
+
+.pv24-source-note {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 240px;
+  height: 60px;
+  display: flex;
+  align-items: center;
+  padding: 0 var(--pv24-16);
+  font-family: var(--pv24-font-mono);
+  font-size: var(--pv24-source-note-size);
+  color: var(--pv24-text-secondary);
+  line-height: 1.4;
+  margin: 0;
+}
+
+/* ---------------------------------------------------------------------------
+ * Slide number (bottom-right)
+ * ------------------------------------------------------------------------ */
+
+.pv24-slide-number {
+  position: absolute;
+  bottom: 0;
+  right: 0;
+  width: 240px;
+  height: 60px;
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  padding: 0 var(--pv24-16);
+  font-family: var(--pv24-font-mono);
+  font-size: var(--pv24-slide-number-size);
+  color: var(--pv24-text-secondary);
+}
+
+/* ---------------------------------------------------------------------------
+ * Ref bar (above source note)
+ * ------------------------------------------------------------------------ */
+
+.pv24-ref-bar {
+  position: absolute;
+  bottom: 60px;
+  left: 0;
+  right: 0;
+  height: 44px;
+  display: flex;
+  align-items: center;
+  gap: var(--pv24-2);
+  padding: 0 var(--pv24-16);
+  border-top: 1px solid var(--pv24-border);
+  background-color: var(--pv24-surface);
+}
+
+/* ---------------------------------------------------------------------------
+ * Ref chip
+ * ------------------------------------------------------------------------ */
+
+.pv24-ref-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--pv24-1);
+  padding: var(--pv24-1) var(--pv24-3);
+  background-color: var(--pv24-brand-purple-lightest);
+  border: 1px solid var(--pv24-brand-purple-light);
+  color: var(--pv24-brand-purple-dark);
+  font-family: var(--pv24-font-mono);
+  font-size: var(--pv24-source-note-size);
+  font-weight: 500;
+  border-radius: var(--pv24-radius);
+  cursor: pointer;
+  transition: background-color var(--pv24-t-fast) ease, border-color var(--pv24-t-fast) ease;
+  line-height: 1.3;
+}
+
+.pv24-ref-chip:hover {
+  background-color: var(--pv24-brand-purple-light);
+  border-color: var(--pv24-brand-purple);
+}
+
+.pv24-ref-chip:focus-visible {
+  outline: 2px solid var(--pv24-accent);
+  outline-offset: 2px;
+}
+
+/* ---------------------------------------------------------------------------
+ * Exhibit placeholder (used by CoreSlide24Dispatcher until exhibits are built)
+ * ------------------------------------------------------------------------ */
+
+.pv24-exhibit-placeholder {
+  position: absolute;
+  inset: var(--pv24-8);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: var(--pv24-3);
+  background-color: var(--pv24-canvas);
+  border: 2px dashed var(--pv24-border);
+  font-family: var(--pv24-font-mono);
+  font-size: var(--pv24-annotation-size);
+  color: var(--pv24-text-secondary);
+  text-align: center;
+}
+
+.pv24-exhibit-placeholder__name {
+  font-weight: 600;
+  color: var(--pv24-text);
+}
+
+.pv24-exhibit-placeholder__type {
+  font-size: var(--pv24-source-note-size);
+  color: var(--pv24-text-secondary);
+}

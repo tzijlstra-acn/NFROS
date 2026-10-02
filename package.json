@@ -67,6 +67,9 @@
     "release:package": "tsx scripts/release-package.ts",
     "pilot:evidence-pack": "tsx scripts/evidence-pack.ts",
     "story:v2.1": "npx open-cli http://localhost:3000/story?deck=v2.1",
+    "check:presentation-headlines": "tsx scripts/check-presentation-headlines.ts",
+    "test:presentation-storyline": "vitest run tests/unit/presentation-v2-4-copy.test.ts",
+    "test:presentation-copy": "vitest run tests/unit/presentation-v2-4-copy.test.ts",
     "check:accenture-brand": "tsx scripts/check-accenture-brand.ts",
     "test:presentation-brand": "tsx scripts/check-accenture-brand.ts",
     "capture:presentation-assets": "tsx scripts/capture-presentation-assets.ts",
@@ -76,6 +79,12 @@
     "verify:presentation-assets:v2-3": "tsx scripts/verify-presentation-assets-v2-3.ts",
     "test:presentation": "tsx scripts/test-presentation.ts",
     "test:presentation-links": "tsx scripts/test-presentation.ts --links-only",
+    "test:presentation-exhibits": "playwright test tests/e2e/presentation-v2-4-exhibits.spec.ts",
+    "test:presentation-product-proof": "playwright test tests/e2e/presentation-v2-4-product-proof.spec.ts",
+    "test:presentation-typography": "playwright test tests/e2e/presentation-v2-4-typography.spec.ts",
+    "test:presentation-motion": "playwright test tests/e2e/presentation-v2-4-motion.spec.ts",
+    "verify:presentation-exports": "tsx scripts/verify-presentation-exports-v2-4.ts",
+    "export:presentation-v2-4": "tsx scripts/export-presentation-v2-4.ts",
     "audit:all": "npm run typecheck && npm run lint && npm run check:copy && npm run scan:secrets && npm run test:unit && npm run test:integration && npm run eval:structural"
   },
   "dependencies": {
