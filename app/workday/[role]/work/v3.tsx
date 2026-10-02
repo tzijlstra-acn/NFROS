@@ -1388,7 +1388,10 @@ export default async function WorkV3({
      Render
   ----------------------------------------------------------------------- */
   return (
-    <div className="wd-main-inner">
+    <div
+      className="wd-main-inner"
+      data-presentation-region={roleId === "rcsa" ? "rcsa-work-hub" : "tprm-work-hub"}
+    >
       <h1 className="wd-page-title">{pick(LABELS.title, language)}</h1>
       <p className="wd-context-line" style={{ marginTop: "var(--wd-1)" }}>
         {contextLine}

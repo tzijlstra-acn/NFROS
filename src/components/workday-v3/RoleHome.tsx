@@ -147,7 +147,7 @@ export function RoleHome({
   const doneCount = sections.handled.length;
 
   return (
-    <div className="wd-main-inner">
+    <div className="wd-main-inner" data-presentation-region="role-home">
       {/*
         * The page says what day it is, and nothing the header already said.
         *

@@ -1,3 +1,5 @@
+> **Archive:** This is the V2.1 speaker script. For the current version, see `docs/PRESENTATION_V2_2_SCRIPT.md`. V2.2 corrects punctuation, stage counts, and copy voice throughout.
+
 # NFROS Presentation V2.1 -- Presenter Script
 
 ## Preamble
