@@ -33,6 +33,7 @@ import {
   storyDurationLabel,
 } from "@/scenario/data/story";
 import { StoryDeck } from "@/components/presentation/StoryDeck";
+import { PresentationV21 } from "@/presentation-v2-1/components/PresentationV21";
 import "@/styles/presentation.css";
 
 export const dynamic = "force-dynamic";
@@ -66,6 +67,18 @@ export default async function StoryPage({
   const params = (await searchParams) ?? {};
 
   const exportMode = isOn(params, "export");
+
+  // V2.1 deck: ?deck=v2.1 routes to the new design system.
+  // ?deck=current is an explicit alias for the original deck (default when deck param is absent).
+  const deckVersion = firstValue(params, "deck") ?? "v1";
+  if (deckVersion === "v2.1") {
+    const initialSlide = Math.max(
+      1,
+      Math.floor(Number(firstValue(params, "slide") ?? "1"))
+    );
+    return <PresentationV21 initialSlide={initialSlide} exportMode={exportMode} />;
+  }
+
   // Export mode implies presenter safe mode. A capture of a scene that is
   // still animating is not a slide, it is a frame of a video.
   const safeMode = exportMode || isOn(params, "safe");

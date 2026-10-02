@@ -30,6 +30,8 @@
     "demo:safe": "cross-env NFR_DEMO_MODE=safe next dev -p 3000",
     "demo:live": "cross-env NFR_DEMO_MODE=live next dev -p 3000",
     "export:deck": "tsx scripts/export-deck.ts",
+    "export:presentation": "tsx scripts/export-presentation-v2-1.ts",
+    "verify:presentation-downloads": "tsx scripts/verify-presentation-downloads.ts",
     "db:generate": "drizzle-kit generate",
     "eval": "tsx scripts/evaluate.ts",
     "eval:structural": "tsx scripts/eval-runner.ts --mode=structural",
@@ -61,6 +63,7 @@
     "licenses": "tsx scripts/licenses.ts",
     "release:package": "tsx scripts/release-package.ts",
     "pilot:evidence-pack": "tsx scripts/evidence-pack.ts",
+    "story:v2.1": "npx open-cli http://localhost:3000/story?deck=v2.1",
     "audit:all": "npm run typecheck && npm run lint && npm run check:copy && npm run scan:secrets && npm run test:unit && npm run test:integration && npm run eval:structural"
   },
   "dependencies": {

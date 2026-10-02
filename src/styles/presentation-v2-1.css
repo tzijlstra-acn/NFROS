@@ -1,0 +1,878 @@
+/*
+ * Presentation V2.1 stylesheet.
+ *
+ * Imports the V2.1 token set and owns all layout, component and utility
+ * classes for the V2.1 deck. Nothing here touches the main product styles or
+ * the original story deck at /story.
+ *
+ * Design constraints:
+ *   - No Tailwind utility classes.
+ *   - No em dash (U+2014): use " -- " instead in copy.
+ *   - IBM Plex Sans and IBM Plex Mono only.
+ *   - All custom properties carry the --pv21- prefix.
+ *   - Slide transitions use CSS transitions only, never keyframe animations.
+ *   - No single transition exceeds 350ms (--pv21-t-slow).
+ */
+
+@import "./presentation-v2-1-tokens.css";
+
+/* ==========================================================================
+   Deck shell
+   ========================================================================== */
+
+/*
+ * .pv21-deck
+ *
+ * Full-screen container. Occupies 100dvh and clips overflow so no slide can
+ * push the page taller than the viewport. Keyboard navigation is handled by
+ * the React component; this class provides the containing geometry.
+ */
+.pv21-deck {
+  position: relative;
+  width: 100%;
+  height: 100dvh;
+  min-height: 0;
+  overflow: hidden;
+  background: var(--pv21-color-canvas);
+  font-family: var(--pv21-font-sans);
+  font-size: var(--pv21-text-base);
+  color: var(--pv21-color-text);
+}
+
+/*
+ * .pv21-slide
+ *
+ * One 1920x1080 frame. Scaled to fit the viewport by the deck container via
+ * a CSS scale transform applied by the component. Position is relative so
+ * absolutely positioned children (slide-number, section-label, footer) can
+ * anchor to the slide edge rather than to the viewport.
+ */
+.pv21-slide {
+  position: absolute;
+  inset: 0;
+  width: var(--pv21-slide-w);
+  height: var(--pv21-slide-h);
+  background: var(--pv21-color-canvas);
+  overflow: hidden;
+  transform-origin: top left;
+}
+
+/* Slide enter/exit transitions driven by the keyboard nav component. */
+.pv21-slide-enter {
+  opacity: 0;
+  transform: translateX(20px);
+}
+
+.pv21-slide-exit {
+  opacity: 0;
+  transform: translateX(-20px);
+}
+
+/*
+ * .pv21-slide-number
+ *
+ * Quiet ordinal in the bottom-right corner. Reads at secondary text colour
+ * so it is present but does not compete with slide content.
+ */
+.pv21-slide-number {
+  position: absolute;
+  bottom: var(--pv21-space-6);
+  right: var(--pv21-space-6);
+  font-family: var(--pv21-font-mono);
+  font-size: var(--pv21-text-xs);
+  color: var(--pv21-color-secondary);
+  letter-spacing: 0.04em;
+  line-height: 1;
+  z-index: 2;
+}
+
+/*
+ * .pv21-section-label
+ *
+ * Chapter or section name, top-left, in secondary text. Uppercase mono,
+ * tracked label style. Matches the chapter bar idiom from the existing deck.
+ */
+.pv21-section-label {
+  position: absolute;
+  top: var(--pv21-space-6);
+  left: var(--pv21-space-8);
+  font-family: var(--pv21-font-mono);
+  font-size: var(--pv21-text-xs);
+  color: var(--pv21-color-secondary);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  line-height: 1;
+  z-index: 2;
+}
+
+/*
+ * .pv21-footer
+ *
+ * Bottom-center footnote area. Synthetic data label, regulatory caveat, or
+ * both. Small and quiet so it is present without shrinking the stage.
+ */
+.pv21-footer {
+  position: absolute;
+  bottom: var(--pv21-space-5);
+  left: 50%;
+  transform: translateX(-50%);
+  font-family: var(--pv21-font-mono);
+  font-size: var(--pv21-text-xs);
+  color: var(--pv21-color-secondary);
+  white-space: nowrap;
+  z-index: 2;
+}
+
+/* ==========================================================================
+   Content areas
+   ========================================================================== */
+
+/*
+ * .pv21-content
+ *
+ * Main content wrapper with generous padding on all sides. Used inside every
+ * layout variant as the innermost text container.
+ */
+.pv21-content {
+  padding: var(--pv21-space-12) var(--pv21-space-16);
+  display: flex;
+  flex-direction: column;
+  gap: var(--pv21-space-6);
+  min-height: 0;
+}
+
+/*
+ * .pv21-title
+ *
+ * Primary slide heading (h1 style). Large, weighted, tight line-height.
+ */
+.pv21-title {
+  font-family: var(--pv21-font-sans);
+  font-size: var(--pv21-text-4xl);
+  font-weight: 600;
+  line-height: 1.08;
+  letter-spacing: -0.02em;
+  color: var(--pv21-color-text);
+  text-wrap: balance;
+  margin: 0;
+}
+
+/*
+ * .pv21-subtitle
+ *
+ * Secondary heading (h2 style). Uses secondary text colour to sit below the
+ * title without competing.
+ */
+.pv21-subtitle {
+  font-family: var(--pv21-font-sans);
+  font-size: var(--pv21-text-xl);
+  font-weight: 400;
+  line-height: 1.3;
+  color: var(--pv21-color-secondary);
+  text-wrap: balance;
+  margin: 0;
+}
+
+/*
+ * .pv21-body
+ *
+ * Body copy. The deck's standard reading size at 15px, normal weight.
+ */
+.pv21-body {
+  font-size: var(--pv21-text-base);
+  font-weight: 400;
+  line-height: 1.55;
+  color: var(--pv21-color-text);
+  max-width: 80ch;
+}
+
+/*
+ * .pv21-emphasis
+ *
+ * A larger pull-quote or statement, between subtitle and title in size.
+ * Used for a single key insight that the room must read.
+ */
+.pv21-emphasis {
+  font-size: var(--pv21-text-2xl);
+  font-weight: 500;
+  line-height: 1.2;
+  color: var(--pv21-color-text);
+  text-wrap: balance;
+}
+
+/*
+ * .pv21-bullets / .pv21-bullet
+ *
+ * An unnumbered list with no default browser bullets. Each item is a
+ * .pv21-bullet. Items are revealed line by line by the component.
+ */
+.pv21-bullets {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--pv21-space-4);
+}
+
+.pv21-bullet {
+  display: grid;
+  grid-template-columns: 20px minmax(0, 1fr);
+  gap: var(--pv21-space-3);
+  font-size: var(--pv21-text-md);
+  line-height: 1.4;
+  color: var(--pv21-color-text);
+  align-items: baseline;
+}
+
+.pv21-bullet::before {
+  content: "";
+  display: block;
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--pv21-color-accent);
+  margin-top: 0.5em;
+  justify-self: center;
+}
+
+/* ==========================================================================
+   Layout variants
+   ========================================================================== */
+
+/*
+ * .pv21-layout-hero
+ *
+ * Centred, vertically stacked. Used for title slides and single-message
+ * frames where the entire slide is one statement.
+ */
+.pv21-layout-hero {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+  text-align: center;
+  padding: var(--pv21-space-16);
+  gap: var(--pv21-space-8);
+}
+
+/*
+ * .pv21-layout-split
+ *
+ * Left column holds the text content, right column holds a visual or diagram.
+ * Split at 50/50 by default; adjust with inline style if the content demands.
+ */
+.pv21-layout-split {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  height: 100%;
+  min-height: 0;
+}
+
+.pv21-layout-split > :first-child {
+  padding: var(--pv21-space-12) var(--pv21-space-10) var(--pv21-space-12) var(--pv21-space-16);
+  display: flex;
+  flex-direction: column;
+  gap: var(--pv21-space-6);
+  justify-content: center;
+  border-right: 1px solid var(--pv21-color-border);
+}
+
+.pv21-layout-split > :last-child {
+  padding: var(--pv21-space-12) var(--pv21-space-16) var(--pv21-space-12) var(--pv21-space-10);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/*
+ * .pv21-layout-two-col
+ *
+ * Two equal columns, separated by a border. Used for comparison slides.
+ */
+.pv21-layout-two-col {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  gap: var(--pv21-space-8);
+  padding: var(--pv21-space-10) var(--pv21-space-16);
+  height: 100%;
+  align-items: start;
+}
+
+/*
+ * .pv21-layout-three-layer
+ *
+ * Three rows stacked vertically. Each row is a distinct product layer.
+ * Used for the product architecture slide.
+ */
+.pv21-layout-three-layer {
+  display: flex;
+  flex-direction: column;
+  gap: var(--pv21-space-4);
+  padding: var(--pv21-space-10) var(--pv21-space-16);
+  height: 100%;
+  justify-content: center;
+}
+
+/*
+ * .pv21-layout-flow
+ *
+ * Horizontal flow of steps with arrows between them.
+ * Used for process or pipeline slides.
+ */
+.pv21-layout-flow {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  gap: 0;
+  padding: var(--pv21-space-10) var(--pv21-space-16);
+  height: 100%;
+  justify-content: center;
+}
+
+/*
+ * .pv21-layout-list
+ *
+ * Agenda or numbered list style. Large, readable rows with clear vertical
+ * rhythm. Used for the agenda slide and any enumerated list slide.
+ */
+.pv21-layout-list {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: var(--pv21-space-6);
+  padding: var(--pv21-space-10) var(--pv21-space-16);
+  height: 100%;
+}
+
+/* ==========================================================================
+   Visual elements
+   ========================================================================== */
+
+/*
+ * .pv21-layer-card
+ *
+ * One layer of the three-layer product architecture diagram. A card with a
+ * coloured left border to indicate the layer's semantic tier.
+ */
+.pv21-layer-card {
+  background: var(--pv21-color-surface);
+  border: 1px solid var(--pv21-color-border);
+  border-radius: var(--pv21-radius-lg);
+  padding: var(--pv21-space-6) var(--pv21-space-8);
+  display: flex;
+  flex-direction: column;
+  gap: var(--pv21-space-3);
+  min-width: 0;
+  border-left: 4px solid var(--pv21-color-accent);
+}
+
+.pv21-layer-card[data-tier="intelligence"] {
+  border-left-color: var(--pv21-color-accent);
+}
+
+.pv21-layer-card[data-tier="human"] {
+  border-left-color: var(--pv21-color-human);
+}
+
+.pv21-layer-card[data-tier="evidence"] {
+  border-left-color: var(--pv21-color-evidence);
+}
+
+/*
+ * .pv21-flow-arrow
+ *
+ * Arrow between flow steps. Decorative only -- uses an SVG inline or a CSS
+ * generated content approach. The component renders these.
+ */
+.pv21-flow-arrow {
+  flex-shrink: 0;
+  width: var(--pv21-space-8);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--pv21-color-secondary);
+  font-size: var(--pv21-text-lg);
+  font-family: var(--pv21-font-mono);
+}
+
+/*
+ * .pv21-col-card
+ *
+ * Card used in two-column slides. Surface background, soft border, generous
+ * internal padding.
+ */
+.pv21-col-card {
+  background: var(--pv21-color-surface);
+  border: 1px solid var(--pv21-color-border);
+  border-radius: var(--pv21-radius-lg);
+  padding: var(--pv21-space-8);
+  display: flex;
+  flex-direction: column;
+  gap: var(--pv21-space-4);
+  min-width: 0;
+}
+
+/*
+ * .pv21-process-row
+ *
+ * Horizontal stage row for a process diagram. Contains multiple
+ * .pv21-stage-chip elements.
+ */
+.pv21-process-row {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  gap: var(--pv21-space-3);
+  flex-wrap: wrap;
+  min-width: 0;
+}
+
+/*
+ * .pv21-stage-chip
+ *
+ * One step in a process row. Small pill-shaped label.
+ */
+.pv21-stage-chip {
+  background: var(--pv21-color-muted-bg);
+  border: 1px solid var(--pv21-color-border);
+  border-radius: var(--pv21-radius-md);
+  padding: var(--pv21-space-2) var(--pv21-space-4);
+  font-size: var(--pv21-text-sm);
+  color: var(--pv21-color-text);
+  white-space: nowrap;
+  font-weight: 500;
+}
+
+.pv21-stage-chip[data-active="true"] {
+  background: var(--pv21-color-accent);
+  border-color: var(--pv21-color-accent);
+  color: #fff;
+}
+
+/*
+ * .pv21-service-stack / .pv21-service-tier
+ *
+ * A four-tier vertical service stack. Each tier is one row.
+ */
+.pv21-service-stack {
+  display: flex;
+  flex-direction: column;
+  gap: var(--pv21-space-2);
+  width: 100%;
+}
+
+.pv21-service-tier {
+  background: var(--pv21-color-surface);
+  border: 1px solid var(--pv21-color-border);
+  border-radius: var(--pv21-radius-md);
+  padding: var(--pv21-space-4) var(--pv21-space-6);
+  display: flex;
+  align-items: center;
+  gap: var(--pv21-space-4);
+  min-width: 0;
+}
+
+/*
+ * .pv21-outcome-grid / .pv21-outcome-card
+ *
+ * A 2x2 grid of outcome statements. Used for the business outcomes slide.
+ */
+.pv21-outcome-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--pv21-space-5);
+}
+
+.pv21-outcome-card {
+  background: var(--pv21-color-surface);
+  border: 1px solid var(--pv21-color-border);
+  border-radius: var(--pv21-radius-lg);
+  padding: var(--pv21-space-6) var(--pv21-space-8);
+  display: flex;
+  flex-direction: column;
+  gap: var(--pv21-space-3);
+  min-width: 0;
+}
+
+/* ==========================================================================
+   Status labels
+   ========================================================================== */
+
+/*
+ * .pv21-status
+ *
+ * Base status chip. Small, pill shaped, monospaced label. A modifier class
+ * applies the appropriate colour pair.
+ */
+.pv21-status {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--pv21-space-1);
+  font-family: var(--pv21-font-mono);
+  font-size: var(--pv21-text-xs);
+  font-weight: 500;
+  letter-spacing: 0.02em;
+  border-radius: var(--pv21-radius-pill);
+  padding: 2px var(--pv21-space-3);
+  white-space: nowrap;
+  /* Base fallback -- modifier classes override these. */
+  color: var(--pv21-color-secondary);
+  background: var(--pv21-color-muted-bg);
+  border: 1px solid var(--pv21-color-border);
+}
+
+.pv21-status--implemented {
+  color: var(--pv21-status-implemented-fg);
+  background: var(--pv21-status-implemented-bg);
+  border-color: var(--pv21-status-implemented-fg);
+}
+
+.pv21-status--demo-only {
+  color: var(--pv21-status-demo-fg);
+  background: var(--pv21-status-demo-bg);
+  border-color: var(--pv21-status-demo-fg);
+}
+
+.pv21-status--planned {
+  color: var(--pv21-status-planned-fg);
+  background: var(--pv21-status-planned-bg);
+  border-color: var(--pv21-color-border);
+}
+
+.pv21-status--configured {
+  color: var(--pv21-status-configured-fg);
+  background: var(--pv21-status-configured-bg);
+  border-color: var(--pv21-status-configured-fg);
+}
+
+/* ==========================================================================
+   Navigation overlays
+   ========================================================================== */
+
+/*
+ * .pv21-agenda-overlay
+ *
+ * Fullscreen agenda, opened with the A key. Displays the five agenda items
+ * and highlights the current section.
+ */
+.pv21-agenda-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 80;
+  background: rgba(23, 32, 51, 0.88);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: var(--pv21-space-16);
+}
+
+/*
+ * .pv21-notes-panel
+ *
+ * Speaker notes drawer, opened with the P key. Fixed to the right edge of
+ * the viewport, full height, scrollable.
+ */
+.pv21-notes-panel {
+  position: fixed;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  width: 400px;
+  z-index: 70;
+  background: var(--pv21-color-surface);
+  border-left: 1px solid var(--pv21-color-border);
+  overflow-y: auto;
+  padding: var(--pv21-space-8) var(--pv21-space-6);
+  display: flex;
+  flex-direction: column;
+  gap: var(--pv21-space-4);
+}
+
+/*
+ * .pv21-help-overlay
+ *
+ * Keyboard shortcut reference opened with the ? key.
+ */
+.pv21-help-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 90;
+  background: rgba(23, 32, 51, 0.80);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: var(--pv21-space-12);
+}
+
+.pv21-help-overlay > div {
+  background: var(--pv21-color-surface);
+  border: 1px solid var(--pv21-color-border);
+  border-radius: var(--pv21-radius-xl);
+  padding: var(--pv21-space-10);
+  width: min(720px, 100%);
+  max-height: 80dvh;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: var(--pv21-space-5);
+}
+
+/* ==========================================================================
+   Download menu
+   ========================================================================== */
+
+/*
+ * .pv21-download-menu
+ *
+ * Dropdown/panel for export links. Hidden in export mode.
+ */
+.pv21-download-menu {
+  position: fixed;
+  bottom: var(--pv21-space-12);
+  right: var(--pv21-space-8);
+  z-index: 60;
+  background: var(--pv21-color-surface);
+  border: 1px solid var(--pv21-color-border);
+  border-radius: var(--pv21-radius-lg);
+  padding: var(--pv21-space-3);
+  display: flex;
+  flex-direction: column;
+  gap: var(--pv21-space-2);
+  box-shadow: 0 8px 24px rgba(23, 32, 51, 0.12);
+}
+
+/*
+ * .pv21-download-btn
+ *
+ * Trigger button that opens the download menu. Hidden in export mode.
+ */
+.pv21-download-btn {
+  position: fixed;
+  bottom: var(--pv21-space-6);
+  right: var(--pv21-space-8);
+  z-index: 60;
+  background: var(--pv21-color-surface);
+  border: 1px solid var(--pv21-color-border);
+  border-radius: var(--pv21-radius-md);
+  padding: var(--pv21-space-2) var(--pv21-space-4);
+  font-family: var(--pv21-font-sans);
+  font-size: var(--pv21-text-sm);
+  color: var(--pv21-color-text);
+  cursor: pointer;
+  transition: background var(--pv21-t-fast) ease-out;
+}
+
+.pv21-download-btn:hover {
+  background: var(--pv21-color-muted-bg);
+}
+
+/* Export mode: hide all navigation and download UI. */
+.pv21-export-mode .pv21-download-menu {
+  display: none;
+}
+
+.pv21-export-mode .pv21-download-btn {
+  display: none;
+}
+
+/* ==========================================================================
+   Agenda slide items
+   ========================================================================== */
+
+/*
+ * .pv21-agenda-item
+ *
+ * One numbered item on the agenda slide. Displays at large scale so the
+ * room can read it from a distance.
+ */
+.pv21-agenda-item {
+  display: grid;
+  grid-template-columns: 48px minmax(0, 1fr);
+  gap: var(--pv21-space-6);
+  align-items: baseline;
+  padding: var(--pv21-space-4) 0;
+  border-bottom: 1px solid var(--pv21-color-border);
+  color: var(--pv21-color-secondary);
+  transition:
+    color var(--pv21-t-base) ease-out,
+    border-bottom-color var(--pv21-t-base) ease-out;
+}
+
+.pv21-agenda-item:last-child {
+  border-bottom: none;
+}
+
+.pv21-agenda-item--active {
+  color: var(--pv21-color-text);
+  border-bottom-color: var(--pv21-color-accent);
+}
+
+.pv21-agenda-item__number {
+  font-family: var(--pv21-font-mono);
+  font-size: var(--pv21-text-xl);
+  color: var(--pv21-color-accent);
+  line-height: 1;
+}
+
+.pv21-agenda-item__label {
+  font-size: var(--pv21-text-lg);
+  font-weight: 500;
+  line-height: 1.3;
+}
+
+.pv21-agenda-item--active .pv21-agenda-item__label {
+  color: var(--pv21-color-text);
+}
+
+/* ==========================================================================
+   End-of-core prompt (shown after slide 13)
+   ========================================================================== */
+
+/*
+ * .pv21-end-prompt
+ *
+ * A call to action shown after the last core slide. Gives the presenter
+ * three options: continue discussion, open appendix, or download.
+ * This is NOT auto-advanced; the presenter must act.
+ */
+.pv21-end-prompt {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: var(--pv21-space-8);
+  background: var(--pv21-color-canvas);
+  z-index: 10;
+}
+
+.pv21-end-prompt__title {
+  font-size: var(--pv21-text-3xl);
+  font-weight: 600;
+  color: var(--pv21-color-text);
+  text-align: center;
+  text-wrap: balance;
+}
+
+.pv21-end-prompt__actions {
+  display: flex;
+  gap: var(--pv21-space-4);
+  flex-wrap: wrap;
+  justify-content: center;
+}
+
+.pv21-end-prompt__btn {
+  background: var(--pv21-color-surface);
+  border: 1px solid var(--pv21-color-border);
+  border-radius: var(--pv21-radius-md);
+  padding: var(--pv21-space-4) var(--pv21-space-8);
+  font-family: var(--pv21-font-sans);
+  font-size: var(--pv21-text-md);
+  font-weight: 500;
+  color: var(--pv21-color-text);
+  cursor: pointer;
+  transition: background var(--pv21-t-fast) ease-out;
+}
+
+.pv21-end-prompt__btn:hover {
+  background: var(--pv21-color-muted-bg);
+}
+
+.pv21-end-prompt__btn--primary {
+  background: var(--pv21-color-accent);
+  border-color: var(--pv21-color-accent);
+  color: #fff;
+}
+
+.pv21-end-prompt__btn--primary:hover {
+  opacity: 0.9;
+}
+
+/* ==========================================================================
+   Appendix
+   ========================================================================== */
+
+/*
+ * .pv21-appendix-index
+ *
+ * A grid or list of appendix slides for the index view.
+ */
+.pv21-appendix-index {
+  display: flex;
+  flex-direction: column;
+  gap: var(--pv21-space-4);
+  padding: var(--pv21-space-8) var(--pv21-space-16);
+}
+
+/*
+ * .pv21-appendix-item
+ *
+ * One row in the appendix index listing.
+ */
+.pv21-appendix-item {
+  display: grid;
+  grid-template-columns: 40px minmax(0, 1fr) auto;
+  gap: var(--pv21-space-4);
+  align-items: center;
+  padding: var(--pv21-space-3) 0;
+  border-bottom: 1px solid var(--pv21-color-border);
+  font-size: var(--pv21-text-base);
+  color: var(--pv21-color-text);
+  cursor: pointer;
+  transition: color var(--pv21-t-fast) ease-out;
+}
+
+.pv21-appendix-item:hover {
+  color: var(--pv21-color-accent);
+}
+
+/*
+ * .pv21-appendix-slide
+ *
+ * Wrapper for a single appendix slide. Identical geometry to a core slide.
+ */
+.pv21-appendix-slide {
+  position: absolute;
+  inset: 0;
+  background: var(--pv21-color-canvas);
+}
+
+/*
+ * .pv21-matrix / .pv21-matrix-row
+ *
+ * A simple data matrix or table used on reference/appendix slides.
+ */
+.pv21-matrix {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: var(--pv21-text-sm);
+  color: var(--pv21-color-text);
+}
+
+.pv21-matrix-row {
+  display: grid;
+  border-bottom: 1px solid var(--pv21-color-border);
+}
+
+.pv21-matrix-row:last-child {
+  border-bottom: none;
+}
+
+.pv21-matrix th,
+.pv21-matrix td {
+  padding: var(--pv21-space-3) var(--pv21-space-4);
+  text-align: left;
+  vertical-align: top;
+}
+
+.pv21-matrix th {
+  font-weight: 600;
+  color: var(--pv21-color-secondary);
+  font-size: var(--pv21-text-xs);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  border-bottom: 2px solid var(--pv21-color-border);
+}

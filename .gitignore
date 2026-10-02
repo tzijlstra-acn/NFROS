@@ -17,9 +17,8 @@ data/*.db-wal
 src/db/migrations/meta/_journal.json.bak
 
 # Generated exports are reproducible, keep the folder but not the binaries
-exports/*.pdf
-exports/*.pptx
-exports/scenes/
+exports/
+public/downloads/*.pdf
 
 # Test output
 test-results/
