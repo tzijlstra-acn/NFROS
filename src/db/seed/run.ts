@@ -87,6 +87,34 @@ import * as decisionData from "@/scenario/data/decisions";
 import * as timelineMoments from "@/scenario/data/timeline-moments";
 import { SCENARIO_DATE } from "@/scenario/data/contract";
 
+/*
+ * The four layers that sit on top of the scenario.
+ *
+ * Every one of them READS the seeded day rather than inventing a parallel
+ * dataset: the integration simulators project real controls, suppliers and
+ * evidence; the live event projection derives each row from a seeded moment,
+ * background action, message, meeting or decision; the AI Partner seed grounds
+ * its suggestions in real identifiers.
+ *
+ * Where each one runs is not interchangeable.
+ *
+ * `seedIntegrations` goes INSIDE the scenario transaction, last. It uses the
+ * same database handle and therefore joins this transaction, and its source
+ * requirement map is derived from the seeded decisions, so it has to run after
+ * them.
+ *
+ * The other three go AFTER the transaction commits, because each opens its own
+ * transaction over the rows this one writes. Nesting them would mean a failure
+ * in the last rolls back the first for no reason.
+ *
+ * Their order matters too: a live event may be produced by an inbound
+ * integration event, and a suggestion is attached to a live event.
+ */
+import { seedProductConfiguration } from "@/product/seed";
+import { seedIntegrations } from "@/integrations/seed";
+import { seedLiveEvents } from "@/scenario/live-event-seed";
+import { seedAiPartner } from "@/agents/suggestions/seed";
+
 export interface SeedSummary {
   rowsWritten: number;
   tablesWritten: number;
@@ -332,9 +360,41 @@ export function seedScenario(runId: string = DEFAULT_RUN_ID): SeedSummary {
 
     /* Per role timeline detail */
     total += insertAll(timelineRoleMoments, timelineMoments.timelineRoleMoments, counts, "timelineRoleMoments");
+
+    /*
+     * The integration projection, inside the transaction and last.
+     *
+     * Inside, because it uses the same database handle and therefore joins
+     * this transaction: a failure here must not leave a scenario with
+     * connector instances pointing at records that were rolled back. Last,
+     * because the source requirement map is derived from the seeded decisions,
+     * so it has to see them.
+     */
+    const integrations = seedIntegrations(runId);
+    counts["integrations"] = integrations.rowsWritten;
+    total += integrations.rowsWritten;
   });
 
   writeEverything();
+
+  /*
+   * The layers above the scenario. Counted into the same summary so
+   * `npm run db:seed` and `demo:reset` report one number for the whole day,
+   * and so a layer that silently wrote nothing is visible as a zero rather
+   * than as an absence.
+   */
+  const product = seedProductConfiguration();
+  counts["productConfiguration"] = product.rowsWritten;
+  total += product.rowsWritten;
+
+  const live = seedLiveEvents(runId);
+  counts["liveEvents"] = live.events;
+  counts["liveEventReads"] = live.readRows;
+  total += live.events + live.readRows;
+
+  const partner = seedAiPartner(runId);
+  counts["aiPartner"] = partner.rowsWritten;
+  total += partner.rowsWritten;
 
   return {
     rowsWritten: total,

@@ -77,6 +77,28 @@ Checked 6 roles against 38 decisions.
 
 Checked 38 decisions for a stated uncertainty and a plausible confidence distribution.
 
-## Grounded evaluations
+## Grounded evaluations: 2 of 4 passed
 
-Not run. These require live mode and a resolvable OpenAI key. Run with NFR_DEMO_MODE=live to include them.
+These required live mode and a real model call. The result is advisory.
+
+### FAIL: probe-control-divergence
+
+- Cited and verified: none
+- Did not cite expected: CTL-PAY-014
+- Declined where appropriate: true
+
+### FAIL: probe-subprocessor-gap
+
+- Cited and verified: EVD-2026-41415, EVD-2026-41410, EVD-2026-41445, EVD-2026-41605, EVD-2026-41235, MSN-2026-0191, EVD-2026-41300
+- Did not cite expected: TP-0042
+- Declined where appropriate: true
+
+### PASS: probe-swiss-jurisdiction
+
+- Cited and verified: EVD-2026-41315, EVD-2026-41320, EVD-2026-41615
+- Declined where appropriate: false
+
+### PASS: probe-unanswerable
+
+- Cited and verified: EVD-2026-40340, EVD-2026-40784, EVD-2026-41908, EVD-2026-41850, EVD-2026-41852, EVD-2026-41304, EVD-2026-41200, EVD-2026-41855, EVD-2026-41255
+- Declined where appropriate: true

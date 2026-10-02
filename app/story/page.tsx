@@ -71,6 +71,20 @@ export default async function StoryPage({
   const safeMode = exportMode || isOn(params, "safe");
   const debug = isOn(params, "debug");
 
+  /*
+   * The reveal step, for the export capture only.
+   *
+   * Absent means "resolve to the final step", which is the behaviour every
+   * other caller wants. The export asks for one frame per pane so a scene
+   * that shows a pane at a single intermediate step is not dropped from the
+   * deck. See the note on `initialStep` in `StoryDeck`.
+   */
+  const requestedStep = firstValue(params, "step");
+  const stepNumber =
+    requestedStep !== undefined && requestedStep !== null && Number.isFinite(Number(requestedStep))
+      ? Math.max(0, Math.floor(Number(requestedStep)))
+      : undefined;
+
   const requested = Number(firstValue(params, "scene") ?? "1");
   const sceneNumber =
     Number.isFinite(requested) && requested >= 1 && requested <= STORY_SCENES.length
@@ -100,6 +114,7 @@ export default async function StoryPage({
         scenes={STORY_SCENES}
         chapters={STORY_CHAPTERS}
         initialSceneNumber={sceneNumber}
+        {...(stepNumber === undefined ? {} : { initialStep: stepNumber })}
         safeMode={safeMode}
         exportMode={exportMode}
         debug={debug}

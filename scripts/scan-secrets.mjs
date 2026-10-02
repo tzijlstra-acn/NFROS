@@ -17,10 +17,18 @@ import { extname, join, relative } from "node:path";
 
 const ROOT = process.cwd();
 
-/** Directories scanned when present. */
+/**
+ * Directories scanned when present.
+ *
+ * `.next-verify` is the production build output, written there rather than to
+ * `.next` so a build can run beside the development server. It is listed
+ * because it is the single most important thing in this list: it is the actual
+ * browser bundle a client machine would receive, and a build that was never
+ * scanned is a gap that looks exactly like a clean run.
+ */
 const TARGETS = [
   "src", "app", "scripts", "tests", "docs",
-  ".next", "out", "dist", "exports",
+  ".next", ".next-verify", "out", "dist", "exports",
   "test-results", "playwright-report",
 ];
 
@@ -126,7 +134,7 @@ function walk(dir, files = []) {
  * Our own key cannot be in a bundle in any case: it is read at runtime from a
  * file outside this project and is never imported as a value.
  */
-const VENDOR_CHUNK = /[\\/]\.next[\\/]server[\\/]|[\\/]\.next[\\/].*node_modules_/;
+const VENDOR_CHUNK = /[\\/]\.next(?:-verify)?[\\/]server[\\/]|[\\/]\.next(?:-verify)?[\\/].*node_modules_/;
 
 /** Detectors that produce false positives in vendored library code. */
 const VENDOR_NOISY_DETECTORS = new Set(["private-key-block", "bearer-token", "jwt"]);
@@ -135,7 +143,7 @@ const VENDOR_NOISY_DETECTORS = new Set(["private-key-block", "bearer-token", "jw
  * Browser facing output. A finding here is the most serious kind, because this
  * is what actually ships to a client machine.
  */
-const BROWSER_OUTPUT = /[\\/](?:\.next[\\/]static|out|dist)[\\/]/;
+const BROWSER_OUTPUT = /[\\/](?:\.next(?:-verify)?[\\/]static|out|dist)[\\/]/;
 
 function scanFile(file) {
   const rel = relative(ROOT, file);
@@ -221,7 +229,9 @@ function main() {
 
   console.log(`Secret scan checked ${files.length} files across: ${scannedTargets.join(", ")}`);
 
-  const bundleDirs = [".next", "out", "dist"].filter((d) => existsSync(join(ROOT, d)));
+  const bundleDirs = [".next", ".next-verify", "out", "dist"].filter((d) =>
+    existsSync(join(ROOT, d)),
+  );
   if (bundleDirs.length === 0) {
     console.log(
       "Note: no build output present. Run npm run build before the scan to cover browser bundles.",

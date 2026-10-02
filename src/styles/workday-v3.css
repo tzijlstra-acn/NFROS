@@ -1,0 +1,1414 @@
+/*
+ * Interactive Workday V3.1 component styles.
+ *
+ * Scoped under `.workday-v3`. The presentation stylesheet and both earlier
+ * interactive layers are untouched.
+ *
+ * The organising principle: a queue is the default, a card is rare, and a
+ * border is rarer. The V2 layer reduced cards and kept borders; this one uses
+ * alignment and whitespace instead of an edge wherever an edge was only
+ * marking a group. The budget in the brief is five bordered containers in the
+ * opening viewport, which is not a style rule so much as a forcing function:
+ * you cannot hit it and still put a box round everything.
+ */
+
+/* ==========================================================================
+   The frame
+   ========================================================================== */
+
+/*
+ * A plain CSS grid on the normal document, not a fixed viewport root.
+ *
+ * The V2 shell is `position: fixed; inset: 0`, which was the right answer to a
+ * specific problem: a viewport sized grid still left the document
+ * programmatically scrollable and `window.scrollTo` carried the header and the
+ * synthetic data disclosure off screen. It also made the header part of a
+ * single fixed subtree that had to be re-created per page.
+ *
+ * This frame gets the same containment from `height: 100dvh` plus
+ * `overflow: hidden` on a normal in-flow grid, which means the header can live
+ * in a route layout that persists across child navigation. `100dvh` rather
+ * than `100vh` so a mobile browser's retracting chrome does not leave a strip.
+ * No JavaScript measures anything.
+ */
+/*
+ * The typographic and colour base sits on the SCOPE, not on the frame.
+ *
+ * It was on `.wd-frame`, and that was wrong for one specific reason: the
+ * overlay panels are siblings of the frame, not children of it, because an
+ * overlay that lives inside a `overflow: hidden` grid row cannot escape it.
+ * So the AI Partner dock inherited from `.workday-v3`, which declared a
+ * single custom property, and fell through to the `body` rule in
+ * `globals.css`. Measured inside the open dock: text at rgb(212, 216, 226),
+ * which is the dark theme's light grey, on a light panel, in Inter rather
+ * than Plex.
+ *
+ * Remapping a custom property does not fix that on its own, which is the
+ * subtlety worth recording. `--font-body` is remapped to Plex inside this
+ * scope, but `body` resolved `var(--font-body)` AT THE BODY, where it is
+ * still Inter, and a descendant that declares no family of its own inherits
+ * the resolved value rather than re-resolving the variable. The scope has to
+ * declare `font-family` itself for anything inside it to pick up the change.
+ */
+.workday-v3 {
+  --wd-shell-overflow: hidden;
+  color: var(--wd-text);
+  font-family: var(--wd-font);
+  font-size: var(--wd-text-base);
+  font-weight: var(--wd-weight-normal);
+  line-height: var(--wd-leading-normal);
+  -webkit-font-smoothing: antialiased;
+}
+
+.wd-frame {
+  min-height: 100dvh;
+  height: 100dvh;
+  display: grid;
+  grid-template-rows: var(--wd-header-h) minmax(0, 1fr) auto;
+  overflow: hidden;
+  background: var(--wd-canvas);
+  color: var(--wd-text);
+  font-family: var(--wd-font);
+  font-size: var(--wd-text-base);
+  font-weight: var(--wd-weight-normal);
+  line-height: var(--wd-leading-normal);
+  -webkit-font-smoothing: antialiased;
+}
+
+html:has(.wd-frame),
+html:has(.wd-frame) body {
+  overflow: hidden;
+  background: var(--wd-canvas);
+}
+
+/* The presentation ambient wash has no place in an analyst workspace. */
+html:has(.wd-frame) .ambient {
+  display: none;
+}
+
+.wd-body {
+  display: grid;
+  grid-template-columns: var(--wd-nav-w) minmax(0, 1fr);
+  min-height: 0;
+  min-width: 0;
+}
+
+.wd-body[data-nav="expanded"] {
+  grid-template-columns: var(--wd-nav-w-expanded) minmax(0, 1fr);
+}
+
+/*
+ * A right side panel is an overlay, never a column.
+ *
+ * The brief requires the main workspace to keep at least 70 percent of the
+ * width at 1366 with panels closed, and only one right panel open at a time.
+ * Overlaying rather than reflowing also means opening one cannot reflow the
+ * queue the user was reading, which was the complaint about the permanent
+ * 372px rail it replaces.
+ */
+.wd-panel {
+  position: fixed;
+  top: var(--wd-header-h);
+  right: 0;
+  bottom: 0;
+  z-index: 60;
+  width: var(--wd-drawer-w);
+  max-width: 92vw;
+  display: flex;
+  flex-direction: column;
+  background: var(--wd-surface);
+  border-left: 1px solid var(--wd-border);
+  box-shadow: var(--wd-shadow-md);
+  animation: wd-slide-in var(--wd-t-drawer) var(--wd-ease) both;
+}
+
+.wd-panel-head {
+  display: flex;
+  align-items: center;
+  gap: var(--wd-2);
+  padding: var(--wd-3) var(--wd-3) var(--wd-3) var(--wd-4);
+  border-bottom: 1px solid var(--wd-border);
+  flex-shrink: 0;
+  min-height: 48px;
+}
+
+.wd-panel-body {
+  flex: 1;
+  overflow-y: auto;
+  padding: var(--wd-4);
+  scrollbar-width: thin;
+}
+
+/*
+ * No padding, for a panel whose content brings its own.
+ *
+ * The AI Partner dock is the reused V2 component, and it is a full height
+ * layout with its own header, tab strip, scrolling body and a composer pinned
+ * to the foot. Wrapping that in 16px of padding and a second scroll container
+ * gave it a scrollbar inside a scrollbar and floated the composer up the
+ * transcript, which is the exact behaviour its own layout exists to prevent.
+ */
+.wd-panel-body-flush {
+  padding: 0;
+  overflow: hidden;
+  display: flex;
+  min-height: 0;
+}
+
+.wd-panel-body-flush > * {
+  flex: 1;
+  min-height: 0;
+  min-width: 0;
+}
+
+.wd-panel-scrim {
+  position: fixed;
+  inset: 0;
+  z-index: 59;
+  background: rgb(16 24 40 / 24%);
+  animation: wd-fade-in var(--wd-t-drawer) var(--wd-ease) both;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .wd-panel,
+  .wd-panel-scrim {
+    animation: none;
+  }
+}
+
+/* ==========================================================================
+   Header
+   ========================================================================== */
+
+/*
+ * Fixed height, one line, never wraps.
+ *
+ * The height is a token and the row uses `overflow: hidden` with `min-width: 0`
+ * on the flexible middle, so nothing in it can set a min-content width wider
+ * than the viewport. A header that wraps to two lines changes the frame's grid
+ * row and moves the whole workspace, which is why the brief makes one line a
+ * release condition rather than a preference.
+ */
+.wd-header {
+  height: var(--wd-header-h);
+  display: flex;
+  align-items: center;
+  gap: var(--wd-3);
+  padding: 0 var(--wd-3);
+  background: var(--wd-surface);
+  border-bottom: 1px solid var(--wd-border);
+  min-width: 0;
+  overflow: hidden;
+  flex-wrap: nowrap;
+}
+
+.wd-brand {
+  display: flex;
+  align-items: center;
+  gap: var(--wd-2);
+  text-decoration: none;
+  color: var(--wd-text);
+  flex-shrink: 0;
+  padding: var(--wd-1) var(--wd-2);
+  margin-left: calc(var(--wd-1) * -1);
+  border-radius: var(--wd-radius);
+}
+
+.wd-brand:hover {
+  background: var(--wd-surface-hover);
+}
+
+.wd-brand-mark {
+  width: 20px;
+  height: 20px;
+  display: block;
+  flex-shrink: 0;
+  border-radius: var(--wd-radius-sm);
+}
+
+.wd-brand-name {
+  font-size: var(--wd-text-base);
+  font-weight: var(--wd-weight-strong);
+  letter-spacing: -0.01em;
+  white-space: nowrap;
+}
+
+/* Where am I. Role, then entity, then the selected object. */
+.wd-header-location {
+  display: flex;
+  align-items: baseline;
+  gap: var(--wd-2);
+  min-width: 0;
+  flex: 1;
+  overflow: hidden;
+  white-space: nowrap;
+}
+
+.wd-header-role {
+  font-size: var(--wd-text-base);
+  font-weight: var(--wd-weight-medium);
+  color: var(--wd-text);
+  flex-shrink: 0;
+}
+
+.wd-header-entity {
+  font-size: var(--wd-text-sm);
+  color: var(--wd-text-muted);
+  flex-shrink: 0;
+}
+
+.wd-header-object {
+  font-size: var(--wd-text-sm);
+  color: var(--wd-text-secondary);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  min-width: 0;
+}
+
+.wd-header-sep {
+  color: var(--wd-text-disabled);
+  flex-shrink: 0;
+}
+
+.wd-header-actions {
+  display: flex;
+  align-items: center;
+  gap: var(--wd-1);
+  flex-shrink: 0;
+}
+
+/*
+ * The selected object is the first thing to go when width runs short, because
+ * it is always also the title of the workspace below. Search collapses to its
+ * icon next. The product mark, the role, Updates, the AI trigger and the user
+ * menu never drop: they are the controls the brief names as essential.
+ */
+@media (max-width: 1100px) {
+  .wd-header-object,
+  .wd-header-sep {
+    display: none;
+  }
+}
+
+@media (max-width: 880px) {
+  .wd-search-label {
+    display: none;
+  }
+}
+
+/* The fallback occupies exactly the same box as the loaded header. */
+.wd-header-fallback .wd-skeleton-text {
+  height: 12px;
+  border-radius: var(--wd-radius-sm);
+  background: var(--wd-surface-hover);
+}
+
+/* ==========================================================================
+   Navigation
+   ========================================================================== */
+
+.wd-nav {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: var(--wd-2) var(--wd-2) var(--wd-3);
+  background: var(--wd-surface);
+  border-right: 1px solid var(--wd-border);
+  min-width: 0;
+  overflow: hidden auto;
+  scrollbar-width: thin;
+}
+
+.wd-nav-list {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.wd-nav-spacer {
+  flex: 1;
+  min-height: var(--wd-4);
+}
+
+.wd-nav-item {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: var(--wd-3);
+  height: 36px;
+  padding: 0 var(--wd-2);
+  border: 0;
+  border-radius: var(--wd-radius);
+  background: transparent;
+  color: var(--wd-text-secondary);
+  font: inherit;
+  font-size: var(--wd-text-sm);
+  text-decoration: none;
+  white-space: nowrap;
+  cursor: pointer;
+  width: 100%;
+  transition: background var(--wd-t-fast) var(--wd-ease);
+}
+
+.wd-nav-item:hover {
+  background: var(--wd-surface-hover);
+  color: var(--wd-text);
+}
+
+.wd-nav-item[aria-current="page"] {
+  background: var(--wd-accent-soft);
+  color: var(--wd-accent);
+  font-weight: var(--wd-weight-medium);
+}
+
+.wd-nav-icon {
+  display: grid;
+  place-items: center;
+  width: 20px;
+  height: 20px;
+  flex-shrink: 0;
+}
+
+.wd-nav-label {
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.wd-body:not([data-nav="expanded"]) .wd-nav-label,
+.wd-body:not([data-nav="expanded"]) .wd-nav-group-label {
+  display: none;
+}
+
+.wd-body:not([data-nav="expanded"]) .wd-nav-item {
+  justify-content: center;
+  gap: 0;
+  padding: 0;
+}
+
+.wd-nav-group-label {
+  padding: var(--wd-3) var(--wd-2) var(--wd-1);
+  font-size: var(--wd-text-xs);
+  color: var(--wd-text-muted);
+}
+
+/* A count on a nav item, and a dot when the rail is collapsed. */
+.wd-nav-count {
+  margin-left: auto;
+  font-size: var(--wd-text-xs);
+  color: var(--wd-text-muted);
+  font-variant-numeric: tabular-nums;
+}
+
+.wd-nav-dot {
+  position: absolute;
+  top: 6px;
+  right: 8px;
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--wd-warning);
+}
+
+/* ==========================================================================
+   Main workspace
+   ========================================================================== */
+
+.wd-main {
+  min-width: 0;
+  overflow-y: auto;
+  overflow-x: hidden;
+  scrollbar-width: thin;
+}
+
+/*
+ * One reading column, centred.
+ *
+ * It was 1200px and left aligned, and the rendered screen showed why that was
+ * wrong twice over. At 1920 the content hugged the rail and left 660px of
+ * empty canvas on the right, and inside the full width blocks the paragraphs
+ * carried their own 72ch and 74ch measures, so a filled suggestion panel was
+ * 1150px wide with text reaching 540px into it. The panel looked broken
+ * rather than calm.
+ *
+ * 880px is the fix for both. It is the reading measure, so the blocks inside
+ * can drop their own and simply fill the column, and centring it means the
+ * canvas is balanced at every width above it. 880px minus the 40px of padding
+ * is roughly 72 characters at 15px Plex, which is where the measure was meant
+ * to be all along.
+ */
+.wd-main-inner {
+  padding: var(--wd-5) var(--wd-6) var(--wd-10);
+  max-width: 880px;
+  margin-inline: auto;
+}
+
+/*
+ * The action class, above the subject.
+ *
+ * Small and quiet on purpose. It repeats what the primary button says, so it
+ * is a lead-in rather than a heading, and giving it any weight would put two
+ * competing headings in the one block the screen is built around.
+ */
+.wd-now-verb {
+  font-size: var(--wd-text-xs);
+  font-weight: var(--wd-weight-medium);
+  color: var(--wd-text-muted);
+  letter-spacing: 0.01em;
+}
+
+/*
+ * The location line. One line, small, and it answers "where am I" only.
+ *
+ * It is not a hero header. The brief is explicit that a page header must not
+ * explain the product, and that the default screen may carry one page label,
+ * one object title and at most three section labels.
+ */
+.wd-location {
+  display: flex;
+  align-items: center;
+  gap: var(--wd-2);
+  font-size: var(--wd-text-xs);
+  color: var(--wd-text-muted);
+  margin-bottom: var(--wd-1);
+  min-height: 18px;
+}
+
+/*
+ * 16px, not 20px. See the note in `RoleHome.tsx`: the page label must not
+ * outrank the work. 20px is now reserved for the active item.
+ */
+.wd-page-title {
+  font-size: var(--wd-text-lg);
+  font-weight: var(--wd-weight-strong);
+  line-height: var(--wd-leading-tight);
+  letter-spacing: -0.012em;
+  margin: 0;
+  color: var(--wd-text);
+}
+
+.wd-object-title {
+  font-size: var(--wd-text-xl);
+  font-weight: var(--wd-weight-strong);
+  line-height: var(--wd-leading-tight);
+  letter-spacing: -0.01em;
+  margin: 0;
+}
+
+/*
+ * A section label is smaller than the work inside it. `Next` was 16px
+ * semibold, the same size as the page title and only 2px under the active
+ * item, so the screen had four elements competing for the eye.
+ */
+.wd-section-label {
+  font-size: var(--wd-text-md);
+  font-weight: var(--wd-weight-medium);
+  margin: 0;
+  color: var(--wd-text);
+}
+
+/* One line of context under the title. Never a paragraph. */
+.wd-context-line {
+  font-size: var(--wd-text-sm);
+  color: var(--wd-text-secondary);
+  margin: 0;
+}
+
+/*
+ * The rhythm between sections is 16px, not 24px.
+ *
+ * Measured at 1366x768 the home page ran 171px to 210px past the fold on
+ * every one of the six roles, which cost three of them the third `Next` row
+ * and cost all six the collapsed `Done`. `Done` being below the fold defeats
+ * the point of the model: a reader is supposed to see what the day has
+ * already handled without going to look for it. Five gaps at 8px less is 40px
+ * of the 170px that had to come out.
+ */
+.wd-section {
+  margin-top: var(--wd-4);
+}
+
+/*
+ * The `Now` label sits tight to the card it names, rather than at the section
+ * rhythm, so the pair reads as one block.
+ */
+.wd-section-label-now {
+  display: block;
+  margin-bottom: var(--wd-2);
+}
+
+.wd-section-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--wd-3);
+  margin-bottom: var(--wd-2);
+  min-height: 24px;
+}
+
+/* ==========================================================================
+   Text utilities
+   ========================================================================== */
+
+.wd-mono {
+  font-family: var(--wd-font-mono);
+  font-size: var(--wd-text-xs);
+  font-variant-numeric: tabular-nums;
+}
+
+.wd-meta {
+  font-size: var(--wd-text-xs);
+  color: var(--wd-text-muted);
+}
+
+.wd-secondary { color: var(--wd-text-secondary); }
+.wd-muted { color: var(--wd-text-muted); }
+.wd-strong { font-weight: var(--wd-weight-medium); color: var(--wd-text); }
+
+.wd-truncate {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  min-width: 0;
+}
+
+.wd-clamp-2 {
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+/* ==========================================================================
+   Layout utilities
+   ========================================================================== */
+
+.wd-row {
+  display: flex;
+  align-items: center;
+  gap: var(--wd-2);
+  min-width: 0;
+}
+
+.wd-row-3 { display: flex; align-items: center; gap: var(--wd-3); min-width: 0; }
+.wd-row-4 { display: flex; align-items: center; gap: var(--wd-4); min-width: 0; }
+.wd-row-top { align-items: flex-start; }
+.wd-row-wrap { flex-wrap: wrap; }
+.wd-between { justify-content: space-between; }
+.wd-grow { flex: 1; min-width: 0; }
+.wd-shrink-0 { flex-shrink: 0; }
+
+.wd-stack,
+.wd-stack-1,
+.wd-stack-2,
+.wd-stack-3,
+.wd-stack-4,
+.wd-stack-5,
+.wd-stack-6 {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.wd-stack { gap: var(--wd-2); }
+.wd-stack-1 { gap: var(--wd-1); }
+.wd-stack-2 { gap: var(--wd-2); }
+.wd-stack-3 { gap: var(--wd-3); }
+.wd-stack-4 { gap: var(--wd-4); }
+.wd-stack-5 { gap: var(--wd-5); }
+.wd-stack-6 { gap: var(--wd-6); }
+
+.wd-divider {
+  height: 1px;
+  background: var(--wd-border);
+  border: 0;
+  margin: 0;
+}
+
+/* ==========================================================================
+   The work queue. The default way to show anything repeating.
+   ========================================================================== */
+
+/*
+ * A queue is a list of rows separated by a hairline, inside ONE bordered
+ * container at most. Analysts work through registers and cases, so the shape
+ * that fits is a table, not a mosaic of cards.
+ */
+.wd-queue {
+  background: var(--wd-surface);
+  border: 1px solid var(--wd-border);
+  border-radius: var(--wd-radius-lg);
+  overflow: hidden;
+}
+
+.wd-queue-borderless {
+  background: transparent;
+  border: 0;
+  border-radius: 0;
+}
+
+.wd-queue-head {
+  display: grid;
+  gap: var(--wd-3);
+  align-items: center;
+  padding: var(--wd-2) var(--wd-3);
+  background: var(--wd-surface-subtle);
+  border-bottom: 1px solid var(--wd-border);
+  font-size: var(--wd-text-xs);
+  color: var(--wd-text-muted);
+  font-weight: var(--wd-weight-medium);
+}
+
+.wd-queue-row {
+  display: grid;
+  gap: var(--wd-3);
+  align-items: center;
+  min-height: var(--wd-row-h);
+  padding: var(--wd-2) var(--wd-3);
+  border: 0;
+  border-top: 1px solid var(--wd-border);
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  text-align: left;
+  text-decoration: none;
+  width: 100%;
+  cursor: pointer;
+  transition: background var(--wd-t-fast) var(--wd-ease);
+}
+
+.wd-queue-row:first-of-type {
+  border-top: 0;
+}
+
+.wd-queue-row:hover {
+  background: var(--wd-surface-hover);
+}
+
+.wd-queue-row[aria-selected="true"],
+.wd-queue-row[data-selected="true"] {
+  background: var(--wd-surface-selected);
+}
+
+/* The selected row carries one accent edge, not a full tint plus a border. */
+.wd-queue-row[data-selected="true"]::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  width: 2px;
+  background: var(--wd-accent);
+}
+
+.wd-queue-row {
+  position: relative;
+}
+
+.wd-cell {
+  min-width: 0;
+  font-size: var(--wd-text-sm);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.wd-cell-primary {
+  font-size: var(--wd-text-md);
+  color: var(--wd-text);
+  font-weight: var(--wd-weight-normal);
+}
+
+.wd-cell-right {
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+
+/* A simple list row where a grid is overkill. */
+.wd-list {
+  display: flex;
+  flex-direction: column;
+}
+
+.wd-list > * + * {
+  border-top: 1px solid var(--wd-border);
+}
+
+/*
+ * A two line row needs 48px, not 56px.
+ *
+ * `--wd-row-h` is 40px and the 8px of vertical padding was additive, so each
+ * row took 56px and three rows took 168px for 120px of text. The padding is
+ * now inside the minimum rather than on top of it.
+ */
+.wd-item {
+  display: flex;
+  align-items: center;
+  gap: var(--wd-3);
+  min-height: 48px;
+  padding: var(--wd-1) 0;
+  text-decoration: none;
+  color: inherit;
+  min-width: 0;
+}
+
+.wd-item-main {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  min-width: 0;
+  flex: 1;
+}
+
+.wd-item-title {
+  font-size: var(--wd-text-md);
+  color: var(--wd-text);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.wd-item-sub {
+  font-size: var(--wd-text-xs);
+  color: var(--wd-text-muted);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* ==========================================================================
+   Now. The one thing that needs the user.
+   ========================================================================== */
+
+/*
+ * The only element in the opening viewport permitted the strongest accent.
+ * Everything else is a row, a label or a count.
+ */
+.wd-now {
+  background: var(--wd-surface);
+  border: 1px solid var(--wd-border);
+  border-left: 3px solid var(--wd-accent);
+  border-radius: var(--wd-radius-lg);
+  padding: var(--wd-3) var(--wd-5) var(--wd-4);
+  box-shadow: var(--wd-shadow-sm);
+}
+
+/*
+ * 8px between the lines of the active item, not 12px.
+ *
+ * The card carries up to six children now: the subject, the heading, the
+ * reason, a qualifier when the item has one, the timing, and the actions. At
+ * 12px the regulatory change role came to 280px, which pushed the collapsed
+ * `Watching` and `Done` row to a bottom edge of 743px against a visible main
+ * area ending at 728px. Five gaps at 4px less is 20px, and the lines belong
+ * to one thought anyway, so they read better closer together.
+ */
+.wd-now > .wd-stack-3 {
+  gap: var(--wd-2);
+}
+
+.wd-now[data-severity="critical"] {
+  border-left-color: var(--wd-danger);
+}
+
+.wd-now[data-severity="high"] {
+  border-left-color: var(--wd-warning);
+}
+
+.wd-now-action {
+  font-size: var(--wd-text-2xl);
+  font-weight: var(--wd-weight-strong);
+  line-height: var(--wd-leading-tight);
+  letter-spacing: -0.01em;
+  margin: 0;
+  color: var(--wd-text);
+}
+
+.wd-now-reason {
+  font-size: var(--wd-text-md);
+  line-height: var(--wd-leading-snug);
+  color: var(--wd-text-secondary);
+  margin: 0;
+}
+
+/*
+ * A qualifier on the active item. Smaller and quieter than the claim it
+ * limits, but present, which is the requirement.
+ */
+.wd-now-qualifier {
+  font-size: var(--wd-text-xs);
+  color: var(--wd-text-muted);
+  font-style: italic;
+}
+
+.wd-now-when {
+  font-size: var(--wd-text-sm);
+  color: var(--wd-text-secondary);
+}
+
+.wd-now-when strong {
+  font-weight: var(--wd-weight-medium);
+  color: var(--wd-text);
+}
+
+/* ==========================================================================
+   Buttons
+   ========================================================================== */
+
+.wd-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--wd-2);
+  height: 32px;
+  padding: 0 var(--wd-3);
+  border: 1px solid transparent;
+  border-radius: var(--wd-radius);
+  background: var(--wd-surface);
+  color: var(--wd-text);
+  font: inherit;
+  font-size: var(--wd-text-sm);
+  font-weight: var(--wd-weight-medium);
+  white-space: nowrap;
+  cursor: pointer;
+  text-decoration: none;
+  transition: background var(--wd-t-fast) var(--wd-ease);
+}
+
+.wd-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* One per focus area. */
+.wd-btn-primary {
+  background: var(--wd-accent);
+  border-color: var(--wd-accent);
+  color: #ffffff;
+}
+
+.wd-btn-primary:hover:not(:disabled) {
+  background: #4c40e0;
+}
+
+.wd-btn-secondary {
+  border-color: var(--wd-border-strong);
+  color: var(--wd-text-secondary);
+}
+
+.wd-btn-secondary:hover:not(:disabled) {
+  background: var(--wd-surface-hover);
+  color: var(--wd-text);
+}
+
+.wd-btn-quiet {
+  background: transparent;
+  color: var(--wd-text-secondary);
+}
+
+.wd-btn-quiet:hover:not(:disabled) {
+  background: var(--wd-surface-hover);
+  color: var(--wd-text);
+}
+
+/*
+ * A text action inside the content, as opposed to one in the chrome.
+ *
+ * `wd-btn-quiet` is transparent and secondary coloured, which is right in the
+ * header and the updates bar where the surrounding icons already say the row
+ * is interactive. In the middle of a page it reads as a static label: on the
+ * rendered screen `View all` and `Review preparation` were indistinguishable
+ * from the text around them. Colour plus a rule under the words is the
+ * ordinary affordance, and it costs no extra chrome.
+ */
+.wd-btn-link {
+  background: transparent;
+  color: var(--wd-accent);
+  padding-inline: var(--wd-1);
+  text-decoration: underline;
+  text-decoration-thickness: 1px;
+  text-underline-offset: 3px;
+  text-decoration-color: color-mix(in srgb, var(--wd-accent) 40%, transparent);
+}
+
+.wd-btn-link:hover:not(:disabled) {
+  background: var(--wd-surface-hover);
+  text-decoration-color: currentcolor;
+}
+
+.wd-btn-lg {
+  height: 36px;
+  padding: 0 var(--wd-4);
+  font-size: var(--wd-text-base);
+}
+
+.wd-btn-sm {
+  height: 28px;
+  padding: 0 var(--wd-2);
+  font-size: var(--wd-text-xs);
+}
+
+.wd-icon-btn {
+  display: inline-grid;
+  place-items: center;
+  width: 32px;
+  height: 32px;
+  border: 0;
+  border-radius: var(--wd-radius);
+  background: transparent;
+  color: var(--wd-text-secondary);
+  cursor: pointer;
+  flex-shrink: 0;
+  transition: background var(--wd-t-fast) var(--wd-ease);
+}
+
+.wd-icon-btn:hover:not(:disabled) {
+  background: var(--wd-surface-hover);
+  color: var(--wd-text);
+}
+
+.wd-icon-btn[aria-expanded="true"],
+.wd-icon-btn[aria-pressed="true"] {
+  background: var(--wd-surface-hover);
+  color: var(--wd-text);
+}
+
+/* ==========================================================================
+   Status. A dot and a word, not a bordered chip.
+   ========================================================================== */
+
+/*
+ * The V2 layer put a bordered chip on every status, which made a system
+ * message and a material risk look alike. Here the default is a 6px dot plus
+ * a text label, and a chip is reserved for severity, authority and counts.
+ */
+.wd-status {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: var(--wd-text-sm);
+  color: var(--wd-text-secondary);
+  white-space: nowrap;
+}
+
+.wd-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  flex-shrink: 0;
+  background: var(--wd-text-disabled);
+}
+
+.wd-dot[data-tone="accent"] { background: var(--wd-accent); }
+.wd-dot[data-tone="info"] { background: var(--wd-info); }
+.wd-dot[data-tone="success"] { background: var(--wd-success); }
+.wd-dot[data-tone="warning"] { background: var(--wd-warning); }
+.wd-dot[data-tone="danger"] { background: var(--wd-danger); }
+
+.wd-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  height: 20px;
+  padding: 0 var(--wd-2);
+  border-radius: var(--wd-radius-sm);
+  background: var(--wd-surface-hover);
+  color: var(--wd-text-secondary);
+  font-size: var(--wd-text-xs);
+  font-weight: var(--wd-weight-medium);
+  white-space: nowrap;
+  flex-shrink: 0;
+  line-height: 1;
+}
+
+.wd-chip[data-tone="accent"] { background: var(--wd-accent-soft); color: var(--wd-accent); }
+.wd-chip[data-tone="info"] { background: var(--wd-info-soft); color: var(--wd-info); }
+.wd-chip[data-tone="success"] { background: var(--wd-success-soft); color: var(--wd-success); }
+.wd-chip[data-tone="warning"] { background: var(--wd-warning-soft); color: var(--wd-warning); }
+.wd-chip[data-tone="danger"] { background: var(--wd-danger-soft); color: var(--wd-danger); }
+
+.wd-oid {
+  font-family: var(--wd-font-mono);
+  font-size: var(--wd-text-xs);
+  color: var(--wd-text-muted);
+  white-space: nowrap;
+  user-select: all;
+}
+
+/* ==========================================================================
+   Inline AI suggestion. One, and compact.
+   ========================================================================== */
+
+/*
+ * One AI line, and the emphasis is on `line`.
+ *
+ * This was a 141px filled panel holding three lines of prose, which made it
+ * the second strongest thing on the screen and put it in competition with
+ * the one block that is supposed to win. The brief allows one concise AI
+ * line, so it is now one: the attribution and the way in sit on one row, the
+ * substance on the next, and the panel is 64px. That is 77px of the 170px
+ * the fold needed back, taken from the lowest value pixels on the page.
+ */
+.wd-suggestion {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: var(--wd-2) var(--wd-4) var(--wd-3);
+  background: var(--wd-accent-soft);
+  border-radius: var(--wd-radius-lg);
+  font-size: var(--wd-text-sm);
+}
+
+.wd-suggestion-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--wd-3);
+}
+
+.wd-suggestion-label {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: var(--wd-text-xs);
+  font-weight: var(--wd-weight-medium);
+  color: var(--wd-accent);
+}
+
+/*
+ * Clamped to one line.
+ *
+ * The page already asks the repository for a single clause, so in normal use
+ * this does nothing. It is here because the text can come from a live model
+ * response, and a model that returns four sentences must not be able to
+ * reflow the page it is commenting on.
+ */
+.wd-suggestion-body {
+  color: var(--wd-text-secondary);
+  line-height: var(--wd-leading-snug);
+  margin: 0;
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 1;
+  line-clamp: 1;
+  overflow: hidden;
+}
+
+/* ==========================================================================
+   Disclosure, for Done and for anything optional
+   ========================================================================== */
+
+/*
+ * Two collapsed disclosures share a row, and each takes the full width once
+ * it is opened. `wrap` plus a 100 percent basis on an open one is what gives
+ * that without any JavaScript: closed they are content sized and sit side by
+ * side, open one takes the row to itself.
+ */
+.wd-disclosure-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  gap: var(--wd-2) var(--wd-6);
+}
+
+.wd-disclosure-row > * {
+  min-width: 0;
+}
+
+.wd-disclosure-row > [data-open="true"] {
+  flex: 1 0 100%;
+}
+
+.wd-disclosure {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--wd-2);
+  height: 28px;
+  padding: 0 var(--wd-2) 0 var(--wd-1);
+  border: 0;
+  border-radius: var(--wd-radius);
+  background: transparent;
+  color: var(--wd-text-secondary);
+  font: inherit;
+  font-size: var(--wd-text-sm);
+  cursor: pointer;
+}
+
+.wd-disclosure:hover {
+  background: var(--wd-surface-hover);
+  color: var(--wd-text);
+}
+
+.wd-disclosure-count {
+  font-variant-numeric: tabular-nums;
+  color: var(--wd-text-muted);
+}
+
+.wd-disclosure-chevron {
+  transition: rotate var(--wd-t-fast) var(--wd-ease);
+}
+
+.wd-disclosure[aria-expanded="false"] .wd-disclosure-chevron {
+  rotate: -90deg;
+}
+
+/* ==========================================================================
+   Source freshness. One quiet line.
+   ========================================================================== */
+
+.wd-freshness {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: var(--wd-text-xs);
+  color: var(--wd-text-muted);
+  background: transparent;
+  border: 0;
+  padding: 0;
+  cursor: pointer;
+  font-family: inherit;
+}
+
+.wd-freshness:hover {
+  color: var(--wd-text-secondary);
+  text-decoration: underline;
+}
+
+/* ==========================================================================
+   Updates bar. 40px, collapsible, and quiet in analyst mode.
+   ========================================================================== */
+
+.wd-updates {
+  height: var(--wd-updates-h);
+  display: flex;
+  align-items: center;
+  gap: var(--wd-3);
+  padding: 0 var(--wd-3);
+  background: var(--wd-surface);
+  border-top: 1px solid var(--wd-border);
+  min-width: 0;
+  overflow: hidden;
+  font-size: var(--wd-text-sm);
+}
+
+/* ==========================================================================
+   Skeletons. Neutral, no strong shimmer.
+   ========================================================================== */
+
+.wd-skeleton {
+  display: block;
+  border-radius: var(--wd-radius-sm);
+  background: var(--wd-surface-hover);
+  position: relative;
+  overflow: hidden;
+}
+
+.wd-skeleton::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    100deg,
+    transparent 24%,
+    rgb(255 255 255 / 55%) 50%,
+    transparent 76%
+  );
+  background-size: 240% 100%;
+  animation: wd-sheen 1.6s linear infinite;
+}
+
+/*
+ * Reduced motion gets a flat fill. The brief asks for neutral skeletons and no
+ * strong shimmer even with motion allowed, which is why the gradient above is
+ * a wash rather than a highlight.
+ */
+@media (prefers-reduced-motion: reduce) {
+  .wd-skeleton::after {
+    animation: none;
+    background: none;
+  }
+}
+
+.wd-skeleton-row {
+  display: flex;
+  align-items: center;
+  gap: var(--wd-3);
+  min-height: var(--wd-row-h);
+  padding: var(--wd-2) var(--wd-3);
+  border-top: 1px solid var(--wd-border);
+}
+
+.wd-skeleton-row:first-child {
+  border-top: 0;
+}
+
+/* ==========================================================================
+   Empty states. Calm, and they name what would change them.
+   ========================================================================== */
+
+.wd-empty {
+  display: flex;
+  flex-direction: column;
+  gap: var(--wd-1);
+  padding: var(--wd-6) var(--wd-4);
+  color: var(--wd-text-secondary);
+  font-size: var(--wd-text-sm);
+}
+
+.wd-empty-title {
+  font-size: var(--wd-text-md);
+  font-weight: var(--wd-weight-medium);
+  color: var(--wd-text);
+}
+
+/* ==========================================================================
+   Notices
+   ========================================================================== */
+
+.wd-notice {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--wd-2);
+  padding: var(--wd-2) var(--wd-3);
+  border-radius: var(--wd-radius);
+  font-size: var(--wd-text-sm);
+  line-height: var(--wd-leading-snug);
+  background: var(--wd-surface-subtle);
+  color: var(--wd-text-secondary);
+}
+
+.wd-notice[data-tone="warning"] { background: var(--wd-warning-soft); color: var(--wd-warning); }
+.wd-notice[data-tone="danger"] { background: var(--wd-danger-soft); color: var(--wd-danger); }
+.wd-notice[data-tone="info"] { background: var(--wd-info-soft); color: var(--wd-info); }
+
+/* Required on every regulatory reference. Quiet, never omitted. */
+.wd-regulatory {
+  font-size: var(--wd-text-xs);
+  color: var(--wd-text-muted);
+}
+
+/* The permanent synthetic data disclosure. */
+.wd-synthetic {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: var(--wd-text-xs);
+  color: var(--wd-text-muted);
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+.wd-synthetic::before {
+  content: "";
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  background: var(--wd-text-disabled);
+}
+
+/* ==========================================================================
+   Focus and accessibility
+   ========================================================================== */
+
+.workday-v3 :focus-visible {
+  outline: 2px solid var(--wd-accent);
+  outline-offset: 2px;
+  border-radius: var(--wd-radius-sm);
+}
+
+.wd-sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+  border: 0;
+}
+
+/* ==========================================================================
+   Animation
+   ========================================================================== */
+
+@keyframes wd-fade-in {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes wd-slide-in {
+  from { translate: 12px 0; opacity: 0; }
+  to { translate: 0 0; opacity: 1; }
+}
+
+@keyframes wd-sheen {
+  from { background-position: 180% 0; }
+  to { background-position: -80% 0; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .workday-v3 *,
+  .workday-v3 *::before,
+  .workday-v3 *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+/* ==========================================================================
+   Menus
+   ========================================================================== */
+
+.wd-menu {
+  position: absolute;
+  top: calc(100% + 4px);
+  right: 0;
+  z-index: 70;
+  min-width: 212px;
+  padding: var(--wd-1);
+  background: var(--wd-surface);
+  border: 1px solid var(--wd-border);
+  border-radius: var(--wd-radius-lg);
+  box-shadow: var(--wd-shadow-md);
+}
+
+.wd-menu-item {
+  display: flex;
+  align-items: center;
+  gap: var(--wd-2);
+  width: 100%;
+  min-height: 32px;
+  padding: var(--wd-1) var(--wd-2);
+  border: 0;
+  border-radius: var(--wd-radius-sm);
+  background: transparent;
+  color: var(--wd-text-secondary);
+  font: inherit;
+  font-size: var(--wd-text-sm);
+  text-align: left;
+  text-decoration: none;
+  cursor: pointer;
+}
+
+.wd-menu-item:hover {
+  background: var(--wd-surface-hover);
+  color: var(--wd-text);
+}
+
+.wd-menu-label {
+  padding: var(--wd-2) var(--wd-2) var(--wd-1);
+  font-size: var(--wd-text-xs);
+  color: var(--wd-text-muted);
+}
+
+.wd-menu-sep {
+  height: 1px;
+  margin: var(--wd-1) 0;
+  background: var(--wd-border);
+}

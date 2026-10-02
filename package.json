@@ -31,7 +31,10 @@
     "eval": "tsx scripts/evaluate.ts",
     "verify:config": "tsx scripts/verify-config.ts",
     "smoke:live": "cross-env NFR_DEMO_MODE=live tsx scripts/smoke-live.ts",
-    "verify:seed": "tsx scripts/verify-seed-depth.ts"
+    "verify:seed": "tsx scripts/verify-seed-depth.ts",
+    "capture:v1": "node scripts/capture-screens.mjs v1",
+    "capture:v2": "node scripts/capture-screens.mjs v2",
+    "build:verify": "cross-env NFR_DIST_DIR=.next-verify next build"
   },
   "dependencies": {
     "@openai/agents": "0.18.0",
@@ -41,6 +44,7 @@
     "d3": "7.9.0",
     "drizzle-orm": "0.45.3",
     "elkjs": "0.12.0",
+    "geist": "^1.7.2",
     "motion": "13.4.6",
     "next": "16.3.7",
     "openai": "7.25.0",

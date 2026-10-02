@@ -584,3 +584,189 @@ exited zero with a blank file, the mutation handlers returned success receipts
 for writes that never happened, and the masked key leak came out of a code path
 no test exercised. Gates catch what they were written to catch. Opening the
 artefact catches the rest.
+
+---
+
+## 7. Interactive Workday V2: QA and design review
+
+Added by the QA and design review workstream after the V2 redesign. The full
+record is `docs/handoffs/workday-v2-qa.md`: every command with its real output,
+a verdict per capability, every defect with a reproduction, the accessibility
+violations by impact, the visual review against the captured screens, and an
+explicit list of what could not be verified. This section is the summary and
+the part that changes the conclusions in sections 2 to 6 above.
+
+**No application code was changed by this workstream.** Not one line, including
+the small self-evident fixes the brief permits. Every failure listed below is
+the product as it stands.
+
+### 7.1 Five new Playwright suites
+
+| File | Covers |
+|---|---|
+| `tests/e2e/workday-v2.spec.ts` | the six role landings, the icon rail, the command palette, the context drawer, the role switch, a decision end to end, the modes, German, the settings area, `?ui=v1`, and that `/story` is untouched |
+| `tests/e2e/workday-v2-live-day.spec.ts` | play, pause, step, jump to live, unread, guided catch-up, auto-pause, viewed versus live time, the 14:05 propagation, and the keyboard map including the negative test |
+| `tests/e2e/workday-v2-ai-partner.spec.ts` | the dock on all eight routes for two roles, the three tabs, the state, the card's two separate lists, evidence in place, the chat, and the generation contract |
+| `tests/e2e/workday-v2-visual.spec.ts` | the type cap, Geist resolution, overflow, clipped controls, the centre being the largest region, the permanent disclosure, reduced motion, and axe-core on eleven surfaces |
+| `tests/e2e/workday-v2-integration.spec.ts` | the integration centre, connector health and mode, freshness, the credential scan, deep links, the queue, and branding |
+
+RESULTS_SUMMARY_PLACEHOLDER
+
+### 7.2 The three most serious defects
+
+1. **The command palette resets the scenario with no confirmation.** The row
+   is labelled "Reset the day, confirm in the demo menu" and the code comment
+   claims it "performs nothing until the second confirmation", but its handler
+   calls `actionResetScenario()` directly and `app/actions.ts:167` has no gate.
+   One keystroke discards every decision, rationale, approval and audit event
+   taken during a demonstration. The palette's subsequence matching returns
+   that row for almost any query. Handoff defect 7.1.
+2. **The AI Partner's generation choreography can never run.** Three
+   independent causes: the event channel never publishes an `agent.` kind; the
+   dock's bridge listens only for `message` while the route names every frame
+   with `event:`, so it receives nothing at all; and nothing calls the
+   generation route automatically, because `onRoleOpened`,
+   `onFocusItemSelected` and `onDecisionOpened` are exported and never called.
+   Four acceptance criteria about preparation, progressive reveal and the
+   failure fallback are unreachable in the running product. Handoff defect 7.6.
+3. **The context drawer is not usable from the keyboard.** It does not take
+   focus when it opens, Tab is not trapped and walks the page behind the scrim,
+   and Escape does not return focus to the trigger. Two one line causes, both
+   in `Drawer`: an effect that depends on `[open]` while the portal only
+   renders once `mounted` flips, and an early `return null` in `ContextDrawer`
+   that unmounts the panel before the `!open` branch can restore focus. Handoff
+   defect 7.2.
+
+### 7.3 This revises section 4.8 of this report
+
+Section 4.8 above records an accent-text contrast defect as fixed. A different
+one is open in the V2 scope: `--app-text-faint` is `#5f6875`, which measures
+**3.33:1** against `--app-shell` `#0f1216` and is applied at 12px. It is used
+for the entity name in the top bar, the secondary line on every queue row,
+"Nothing new" in the live day bar and the capability labels on every connector
+row, and it accounts for 94 of the 96 serious axe nodes.
+`--app-text-muted` at 5.31:1 passes, so the fix is a token value.
+
+The same token is why the mandatory synthetic data disclosure fails contrast in
+the administrator area, though not in the workday.
+
+### 7.4 This revises the live AI path section
+
+Section 3 above records the live path as unverified for want of a credential.
+With a valid key the smoke test passes first hand: 744 models, `gpt-5.1`
+primary, `ok true`, status completed, `produced text true`, and no key material
+in the result. The redaction layer was exercised incidentally by an invalid key
+and passed, logging `[redacted]`.
+
+Two findings follow, and the first is the important one.
+
+**The three AI modes do not differ in origin when driven through the product.**
+Selecting Live AI, Presenter Safe and Offline from the demo menu and then
+requesting the same suggestion produced `source: "cache"` all three times with
+identical stage lists. The cause is that `setResolvedDemoMode` does not reach
+the module instance the route handlers hold: after selecting Live AI the AI
+Partner header reported Live while `/api/health/ai` continued to report `safe`,
+and `generateSuggestion` gates its live branch on the route handler's copy. A
+presenter can select Live AI, see the interface agree, and be served cached
+content for the whole demonstration. Handoff defect 7.13.
+
+The confound is recorded in the handoff: the development server resolves an
+invalid key, so `source: "cache"` in live mode has a second sufficient
+explanation. The key-independent evidence is the health route, which calls no
+provider and still reported `safe`. Starting the server with
+`NFR_DEMO_MODE=live` and a valid key would settle it in one step and was not
+done, because restarting would have interrupted other workstreams.
+
+**A live suggestion that did reach the interface was corrupted.** One of the
+`source: "live"` rows in the developer database contains a CJK ideograph
+`U+770B` and a typographic apostrophe `U+2019` in English prose, and renders
+verbatim in the dock on `/workday/tprm`. It has `validated_at` set:
+`validateSuggestionDraft` has no character set rule, and `check:copy` scans
+files by extension so it cannot see run time content. Handoff defect 7.14. The
+row predates the change to the provider's strict `json_schema` mode and a live
+generation run after that change came back character set clean, so the
+likelihood is lower than the row suggests; the missing rule is not.
+
+**The validator is otherwise strong, and that was verified on live output.** A
+live generation for the resilience lead was refused outright on the
+`swiss-dora` rule, because the draft asserted an EU instrument against the
+Swiss entity. Nothing was published, `generation.state` was `error` and the
+stage list honestly stopped at `reconciling`. That is the single most damaging
+factual error this product could make, a real model made it, and the
+deterministic gate caught it.
+
+**A live suggestion publishes correctly through the deployment path.**
+Generated first hand for `rcsa` / `CTL-PAY-014`: `source: live`, state `ready`,
+the full seven stage list, confidence 79, six checks and **zero** actions
+completed, which is the two-lists rule holding on live output rather than only
+on authored content. `sources` is empty, confirming the generation handoff's
+own limitation that no `source_requirements` rows are seeded.
+
+### 7.5 One pre-existing suite no longer tests what is served
+
+Measured at desktop-1920 by running the whole directory:
+`journeys.spec.ts` 29 tests with **13 failed**, `security.spec.ts` 18 of 18
+passed, `visual.spec.ts` 37 of 37 passed.
+
+`journeys.spec.ts` was written against V1 and V2 is now the default on the same
+routes. It keys on a "Workday timeline" navigation, a
+`header .mono.strong-text` clock, an `aria-haspopup="true"` role switcher and
+an "Interface language" group, none of which V2 renders. **So
+`npm run audit:all` cannot pass**, and 13 of its failures are not defects in
+the product. The fix is `?ui=v1` on that file's `open()` helper, or a selector
+migration, and it belongs to its owner. It was not done here.
+
+Two corrections to the expectation going in. `security.spec.ts` is unaffected
+because it inspects served bundles rather than the rendered interface. And
+`visual.spec.ts` **passes in full against V2 with nothing changed**: it
+measures properties rather than a shell, so no horizontal or vertical overflow,
+no text below 10px, no dead or covered control and no content clipped out of
+reach all hold on all thirteen workday surfaces it checks. That is an
+independent confirmation of the V2 geometry results, written by someone else
+against a different interface.
+
+### 7.6 Two things that make the captured screens misleading
+
+Both matter because `docs/screenshots/workday-v2/` is the artefact a designer
+reviews.
+
+The **Next development overlay badge sits exactly on top of the live day play
+control** at every viewport: the badge is at (22, 1026) 32 by 32 and the
+control at (24, 1042) 28 by 28, and `elementFromPoint` at the control's centre
+returns `NEXTJS-PORTAL`. In `npm run dev` the Play button cannot be clicked,
+and in all 72 captured images the product's signature control is hidden.
+`visual.spec.ts` excuses `nextjs-portal` from its obstruction check, with good
+reason, which is why no gate catches it.
+
+And **`capture-screens.mjs` waits 1500ms after `networkidle`, which is not
+enough for the role visualisations**. Every `*-workbench-*.png` shows the
+Processes and Risks columns empty and a risk card floating at the bottom with
+its chip clipped mid word. Captured again with an 8000ms settle the same route
+renders correctly.
+
+### 7.7 What the redesign demonstrably achieved
+
+Worth recording alongside the defects, because it is measurable and it is the
+thing section 1 of `docs/INTERACTIVE_WORKDAY_V2.md` claims.
+
+The centre work area is **1526x982 at 1920x1080 (72.3 percent), 1046x802 at
+1440x900 (64.7 percent) and 1260x670 at 1366x768 (80.5 percent)**,
+independently recomputed and matching the published figures exactly. The centre
+is the largest region of the shell on all eight routes at all three viewports.
+**Zero** text bearing elements render above 24px anywhere in the workday scope,
+so the token bridge enforces the type cap structurally rather than by review.
+Geist Sans and Geist Mono are the only resolved families. Nothing overflows
+horizontally and no control is clipped or unreachable. The permanent disclosure
+is rendered and inside the viewport on every surface checked. Under
+`prefers-reduced-motion: reduce` there is not one infinitely animating element
+in the workday scope. And a branding switch changes the resolved identity and
+the change log while leaving the clock, the open decision count and the audit
+trail length identical, which is the central product claim and it holds.
+
+The strongest single piece of evidence is not in the new suites at all.
+`tests/e2e/visual.spec.ts`, written against V1 by a different workstream and
+unchanged, passes 37 of 37 against V2. It measures properties rather than
+selectors: no overflow in either axis on a surface designed as one stage, no
+text below 10px, no control with a dead hit area or covered at its own centre,
+and no content clipped out of reach. V2 satisfies the whole of the V1 visual
+matrix without that file being touched.

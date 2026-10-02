@@ -32,6 +32,7 @@ async function main(): Promise<void> {
   console.log(`  latency     ${result.latencyMs} ms`);
   console.log(`  tokens in   ${result.inputTokens}`);
   console.log(`  tokens out  ${result.outputTokens}`);
+  console.log(`  produced text ${result.producedText}`);
   if (result.error) console.log(`  error       ${result.error}`);
 
   /*

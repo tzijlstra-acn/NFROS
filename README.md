@@ -73,6 +73,9 @@ Then open:
 | Workday, role selection | http://localhost:3000/workday |
 | Workday, Operational Risk Partner | http://localhost:3000/workday/rcsa |
 | Workday, Third-Party Risk Manager | http://localhost:3000/workday/tprm |
+| The previous interface, for comparison | http://localhost:3000/workday/rcsa?ui=v1 |
+| Administration, organisation | http://localhost:3000/settings/organisation |
+| Administration, integrations | http://localhost:3000/settings/integrations |
 | Control room | http://localhost:3000/control-room |
 | Trust and authority | http://localhost:3000/trust |
 | Value model | http://localhost:3000/value |
@@ -80,6 +83,27 @@ Then open:
 | AI health, JSON | http://localhost:3000/api/health/ai |
 
 If port 3000 is taken, pass another: `next dev -p 3001`.
+
+### Which interface you get
+
+The interactive workday has two interfaces served from the same routes. They
+read the same database, the same scenario run, the same repositories, the same
+server actions and the same authority gate; only the presentation differs.
+
+```text
+?ui=v2    Interactive Workday V2, the default
+?ui=v1    the previous interface
+NFR_WORKDAY_UI=v1|v2    pins a version for a deployment
+```
+
+V2 is a compact product interface: Geist typography, a graphite palette, a 48px
+top bar, a 58px icon rail, a persistent AI Partner, a live day player with play
+and catch up, and the former intelligence rail as a contextual drawer. V1 is
+retained as a fallback for the transition and is not a supported variant.
+
+At 1366x768 the V2 work object has 80.5 percent of the viewport against 45.6
+percent in V1. The reasoning and the full measurements are in
+`docs/INTERACTIVE_WORKDAY_V2.md`.
 
 ---
 
@@ -224,13 +248,46 @@ Resolution precedence:
 4. `OPENAI_MINI_API_KEY` from the same files, as a final fallback
 5. Presenter safe or offline mode when no usable key is found
 
+### Running live mode
+
+Precedence 1 is the route to use, because it is the only one that keeps the key
+out of this repository entirely. Set it in the launching shell:
+
+```bash
+export OPENAI_API_KEY=...        # never committed, never written to a file here
+npm run demo:live
+```
+
+The same applies to every script that makes a call: `npm run smoke:live`,
+`npm run eval` with `NFR_DEMO_MODE=live`, and `npx tsx scripts/verify-ai-partner.ts`.
+A key set this way reaches the server process and nothing else: it is not
+written to disk, not sent to the browser, and not readable through any route.
+`npm run scan:secrets` covers the production browser bundle and asserts it.
+
 ### Current status of the key on this machine
 
-The key in `RealAIInfrastructure/.env` **resolves correctly and is rejected by
-OpenAI with HTTP 401**. Live mode therefore cannot function until it is
-replaced. Presenter safe and offline mode are unaffected, and every interactive
-surface, the whole story and the full decision and execution path work without
-a model.
+**Live mode works and has been verified end to end.** Three credentials were
+tried: the one in `RealAIInfrastructure/.env` and a second supplied through the
+shell are both rejected by the provider with HTTP 401 `invalid_api_key`,
+confirmed with a raw request straight to `api.openai.com/v1/models` that
+bypasses all application code. A third, supplied through the shell, is accepted:
+744 models visible, `gpt-5.1` resolved as primary and `gpt-5-mini` as fast.
+
+Verified live: the smoke test, model probing, suggestion generation for both
+demonstration roles with real citations, a chat turn producing typed parts with
+cited evidence, and the evaluation suite including its four grounded probes.
+Running it found three real defects that the fallback had been hiding, all now
+fixed and recorded in `docs/ASSUMPTIONS.md` section 7.18.
+
+The key is supplied through the shell environment and is deliberately NOT in
+this repository, not even in a gitignored file. See the key rules below.
+
+Presenter safe remains the default, because predictable timing matters more
+than novelty in a live demonstration. Every interactive surface, the whole
+story, the live day player, the AI Partner and the full decision and execution
+path also work with no model at all, which is a requirement rather than a
+consolation: the complete local experience must not require external
+credentials.
 
 ```bash
 npm run smoke:live     # one minimal call; reports model, status, latency, tokens
@@ -393,6 +450,14 @@ the sources.
 | `docs/SOURCE_REPOSITORY_AUDIT.md` | What was inspected and what was borrowed |
 | `docs/ASSUMPTIONS.md` | **Every judgment call, including the ones to challenge first** |
 | `docs/QA_REPORT.md` | What was tested, what passed, what did not |
+| `docs/INTERACTIVE_WORKDAY_V2.md` | **The interactive redesign: what changed, why, and where the code is** |
+| `docs/PRODUCT_ARCHITECTURE.md` | The packaging model, function packs, dedicated deployment assumption |
+| `docs/WHITE_LABEL_AND_PACKAGING.md` | The three branding modes, product language, entitlements |
+| `docs/DEPLOYMENT_PROFILES.md` | The four deployment shapes and what this prototype actually runs |
+| `docs/INTEGRATION_FABRIC.md` | The system of engagement principle, inbound and outbound pipelines |
+| `docs/CONNECTOR_CONTRACT.md` | The connector interface, capabilities, idempotency, errors |
+| `docs/PRODUCTIZATION_GAPS.md` | **What a real engagement would still have to build** |
+| `docs/handoffs/` | Per workstream handoffs from the redesign, including the V1 baseline audit |
 
 ---
 

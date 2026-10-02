@@ -91,6 +91,15 @@ export interface SupplierConstellationProps {
   selectedNodeId?: string | null;
   onSelectNode?: (nodeId: string) => void;
   heading?: string;
+  /**
+   * Nodes a recent monitoring change reached.
+   *
+   * Drawn as a 2px edge marker, the same device the application uses on a list
+   * row. Omitted by default, which leaves the previous rendering untouched.
+   */
+  changedNodeIds?: readonly string[];
+  /** The marker's accessible name. Passed in so it can be German. */
+  changedLabel?: string;
 }
 
 /* ==========================================================================
@@ -253,7 +262,17 @@ export function SupplierConstellation({
   selectedNodeId = null,
   onSelectNode,
   heading = "Supplier dependency and chain",
+  changedNodeIds,
+  changedLabel = "Changed recently",
 }: SupplierConstellationProps) {
+  /* Keyed on the joined string rather than the array: a caller that rebuilds
+     the array every render would otherwise rebuild this set every render. */
+  const changedNodesKey = (changedNodeIds ?? []).join("|");
+  const changedNodes = useMemo(
+    () => new Set(changedNodesKey.length === 0 ? [] : changedNodesKey.split("|")),
+    [changedNodesKey],
+  );
+
   const patternId = useId().replace(/:/g, "");
   const [activeId, setActiveId] = useState<string | null>(null);
 
@@ -442,12 +461,17 @@ export function SupplierConstellation({
             {placed.map((node) => {
               const dim = connected !== null && !connected.has(node.id);
               const isFocused = focusTarget === node.id;
+              const hasChanged = changedNodes.has(node.id);
+              const nodeLabel = describeNode(node);
               return (
                 <g
                   key={node.id}
                   tabIndex={0}
                   role="button"
-                  aria-label={describeNode(node)}
+                  /* Geometry alone would be invisible to a screen reader, so a
+                     changed node says so in its accessible name. */
+                  aria-label={hasChanged ? `${nodeLabel} ${changedLabel}.` : nodeLabel}
+                  data-changed={hasChanged ? true : undefined}
                   opacity={dim ? 0.24 : 1}
                   style={{ cursor: onSelectNode ? "pointer" : "default", outline: "none" }}
                   onMouseEnter={() => setActiveId(node.id)}
@@ -462,6 +486,20 @@ export function SupplierConstellation({
                     }
                   }}
                 >
+                  {/* A 2px edge beside the node, not a fill: the halves already
+                      carry the appendix divergence and the pulse already carries
+                      the event, so recency gets its own still mark. */}
+                  {hasChanged ? (
+                    <rect
+                      x={node.x - node.size - 8}
+                      y={node.y - 6}
+                      width="2"
+                      height="12"
+                      rx="1"
+                      fill="var(--accent)"
+                    />
+                  ) : null}
+
                   {/* Focus ring drawn rather than inherited: a CSS box-shadow does
                       not paint on an SVG shape. */}
                   {isFocused ? (

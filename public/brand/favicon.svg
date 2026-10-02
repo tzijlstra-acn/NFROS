@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" width="32" height="32" role="img" aria-label="NFR WorkOS">
+  <!--
+    Favicon placeholder. Abstract for the same reason as the two marks: no real
+    trademark artwork belongs in a synthetic prototype.
+  -->
+  <rect width="32" height="32" rx="7" fill="#0f1216" />
+  <path d="M9 23V13.5a7 7 0 0 1 14 0V23" fill="none" stroke="#f4f6f8" stroke-width="2.2" stroke-linecap="round" />
+  <circle cx="16" cy="8.6" r="2" fill="#8b82ff" />
+</svg>

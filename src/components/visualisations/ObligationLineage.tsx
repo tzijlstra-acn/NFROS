@@ -88,6 +88,17 @@ export interface ObligationLineageProps {
   selectedObligationId?: string | null;
   onSelectObligation?: (obligationId: string) => void;
   heading?: string;
+  /**
+   * Obligations extracted or re-extracted recently.
+   *
+   * Drawn as a 2px edge marker on the obligation node. It says the extraction
+   * is new, which is a different claim from the terminal state the ribbon
+   * already carries, and the two must not be confused: a newly extracted
+   * obligation can be fully evidenced, and a long standing one can be unowned.
+   */
+  changedObligationIds?: readonly string[];
+  /** The marker's accessible name. Passed in so it can be German. */
+  changedLabel?: string;
 }
 
 /** The label that must accompany every regulatory reference in this product. */
@@ -217,7 +228,17 @@ export function ObligationLineage({
   selectedObligationId = null,
   onSelectObligation,
   heading = "Obligation to control lineage",
+  changedObligationIds,
+  changedLabel = "Changed recently",
 }: ObligationLineageProps) {
+  /* Keyed on the joined string rather than the array: a caller that rebuilds
+     the array every render would otherwise rebuild this set every render. */
+  const changedObligationsKey = (changedObligationIds ?? []).join("|");
+  const changedObligations = useMemo(
+    () => new Set(changedObligationsKey.length === 0 ? [] : changedObligationsKey.split("|")),
+    [changedObligationsKey],
+  );
+
   // Instance scoped, so two lineage views on one page cannot share a pattern id.
   const patternId = useId().replace(/:/g, "");
   const [activeId, setActiveId] = useState<string | null>(null);
@@ -571,6 +592,10 @@ export function ObligationLineage({
               const obligation = row.obligation;
               const dim = focusTarget !== null && focusTarget !== obligation.id;
               const isFocused = focusTarget === obligation.id;
+              const obligationLabel = describeObligation(
+                obligation,
+                publicationById.get(obligation.publicationId),
+              );
               const oblTop = row.top;
               const oblBottom = row.top + row.height;
               const targetsTop = oblTop + 7;
@@ -639,7 +664,12 @@ export function ObligationLineage({
                   <g
                     tabIndex={0}
                     role="button"
-                    aria-label={describeObligation(obligation, publicationById.get(obligation.publicationId))}
+                    aria-label={
+                      changedObligations.has(obligation.id)
+                        ? `${obligationLabel} ${changedLabel}.`
+                        : obligationLabel
+                    }
+                    data-changed={changedObligations.has(obligation.id) ? true : undefined}
                     style={{ cursor: onSelectObligation ? "pointer" : "default", outline: "none" }}
                     onMouseEnter={() => setActiveId(obligation.id)}
                     onMouseLeave={() => setActiveId(null)}
@@ -665,6 +695,17 @@ export function ObligationLineage({
                         strokeWidth="2"
                       />
                     ) : null}
+
+                    {changedObligations.has(obligation.id) ? (
+                      <rect
+                        x={COLS.obligation.x - 7}
+                        y={oblTop + 2}
+                        width="2"
+                        height={Math.max(8, row.height - 4)}
+                        rx="1"
+                        fill="var(--accent)"
+                      />
+                    ) : null}
                     <rect
                       x={COLS.obligation.x}
                       y={oblTop}
@@ -677,6 +718,17 @@ export function ObligationLineage({
                       }
                       strokeWidth={obligation.isUnownedGap ? "1.8" : "1.2"}
                     />
+                    {/*
+                      * The identifier only, not the paragraph reference.
+                      *
+                      * The paragraph column states the reference on this same
+                      * row, so repeating it here was redundant, and because
+                      * this label is left anchored while the entity scope is
+                      * right anchored on the same baseline, the repetition
+                      * also collided with it: a card read
+                      * "OBL-2026-0031-005 Section A, pa" with "ARC-DE,
+                      * ARC-AT" drawn through the middle of the word.
+                      */}
                     <text
                       x={COLS.obligation.x + 10}
                       y={oblTop + 17}
@@ -684,7 +736,8 @@ export function ObligationLineage({
                       fontFamily="var(--font-mono)"
                       fill="var(--text-3)"
                     >
-                      {obligation.id} {obligation.paragraphReference}
+                      {obligation.id}
+                      <title>{`${obligation.id}, ${obligation.paragraphReference}`}</title>
                     </text>
                     <text
                       x={COLS.obligation.x + COLS.obligation.w - 10}

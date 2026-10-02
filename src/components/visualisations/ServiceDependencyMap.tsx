@@ -88,6 +88,15 @@ export interface ServiceDependencyMapProps {
   onSelectNode?: (nodeId: string) => void;
   heading?: string;
   /**
+   * Nodes a recent monitoring change reached.
+   *
+   * Drawn as a 2px edge marker, the same device the application uses on a list
+   * row. Omitted by default, which leaves the previous rendering untouched.
+   */
+  changedNodeIds?: readonly string[];
+  /** The marker's accessible name. Passed in so it can be German. */
+  changedLabel?: string;
+  /**
    * Renders the impact tolerance pressure bars below the drawing. True by
    * default, which is the report surface behaviour: a document is read in one
    * pass and the drawing and its tolerance table belong together.
@@ -110,7 +119,17 @@ export interface ServiceDependencyMapProps {
 const VIEW_W = 1000;
 const TOP = 56;
 const NODE_W = 196;
-const NODE_H = 56;
+/*
+ * 68 rather than 56.
+ *
+ * The label wraps to two lines at `y + 33` and `y + 46`, and the metadata line
+ * sat at `y + NODE_H - 6`, which was `y + 50`. Four pixels below a 12px line
+ * is an overlap, so a two line service name had its entity scope drawn
+ * through it: "Client Onboarding and Static Data Maintenance" carried
+ * "Arcadia Bank AG, Arcadia Bank Oesterreich AG" across its second line. The
+ * card is twelve pixels taller and the metadata sits clear of the title.
+ */
+const NODE_H = 68;
 const NODE_GAP = 22;
 const BOTTOM_PAD = 24;
 
@@ -246,8 +265,19 @@ export function ServiceDependencyMap({
   onSelectNode,
   heading = "Service dependency and impact tolerance",
   showTolerancePressure = true,
+  changedNodeIds,
+  changedLabel = "Changed recently",
 }: ServiceDependencyMapProps) {
   const [activeId, setActiveId] = useState<string | null>(null);
+
+  /* Keyed on the joined string rather than the array: a caller that rebuilds
+     the array every render would otherwise rebuild this set every render. */
+  const changedNodesKey = (changedNodeIds ?? []).join("|");
+  const changedNodes = useMemo(
+    () => new Set(changedNodesKey.length === 0 ? [] : changedNodesKey.split("|")),
+    [changedNodesKey],
+  );
+
 
   const layout = useMemo(() => {
     const columns = LANE_ORDER.map((kind) => ({
@@ -471,12 +501,15 @@ export function ServiceDependencyMap({
             const tone = statusTone(node);
             const measures = toleranceByService.get(node.id) ?? [];
             const worst = worstState(measures);
+            const hasChanged = changedNodes.has(node.id);
+            const nodeLabel = describeNode(node, measures, eventMoment);
             return (
               <g
                 key={node.id}
                 tabIndex={0}
                 role="button"
-                aria-label={describeNode(node, measures, eventMoment)}
+                aria-label={hasChanged ? `${nodeLabel} ${changedLabel}.` : nodeLabel}
+                data-changed={hasChanged ? true : undefined}
                 opacity={dim ? 0.16 : 1}
                 style={{ cursor: onSelectNode ? "pointer" : "default", outline: "none" }}
                 onMouseEnter={() => setActiveId(node.id)}
@@ -501,6 +534,19 @@ export function ServiceDependencyMap({
                     fill="none"
                     stroke="var(--accent)"
                     strokeWidth="2"
+                  />
+                ) : null}
+
+                {/* A 2px edge. The pulse belongs to the event path, so recency
+                    is given a separate, still mark. */}
+                {hasChanged ? (
+                  <rect
+                    x={x - 7}
+                    y={y + 2}
+                    width="2"
+                    height={NODE_H - 4}
+                    rx="1"
+                    fill="var(--accent)"
                   />
                 ) : null}
 
@@ -551,11 +597,34 @@ export function ServiceDependencyMap({
                     {line}
                   </text>
                 ))}
-                <text x={x + 12} y={y + NODE_H - 6} fontSize="11" fill="var(--text-4)">
-                  {[node.entityLabel, node.frameworkLabel, node.failedAtMoment ? `failed ${node.failedAtMoment}` : null]
+                {/*
+                  * Truncated to the card, with the full text on the title.
+                  *
+                  * SVG text neither wraps nor clips, so an entity scope naming
+                  * two legal entities simply drew past the card edge and over
+                  * whatever was beside it. The budget is the card width less
+                  * the left inset and a right margin, at roughly 5.4px per
+                  * character for this font and size.
+                  */}
+                {(() => {
+                  const meta = [
+                    node.entityLabel,
+                    node.frameworkLabel,
+                    node.failedAtMoment ? `failed ${node.failedAtMoment}` : null,
+                  ]
                     .filter(Boolean)
-                    .join("  ")}
-                </text>
+                    .join("  ");
+                  if (meta.length === 0) return null;
+                  const budget = Math.floor((NODE_W - 24) / 5.4);
+                  const shown =
+                    meta.length > budget ? `${meta.slice(0, budget - 3).trimEnd()}...` : meta;
+                  return (
+                    <text x={x + 12} y={y + NODE_H - 8} fontSize="11" fill="var(--text-4)">
+                      {shown}
+                      <title>{meta}</title>
+                    </text>
+                  );
+                })()}
 
                 {/* A service carries the worst state of its own tolerance measures, so
                     the map and the bars below are linked by a shared glyph. */}

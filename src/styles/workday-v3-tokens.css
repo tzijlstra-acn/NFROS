@@ -1,0 +1,508 @@
+/*
+ * Interactive Workday V3.1 tokens. Light first.
+ *
+ * A third scope, and the reason is a change of purpose rather than of taste.
+ *
+ * The V2 scope was built for a graphite application that looks precise on a
+ * projector. This one is built for an analyst who has the product open for
+ * eight hours, which is a different brief: a light canvas, less colour, fewer
+ * borders, and a hierarchy strong enough that one thing is obviously the thing
+ * to do next. V2 answered "how do I make this feel like an application". V3.1
+ * answers "how does a person in their first week know what to do".
+ *
+ * Everything is scoped under `.workday-v3`. Nothing is on `:root`. The
+ * presentation keeps `tokens.css`, the V2 interface keeps
+ * `workday-v2-tokens.css`, and neither is touched by anything here, which is
+ * what lets all three be served from the same routes for comparison.
+ *
+ * Typography is self hosted for the same reason as every other family in this
+ * repository: the application must render with its intended type in offline
+ * mode, and the build must not depend on reaching a font service.
+ */
+
+@font-face {
+  font-family: "IBM Plex Sans";
+  src: url("/fonts/ibm-plex-sans-400.woff2") format("woff2");
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "IBM Plex Sans";
+  src: url("/fonts/ibm-plex-sans-500.woff2") format("woff2");
+  font-weight: 500;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "IBM Plex Sans";
+  src: url("/fonts/ibm-plex-sans-600.woff2") format("woff2");
+  font-weight: 600;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "IBM Plex Mono";
+  src: url("/fonts/ibm-plex-mono-400.woff2") format("woff2");
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+
+.workday-v3 {
+  color-scheme: light;
+
+  /* ====================================================================
+     Typography
+     ==================================================================== */
+  --wd-font: "IBM Plex Sans", "Segoe UI", system-ui, sans-serif;
+  --wd-font-mono: "IBM Plex Mono", "Cascadia Mono", ui-monospace, monospace;
+
+  /*
+   * Three weights only. Weight and spacing carry hierarchy here, not size:
+   * the ceiling is 20px for a page title and 24px for an empty state, so
+   * there is no room to shout with scale.
+   */
+  --wd-weight-normal: 400;
+  --wd-weight-medium: 500;
+  --wd-weight-strong: 600;
+
+  --wd-text-xs: 12px;   /* metadata */
+  --wd-text-sm: 13px;   /* compact table and list rows */
+  --wd-text-base: 14px; /* default interface copy */
+  --wd-text-md: 15px;   /* important row copy, AI answer */
+  --wd-text-lg: 16px;   /* section heading */
+  --wd-text-xl: 18px;   /* object title */
+  --wd-text-2xl: 20px;  /* page title */
+  --wd-text-3xl: 24px;  /* rare empty state or special focus */
+
+  --wd-leading-tight: 1.25;
+  --wd-leading-snug: 1.4;
+  --wd-leading-normal: 1.55;
+
+  /* ====================================================================
+     Surfaces. Three levels, not six.
+     ==================================================================== */
+  --wd-canvas: #f5f6f8;
+  --wd-surface: #ffffff;
+  --wd-surface-subtle: #f8fafc;
+  --wd-surface-hover: #f1f5f9;
+  --wd-surface-selected: #f0efff;
+
+  --wd-border: #e4e7ec;
+  --wd-border-strong: #cbd2dc;
+
+  /* ====================================================================
+     Text
+     ==================================================================== */
+  --wd-text: #172033;
+  --wd-text-secondary: #475467;
+  --wd-text-muted: #7b8494;
+  --wd-text-disabled: #a0a8b5;
+
+  /* ====================================================================
+     Colour, used for meaning and nowhere else.
+     ==================================================================== */
+  --wd-accent: #5b4ff2;
+  --wd-accent-soft: #eeecff;
+  --wd-accent-border: #c7c2fb;
+
+  --wd-info: #2563eb;
+  --wd-info-soft: #eff6ff;
+
+  --wd-success: #15803d;
+  --wd-success-soft: #f0fdf4;
+
+  --wd-warning: #a15c07;
+  --wd-warning-soft: #fffbeb;
+
+  --wd-danger: #b42318;
+  --wd-danger-soft: #fff1f2;
+
+  /*
+   * Every one of the five above is already a dark enough value to pass WCAG
+   * AA as small text on white and on its own soft tint, which is why there is
+   * no separate text variant here as there is in the V2 scope. That is a
+   * property of a light theme worth stating: the dark theme needed a second
+   * value per hue because a saturated colour on a dark ground is bright, and
+   * bright is not the same as legible.
+   */
+
+  --wd-shadow-sm: 0 1px 2px rgb(16 24 40 / 5%);
+  --wd-shadow-md: 0 8px 24px rgb(16 24 40 / 8%);
+  --wd-shadow-lg: 0 16px 48px rgb(16 24 40 / 12%);
+
+  /* ====================================================================
+     Geometry
+     ==================================================================== */
+  --wd-header-h: 48px;
+  --wd-nav-w: 56px;
+  --wd-nav-w-expanded: 196px;
+  --wd-drawer-w: 360px;
+  --wd-dock-w: 360px;
+  --wd-updates-h: 40px;
+
+  /* Spacing, 4px base. */
+  --wd-1: 4px;
+  --wd-2: 8px;
+  --wd-3: 12px;
+  --wd-4: 16px;
+  --wd-5: 20px;
+  --wd-6: 24px;
+  --wd-8: 32px;
+  --wd-10: 40px;
+
+  --wd-radius-sm: 4px;
+  --wd-radius: 6px;
+  --wd-radius-lg: 8px;
+  --wd-radius-pill: 999px;
+
+  /* Row metrics, so every queue in the product lines up. */
+  --wd-row-h: 40px;
+  --wd-row-h-compact: 34px;
+
+  /* ====================================================================
+     Motion. Short, and only to explain a change.
+     ==================================================================== */
+  --wd-t-fast: 120ms;
+  --wd-t-base: 180ms;
+  --wd-t-drawer: 220ms;
+  --wd-ease: cubic-bezier(0.22, 0.85, 0.28, 1);
+}
+
+/*
+ * Dark mode.
+ *
+ * The same information hierarchy and the same layout, with the surfaces and
+ * text inverted. It is NOT keyed off the operating system preference: the
+ * brief is explicit that light is the default and that the organisation or
+ * the user chooses otherwise, because an analyst inheriting a dark product
+ * because their laptop is in dark mode is not a decision anyone made.
+ */
+.workday-v3[data-wd-theme="dark"] {
+  color-scheme: dark;
+
+  --wd-canvas: #0f1319;
+  --wd-surface: #171c24;
+  --wd-surface-subtle: #1c222b;
+  --wd-surface-hover: #222934;
+  --wd-surface-selected: #262348;
+
+  --wd-border: #2a313c;
+  --wd-border-strong: #3c4553;
+
+  --wd-text: #f2f4f7;
+  --wd-text-secondary: #c2c9d4;
+  --wd-text-muted: #8d96a5;
+  --wd-text-disabled: #6a7382;
+
+  --wd-accent: #a79fff;
+  --wd-accent-soft: #221f3d;
+  --wd-accent-border: #413a7a;
+
+  --wd-info: #8ab4ff;
+  --wd-info-soft: #16233a;
+
+  --wd-success: #6ddd9c;
+  --wd-success-soft: #122a1d;
+
+  --wd-warning: #f0c070;
+  --wd-warning-soft: #2b2113;
+
+  --wd-danger: #ff9a92;
+  --wd-danger-soft: #311a1a;
+
+  --wd-shadow-sm: 0 1px 2px rgb(0 0 0 / 40%);
+  --wd-shadow-md: 0 8px 24px rgb(0 0 0 / 46%);
+  --wd-shadow-lg: 0 16px 48px rgb(0 0 0 / 56%);
+}
+
+/*
+ * ==========================================================================
+ * The bridge.
+ * ==========================================================================
+ *
+ * The same device the V2 scope uses, and for the same reason: rather than
+ * rewriting every reused component against new token names, the old names are
+ * remapped to the new values inside this scope only.
+ *
+ * It is not optional here. `globals.css` sets `font-family: var(--font-display)`
+ * on every heading element, and `--font-display` is Space Grotesk at the root.
+ * Without this block a V3.1 page title rendered in Space Grotesk even though
+ * nothing in the V3 stylesheet mentions it, which fails the acceptance
+ * criterion that Space Grotesk is absent from these routes. Measured before
+ * the fix: `.wd-page-title` computed to Space Grotesk on both role homes.
+ *
+ * The type scale is capped for the same reason as in V2, and the effect is
+ * stronger here because the ceiling is lower: a reused component asking for
+ * display type cannot produce a heading above 20px on a working screen, which
+ * is a structural guarantee rather than a review note.
+ */
+.workday-v3 {
+  /* Families. */
+  --font-display: var(--wd-font);
+  --font-body: var(--wd-font);
+  --font-mono: var(--wd-font-mono);
+
+  /* Type scale, capped at 20px for a heading and 24px for an empty state. */
+  --text-xs: var(--wd-text-xs);
+  --text-sm: var(--wd-text-sm);
+  --text-base: var(--wd-text-base);
+  --text-md: var(--wd-text-md);
+  --text-lg: var(--wd-text-lg);
+  --text-xl: var(--wd-text-xl);
+  --text-2xl: var(--wd-text-2xl);
+  --text-3xl: var(--wd-text-3xl);
+  --text-4xl: var(--wd-text-3xl);
+
+  /* Tracking: the presentation system tracks labels at 0.09em. */
+  --tracking-label: 0.01em;
+  --tracking-wide: 0.01em;
+  --tracking-tight: -0.011em;
+
+  /* Surfaces, so a reused panel is light rather than graphite. */
+  --bg: var(--wd-canvas);
+  --surface-0: var(--wd-surface);
+  --surface-1: var(--wd-surface);
+  --surface-2: var(--wd-surface-subtle);
+  --surface-3: var(--wd-surface-hover);
+  --surface-raised: var(--wd-surface);
+
+  /* Text. */
+  --text-1: var(--wd-text);
+  --text-2: var(--wd-text-secondary);
+  --text-3: var(--wd-text-secondary);
+  --text-4: var(--wd-text-muted);
+  --text-disabled: var(--wd-text-disabled);
+
+  /* Borders. */
+  --border-1: var(--wd-border);
+  --border-2: var(--wd-border-strong);
+  --border-strong: var(--wd-border-strong);
+
+  /* Semantic hues. Pink is mapped onto the accent, as in V2. */
+  --accent: var(--wd-accent);
+  --accent-strong: var(--wd-accent);
+  --accent-dim: var(--wd-accent);
+  --accent-text: var(--wd-accent);
+  --pink: var(--wd-accent);
+  --cyan: var(--wd-info);
+  --green: var(--wd-success);
+  --amber: var(--wd-warning);
+  --red: var(--wd-danger);
+
+  --accent-tint: var(--wd-accent-soft);
+  --pink-tint: var(--wd-accent-soft);
+  --cyan-tint: var(--wd-info-soft);
+  --green-tint: var(--wd-success-soft);
+  --amber-tint: var(--wd-warning-soft);
+  --red-tint: var(--wd-danger-soft);
+
+  --accent-edge: var(--wd-accent-border);
+  --cyan-edge: var(--wd-info);
+  --green-edge: var(--wd-success);
+  --amber-edge: var(--wd-warning);
+  --red-edge: var(--wd-danger);
+
+  --ai: var(--wd-accent);
+  --human: var(--wd-warning);
+  --evidence: var(--wd-success);
+  --risk: var(--wd-danger);
+  --data: var(--wd-info);
+  --gap: var(--wd-warning);
+
+  /* Radii and elevation. */
+  --radius-sm: var(--wd-radius-sm);
+  --radius-md: var(--wd-radius);
+  --radius-lg: var(--wd-radius-lg);
+  --radius-xl: var(--wd-radius-lg);
+  --shadow-1: var(--wd-shadow-sm);
+  --shadow-2: var(--wd-shadow-sm);
+  --shadow-3: var(--wd-shadow-md);
+  --shadow-4: var(--wd-shadow-lg);
+
+  --focus-ring: 0 0 0 2px var(--wd-surface), 0 0 0 4px var(--wd-accent);
+}
+
+/*
+ * The presentation `.display` and `.label` classes carry a deck treatment: a
+ * display family, a heavy weight, and for `.label` an uppercase paragraph
+ * label tracked at 0.09em. The brief forbids uppercase paragraph labels on
+ * analyst routes, so both are normalised here rather than at each call site.
+ */
+.workday-v3 .display {
+  font-family: var(--wd-font);
+  font-weight: var(--wd-weight-strong);
+  letter-spacing: -0.011em;
+}
+
+.workday-v3 .label {
+  font-family: var(--wd-font);
+  text-transform: none;
+  letter-spacing: 0.01em;
+  font-size: var(--wd-text-xs);
+  font-weight: var(--wd-weight-medium);
+  color: var(--wd-text-muted);
+}
+
+.workday-v3 .lede {
+  font-size: var(--wd-text-sm);
+  line-height: var(--wd-leading-normal);
+  color: var(--wd-text-secondary);
+  max-width: 78ch;
+}
+
+/*
+ * Headings inside this scope take the V3 family explicitly.
+ *
+ * The bridge above already remaps `--font-display`, and this is the belt to
+ * that braces: a component that hardcodes a family rather than reading the
+ * token would otherwise still escape.
+ */
+.workday-v3 h1,
+.workday-v3 h2,
+.workday-v3 h3,
+.workday-v3 h4,
+.workday-v3 h5,
+.workday-v3 h6 {
+  font-family: var(--wd-font);
+}
+
+/* ==========================================================================
+ * The app token family.
+ * ==========================================================================
+ *
+ * The second half of the bridge, and the half that makes the reuse real.
+ *
+ * `--app-*` is the vocabulary every `app-` prefixed component is written
+ * against, and it is declared under `.workday-v2`. A V2 component mounted
+ * inside `.workday-v3` therefore found none of it: `.app-partner` asked for
+ * `var(--app-shell)` and got nothing, so the AI Partner dock rendered with a
+ * transparent background, no borders and no surface separation. Measured in
+ * the open dock before this block existed: background `rgba(0, 0, 0, 0)`.
+ *
+ * Mapping the family rather than rewriting the components is the same choice
+ * the V2 scope made about the presentation tokens, and it pays off more than
+ * once: the dock, the decision flows and the workbench are all written in
+ * this vocabulary, so each one becomes usable in the light scope without a
+ * second implementation of anything safety relevant.
+ *
+ * Shadows are NOT mapped through. The V2 shadows are black at 40 to 56
+ * percent, which is correct on graphite and is a smear on a light canvas.
+ * They are remapped to the V3 shadows deliberately.
+ */
+.workday-v3 {
+  /* Spacing. */
+  --app-1: var(--wd-1);
+  --app-2: var(--wd-2);
+  --app-3: var(--wd-3);
+  --app-4: var(--wd-4);
+  --app-5: var(--wd-5);
+  --app-6: var(--wd-6);
+  --app-8: var(--wd-8);
+  --app-10: var(--wd-10);
+  --app-12: 48px;
+
+  /* Surfaces. */
+  --app-bg: var(--wd-canvas);
+  --app-shell: var(--wd-surface);
+  --app-surface: var(--wd-surface);
+  --app-surface-raised: var(--wd-surface);
+  --app-surface-hover: var(--wd-surface-hover);
+  --app-surface-active: var(--wd-surface-hover);
+
+  /* Borders. */
+  --app-border: var(--wd-border);
+  --app-border-strong: var(--wd-border-strong);
+  --app-border-loud: var(--wd-border-strong);
+  --app-focus-edge: var(--wd-accent);
+
+  /* Text. */
+  --app-text: var(--wd-text);
+  --app-text-secondary: var(--wd-text-secondary);
+  --app-text-muted: var(--wd-text-muted);
+  --app-text-faint: var(--wd-text-disabled);
+
+  /* Type scale, capped on the same ceiling as the rest of this scope. */
+  --app-text-2xs: var(--wd-text-xs);
+  --app-text-xs: var(--wd-text-xs);
+  --app-text-sm: var(--wd-text-sm);
+  --app-text-base: var(--wd-text-base);
+  --app-text-md: var(--wd-text-md);
+  --app-text-lg: var(--wd-text-lg);
+  --app-text-xl: var(--wd-text-xl);
+  --app-text-2xl: var(--wd-text-2xl);
+  --app-text-3xl: var(--wd-text-3xl);
+
+  --app-leading-tight: var(--wd-leading-tight);
+  --app-leading-snug: var(--wd-leading-snug);
+  --app-leading-normal: var(--wd-leading-normal);
+
+  --app-tracking-tight: -0.011em;
+  --app-tracking-normal: 0;
+  --app-tracking-label: 0.01em;
+
+  /* The AI hue, and the semantic hues with their tints and edges. */
+  --app-ai: var(--wd-accent);
+  --app-ai-text: var(--wd-accent);
+  --app-ai-tint: var(--wd-accent-soft);
+  --app-ai-edge: var(--wd-accent-border);
+
+  --app-success: var(--wd-success);
+  --app-success-text: var(--wd-success);
+  --app-success-tint: var(--wd-success-soft);
+  --app-success-edge: var(--wd-success);
+
+  --app-warning: var(--wd-warning);
+  --app-warning-text: var(--wd-warning);
+  --app-warning-tint: var(--wd-warning-soft);
+  --app-warning-edge: var(--wd-warning);
+
+  --app-danger: var(--wd-danger);
+  --app-danger-text: var(--wd-danger);
+  --app-danger-tint: var(--wd-danger-soft);
+  --app-danger-edge: var(--wd-danger);
+
+  --app-info: var(--wd-info);
+  --app-info-text: var(--wd-info);
+  --app-info-tint: var(--wd-info-soft);
+  --app-info-edge: var(--wd-info);
+
+  --app-selected-bg: var(--wd-surface-selected);
+  --app-selected-edge: var(--wd-accent-border);
+
+  /* Radii. */
+  --app-radius-sm: var(--wd-radius-sm);
+  --app-radius: var(--wd-radius);
+  --app-radius-lg: var(--wd-radius-lg);
+  --app-radius-pill: var(--wd-radius-pill);
+
+  /* Shadows, remapped rather than inherited. See the note above. */
+  --app-shadow-1: var(--wd-shadow-sm);
+  --app-shadow-2: var(--wd-shadow-md);
+  --app-shadow-3: var(--wd-shadow-lg);
+
+  /* Metrics. */
+  --app-topbar-h: var(--wd-header-h);
+  --app-row-h: var(--wd-row-h);
+  --app-row-h-lg: 48px;
+  --app-rail-w: var(--wd-nav-w);
+  --app-rail-w-expanded: var(--wd-nav-w-expanded);
+  --app-partner-w: var(--wd-dock-w);
+  --app-partner-w-collapsed: 48px;
+  --app-drawer-w: var(--wd-drawer-w);
+  --app-liveday-h: var(--wd-updates-h);
+
+  /* Motion. */
+  --app-t-control: var(--wd-t-fast);
+  --app-t-hover: var(--wd-t-fast);
+  --app-t-drawer: var(--wd-t-drawer);
+  --app-t-suggestion: var(--wd-t-drawer);
+  --app-t-object: var(--wd-t-drawer);
+  --app-t-propagate: var(--wd-t-drawer);
+  --app-ease: var(--wd-ease);
+  --app-ease-spatial: var(--wd-ease);
+}

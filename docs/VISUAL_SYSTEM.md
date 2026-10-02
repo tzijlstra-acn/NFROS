@@ -7,19 +7,32 @@ Synthetic institution and data. **Illustrative regulatory context, not legal adv
 This document records the design tokens with their actual values, the semantic colour contract, the
 provenance styling contract, the six hero visualisations and what each encodes, the accessibility
 rules that are actually implemented, and what was inherited from the NFR pitch design system versus
-what was rebuilt. Section 11 records the limitations.
+what was rebuilt. Section 12 records the limitations.
+
+**There are now two visual scopes, and that matters for everything below.** The tokens documented
+here are the presentation system. It serves `/story` and the reporting surfaces, and it is
+unchanged. The interactive workday was moved onto a separate, scoped application system in
+`src/styles/workday-v2-tokens.css` and `src/styles/workday-v2.css`, because a presenter-led deck and
+a working application want different typography, density and colour discipline, and the previous
+interactive layer compromised by inheriting the deck. Section 10 summarises that scope and the
+bridge between the two. The complete reference is `docs/handoffs/workday-v2-visual-system.md` and
+the reasoning is `docs/INTERACTIVE_WORKDAY_V2.md`.
 
 Primary sources:
 
 | Concern | File |
 |---|---|
-| Design tokens, both themes | `src/styles/tokens.css`, 208 lines |
+| Presentation design tokens, both themes | `src/styles/tokens.css` |
+| Application tokens, scoped to the workday | `src/styles/workday-v2-tokens.css` |
+| Application component styles, scoped to the workday | `src/styles/workday-v2.css` |
 | Base, primitives, utilities | `src/styles/globals.css`, 769 lines |
 | Presentation deck stylesheet | `src/styles/presentation.css`, 2,845 lines |
 | Provenance and evidence primitives | `src/components/evidence/primitives.tsx` |
 | Figure basis labels | `src/components/evidence/figures.tsx` |
 | Hero visualisations | `src/components/visualisations/*.tsx`, 5,790 lines across six files |
-| Application shell | `src/components/shell/*.tsx` |
+| Application shell, V1 | `src/components/shell/*.tsx` |
+| Application shell, V2 | `src/components/workday-v2/*.tsx` |
+| Application primitives, V2 | `src/components/workday-v2/primitives.tsx`, `interactive.tsx` |
 | Bilingual labels and provenance glyphs | `src/i18n/labels.ts` |
 | Font loading | `app/layout.tsx` |
 | Inherited system, read only archaeology | `docs/handoffs/source-visual-findings.md`, 716 lines |
@@ -850,7 +863,12 @@ Point sized padding rather than pixels is the correct choice for a print context
 
 ## 9. Shell composition
 
-`src/components/shell/`. Five components, 1,723 lines.
+Two shells are served from the same routes, chosen by `?ui=v1` or `?ui=v2`. V2 is the default. V1 is
+documented first because the accountability surfaces it defines were carried forward intact.
+
+### 9.1 V1, `src/components/shell/`
+
+Five components, 1,723 lines.
 
 | Component | Role |
 |---|---|
@@ -860,14 +878,159 @@ Point sized padding rather than pixels is the correct choice for a print context
 | `controls.tsx` | Autonomy selector, language selector, background work dialog, mode controls |
 | `ModeSelector.tsx` | The three demo modes |
 
-The seven rail tabs are the product's accountability surface, and their labels are in
+The seven rail tabs are the accountability surface of the product, and their labels are in
 `RAIL_TABS` (`src/i18n/labels.ts:80`) in both languages. Their ordering is a claim: evidence first,
 then why it matters, then what is not known, then the governing policy, then who approved what, then
 what the machine did, then the full trail.
 
+### 9.2 V2, `src/components/workday-v2/`
+
+| Component | Role |
+|---|---|
+| `AppShellV2.tsx` | Server. Reads the scenario, resolves branding, assembles the chrome |
+| `ShellFrame.tsx` | Client. The grid, the three AI Partner renderings, mounts the drawer and palette |
+| `ShellContext.tsx` | Client. Rail expansion, partner open state, drawer tab, palette state |
+| `TopBarV2.tsx` | Client. 48px. Brand, role, context, command trigger, live status, menus |
+| `NavigationRail.tsx` | Client. 58px collapsed, 208px expanded. Tabler icons, active edge, counts |
+| `FocusWorkspace.tsx` | Server. The Now card, then the queue, then the work object |
+| `ContextDrawer.tsx` | Client. The seven rail tabs as a drawer, plus the compact triggers |
+| `DemoMenu.tsx` | Client. The demonstration controls, collapsed into one menu |
+| `WorkdayV2Route.tsx` | Server. The assembly every route shares |
+| `primitives.tsx` | Server safe presentational set |
+| `interactive.tsx` | Client. Tabs, Menu, Drawer, ExpandRow, Disclosure, Announcer |
+
+**The accountability surface is unchanged, only relocated.** The same seven tabs, in the same order,
+reading from the same `buildIntelligenceRail` mapper, reusing the same evidence, uncertainty and
+contradiction components. What changed is that they no longer consume 372px of every screen at every
+moment. The compact triggers under a work object read "Evidence 15", "Uncertainty 4", "Applicable
+policy 4", "AI activity 20", "Audit trail 34", and each opens the drawer on that tab.
+
+### 9.3 Geometry, measured
+
+| Viewport | V1 centre work area | V2 centre work area |
+|---|---|---|
+| 1920x1080 | 1316x940, 59.7 percent | 1526x982, 72.3 percent |
+| 1440x900 | 836x760, 49.0 percent | 1046x802, 64.7 percent |
+| 1366x768 | 762x628, 45.6 percent | 1260x670, 80.5 percent |
+
+V1 permanent chrome: a 56px top bar, an 84px timeline, a 232px left rail and a 372px right rail,
+none of it removable. V2: a 48px top bar, a 50px live day bar, a 58px icon rail, and a 336px AI
+Partner that becomes a 48px presence rail at 1366 and can be closed at any width.
+
 ---
 
-## 10. Inherited versus rebuilt
+## 10. The application scope
+
+Everything is under `.workday-v2`. Nothing is declared on `:root`, so `/story` is unaffected.
+
+### 10.1 Typography
+
+Geist Sans and Geist Mono, self-hosted from the official `geist` package into `public/fonts/` and
+declared with plain `@font-face` for the same reason as the three presentation families: the
+application must render with its intended typography in offline mode, and the build must not depend
+on reaching a font service. Both are SIL OFL 1.1; see `public/fonts/THIRD_PARTY_NOTICES.md`.
+
+| Token | Value | Used for |
+|---|---|---|
+| `--app-text-2xs` | 11px | counts inside chips only |
+| `--app-text-xs` | 12px | metadata, secondary detail |
+| `--app-text-sm` | 13px | dense rows, compact controls |
+| `--app-text-base` | 14px | default interface text |
+| `--app-text-md` | 15px | primary row text, assistant response |
+| `--app-text-lg` | 16px | section heading |
+| `--app-text-xl` | 18px | work object title |
+| `--app-text-2xl` | 20px | primary focus title |
+| `--app-text-3xl` | 24px | rare hero or empty state only |
+
+Geist Mono is reserved for time, identifiers, indicator values, percentages, counts, timestamps and
+audit references. Prose is never monospaced. The presentation `.label` class, an uppercase mono
+label tracked at 0.09em, is normalised to sentence case at the metadata size inside this scope.
+
+### 10.2 Surfaces and colour
+
+```css
+--app-bg: #0b0d10;             --app-text: #f4f6f8;
+--app-shell: #0f1216;          --app-text-secondary: #b7bec9;
+--app-surface: #14181e;        --app-text-muted: #7f8998;
+--app-surface-raised: #1a1f27; --app-text-faint: #5f6875;
+--app-surface-hover: #202630;
+--app-surface-active: #262d39;
+
+--app-ai: #8b82ff;        --app-ai-text: #afa8ff;
+--app-info: #56b7db;      --app-info-text: #8ed3ee;
+--app-success: #4fc28b;   --app-success-text: #80d9ae;
+--app-warning: #e8b65c;   --app-warning-text: #f3cd8a;
+--app-danger: #ec6b78;    --app-danger-text: #f59aa3;
+```
+
+Each hue has a separate text variant. The base values are calibrated for borders, dots, bars and
+icon strokes, and several fail the WCAG AA 4.5:1 threshold as small text on their own 10 percent
+tint. That matters because these colours carry the AI state and the human judgment state, and a
+reader must be able to tell those apart. The `--app-*-text` variants are the only values permitted
+for text, which is the same rule and the same reasoning as `--accent-text` in the presentation
+system.
+
+Pink is absent. It was the presentation selection colour; in an application it competes with the
+danger tone at a glance. Selection is a neutral raise plus one active edge.
+
+### 10.3 The bridge
+
+The repository holds a large amount of good domain work the interactive layer must keep: the
+evidence citation list, the uncertainty panel, the contradiction card, the decision flow and the six
+hero visualisations documented in section 5. All of it references the presentation token names.
+
+Rather than rewrite those components, the bridge block in `workday-v2-tokens.css` remaps the old
+names to the new values inside the workday scope only. A component written against `--surface-1` and
+`--text-2` renders in graphite and Geist without being touched, and the same component on `/story`
+is unaffected.
+
+Two remappings enforce acceptance criteria structurally rather than by review:
+
+| Remap | Effect |
+|---|---|
+| `--text-2xl` 36px to 20px, `--text-3xl` and `--text-4xl` to 24px | A reused component cannot produce a deck-sized heading on a working screen |
+| `--pink` to `--app-ai` | Pink cannot reappear as an interaction colour through an inherited component |
+
+### 10.4 Card against row
+
+A row is the default; a card is the exception. The previous interactive layer put nearly everything
+in a bordered panel, which produced visual correctness without hierarchy, because when every element
+has an edge no element has emphasis.
+
+A `Card` is permitted for four things only: a primary decision, a new AI suggestion, an execution
+receipt and a critical event. A fifth case needs a written reason. Everything repeating is a row:
+tasks, signals, activity, evidence, messages, timeline events and reviewed suggestions. Lists are
+separated by a single hairline rather than bordered individually.
+
+Chips are permitted for status, source type, severity, authority and count, and nothing else. A chip
+containing a clause is a badge pretending to be prose.
+
+Primary buttons are rare: at most one per focus area.
+
+### 10.5 Motion
+
+| Duration | Explains |
+|---|---|
+| 120ms | control response |
+| 180ms | hover and selection |
+| 240ms | drawer and panel |
+| 320ms | suggestion arrival |
+| 450ms | object transition |
+| 700ms | role or shared event propagation |
+
+Motion explains a state change and nothing else. There is no idle decorative movement, no glowing
+border, no floating card and no looping gradient. The AI sheen and the live dot are the only
+continuous animations and both require a real running flag: an interface that pulses while nothing
+is happening is lying about work.
+
+Reduced motion removes spatial morphing, pulse rings and auto-scrolling, replaces shimmer with a
+neutral fill, and keeps every piece of state information in text. Play still advances the scenario.
+
+---
+
+---
+
+## 11. Inherited versus rebuilt
 
 `docs/handoffs/source-visual-findings.md` is read only archaeology of the NFR pitch repository, a
 124 KB single page deck with 84 KB of CSS. Its section 8 lists ten things to carry forward and an
@@ -924,7 +1087,7 @@ Nothing in the source repository corresponds to:
 
 ---
 
-## 11. Limitations
+## 12. Limitations
 
 1. **The accent chip fails WCAG AA for normal text.** `--accent` on `--accent-tint` composited over
    `--surface-1` measures **3.85:1**, against the 4.5:1 requirement for text at 12px.

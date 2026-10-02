@@ -130,6 +130,8 @@ export interface SmokeTestResult {
   latencyMs: number;
   inputTokens: number;
   outputTokens: number;
+  /** True when the response carried usable text, not merely a 200. */
+  producedText: boolean;
   error?: string;
 }
 
@@ -151,6 +153,7 @@ export async function runLiveSmokeTest(): Promise<SmokeTestResult> {
       latencyMs: 0,
       inputTokens: 0,
       outputTokens: 0,
+      producedText: false,
       error: "Live calls are not permitted in the current mode, or no key was resolved.",
     };
   }
@@ -158,20 +161,55 @@ export async function runLiveSmokeTest(): Promise<SmokeTestResult> {
   const models = await probeModelAvailability();
 
   try {
+    /*
+     * The budget is 256 tokens and the reasoning effort is low, and both
+     * numbers are the fix for a real failure rather than arbitrary.
+     *
+     * This call originally asked for 16 output tokens, which is ample for the
+     * word "ready" and completely wrong for the model that answers it. The
+     * gpt-5 family draws its reasoning tokens from the SAME output budget, so
+     * 16 was consumed by reasoning before any text was produced and the
+     * provider returned status "incomplete" with zero output tokens and a 200.
+     *
+     * The old code reported that as ok: true, which is the precise failure
+     * this codebase works hard to avoid elsewhere: a green status that a
+     * presenter would act on and that does not mean what it says. See the
+     * liveAiConfigured against liveAiVerified distinction in
+     * `src/server/config/runtime.ts` for the same argument.
+     */
     const response = await openai.responses.create({
       model: models.fast,
       input: "Reply with the single word: ready",
-      max_output_tokens: 16,
+      max_output_tokens: 256,
+      reasoning: { effort: "low" },
     });
 
-    recordLiveVerification(true);
+    const text = (response.output_text ?? "").trim();
+    const producedText = text.length > 0;
+    const status = response.status ?? "completed";
+
+    /*
+     * ok means a usable response came back, not that the request did not
+     * throw. An incomplete response with no text is a configuration problem
+     * the presenter needs to know about before the demonstration, not after.
+     */
+    const ok = producedText && status !== "failed";
+    recordLiveVerification(ok);
+
     return {
-      ok: true,
+      ok,
       model: models.fast,
-      status: response.status ?? "completed",
+      status,
       latencyMs: Date.now() - startedAt,
       inputTokens: response.usage?.input_tokens ?? 0,
       outputTokens: response.usage?.output_tokens ?? 0,
+      producedText,
+      ...(ok
+        ? {}
+        : {
+            error:
+              "The provider accepted the request and returned no usable text. The output budget may be exhausted by reasoning before any text is produced.",
+          }),
     };
   } catch (error) {
     /*
@@ -194,6 +232,7 @@ export async function runLiveSmokeTest(): Promise<SmokeTestResult> {
       latencyMs: Date.now() - startedAt,
       inputTokens: 0,
       outputTokens: 0,
+      producedText: false,
       error: message,
     };
   }

@@ -110,19 +110,125 @@ async function readSceneMeta(page: Page): Promise<SceneMeta[]> {
   }));
 }
 
-/** Captures one scene, returning the file path. */
-async function captureScene(page: Page, sceneNumber: number): Promise<string> {
-  const url = `${BASE_URL}/story?export=1&safe=1&scene=${sceneNumber}`;
-  await page.goto(url, { waitUntil: "networkidle" });
+/** One captured frame, and which pane of which scene it is. */
+interface SceneFrame {
+  sceneNumber: number;
+  path: string;
+  /** One based. 1 of 1 for a single pane scene. */
+  paneIndex: number;
+  paneCount: number;
+  /** The pane's own accessible label, for the speaker script. */
+  paneLabel: string;
+}
 
+/** What the deck is showing right now: the step budget and the visible panes. */
+async function readPaneState(page: Page): Promise<{ stepCount: number; panes: string[] }> {
+  return page.evaluate(() => {
+    const match = document.body.innerText.match(/reveal \d+ of (\d+)/);
+    return {
+      stepCount: match?.[1] ? Number(match[1]) : 1,
+      panes: [...document.querySelectorAll(".scene-fit")]
+        .filter((element) => element.getAttribute("data-shown") === "true")
+        .map((element) => element.getAttribute("aria-label") ?? ""),
+    };
+  });
+}
+
+async function settle(page: Page): Promise<void> {
   // Fonts must be loaded, or the capture shows fallback typography.
   await page.evaluate(() => document.fonts.ready);
   // A short settle so any layout driven by a resize observer has run.
   await page.waitForTimeout(600);
+}
 
-  const path = join(SCENE_DIR, `scene-${String(sceneNumber).padStart(2, "0")}.png`);
-  await page.screenshot({ path, fullPage: false });
-  return path;
+/**
+ * Captures every pane of one scene.
+ *
+ * A single pane scene yields one frame and keeps its original file name, which
+ * is thirteen of the sixteen scenes.
+ *
+ * The other three need one frame each per pane, and the reason is a defect
+ * this function used to have. A multi pane scene reveals one pane per step,
+ * and three of them gate a pane on an EXACT step rather than a range. Export
+ * mode resolves immediately to the FINAL step, so every intermediate pane was
+ * simply absent from the deck: scene 12 exported one of its five panes and
+ * lost the service dependency map, scene 14 exported one of four and lost the
+ * portfolio decision thread, and scene 16 exported one of two. The deck had
+ * the right number of pages and was missing eight panes of content.
+ *
+ * Panes are discovered rather than hardcoded. Asking the page which panes are
+ * visible at each step means a scene that gains or loses a pane later is
+ * captured correctly without anyone remembering to update a table here.
+ */
+async function captureScene(page: Page, sceneNumber: number): Promise<SceneFrame[]> {
+  const base = `${BASE_URL}/story?export=1&safe=1&scene=${sceneNumber}`;
+  await page.goto(base, { waitUntil: "networkidle" });
+  await settle(page);
+
+  const initial = await readPaneState(page);
+  const padded = String(sceneNumber).padStart(2, "0");
+
+  /*
+   * A scene with no more than one pane is captured exactly as before, at its
+   * final step and under its original file name. Stepping through it would
+   * produce identical frames.
+   */
+  const paneCount = await (async () => {
+    return page.evaluate(() => document.querySelectorAll(".scene-fit").length);
+  })();
+
+  if (paneCount <= 1) {
+    const path = join(SCENE_DIR, `scene-${padded}.png`);
+    await page.screenshot({ path, fullPage: false });
+    return [
+      {
+        sceneNumber,
+        path,
+        paneIndex: 1,
+        paneCount: 1,
+        paneLabel: initial.panes[0] ?? "",
+      },
+    ];
+  }
+
+  const frames: SceneFrame[] = [];
+  let previous = "";
+
+  for (let step = 0; step < initial.stepCount; step += 1) {
+    await page.goto(`${base}&step=${step}`, { waitUntil: "networkidle" });
+    await settle(page);
+
+    const state = await readPaneState(page);
+    const signature = state.panes.join("|");
+    // Only a change of pane is a new slide. Several steps reveal content
+    // inside one pane, and those belong on one page.
+    if (signature === previous || state.panes.length === 0) continue;
+    previous = signature;
+
+    const index = frames.length + 1;
+    const path = join(SCENE_DIR, `scene-${padded}-${String(index).padStart(2, "0")}.png`);
+    await page.screenshot({ path, fullPage: false });
+    frames.push({
+      sceneNumber,
+      path,
+      paneIndex: index,
+      paneCount: 0,
+      paneLabel: state.panes[0] ?? "",
+    });
+  }
+
+  if (frames.length === 0) {
+    // Nothing was discovered, so fall back to the previous behaviour rather
+    // than dropping the scene from the deck entirely.
+    const path = join(SCENE_DIR, `scene-${padded}.png`);
+    await page.goto(base, { waitUntil: "networkidle" });
+    await settle(page);
+    await page.screenshot({ path, fullPage: false });
+    return [{ sceneNumber, path, paneIndex: 1, paneCount: 1, paneLabel: "" }];
+  }
+
+  for (const frame of frames) frame.paneCount = frames.length;
+  return frames;
 }
 
 /** Checks a captured page for vertical overflow, which must never happen. */
@@ -204,7 +310,16 @@ async function buildPdf(browser: Browser, scenePaths: string[]): Promise<string>
   return pdfPath;
 }
 
-async function buildPptx(scenes: SceneMeta[], scenePaths: string[]): Promise<string> {
+/**
+ * One slide per captured frame.
+ *
+ * Frames rather than a path array indexed in parallel with the scenes, because
+ * the two are no longer the same length: a multi pane scene contributes
+ * several frames. Pairing by index was correct while every scene produced
+ * exactly one page and would have silently attached the wrong notes the moment
+ * one produced two.
+ */
+async function buildPptx(scenes: SceneMeta[], frames: SceneFrame[]): Promise<string> {
   const pptx = new PptxGenJS();
   pptx.defineLayout({ name: "HD16x9", width: 13.333, height: 7.5 });
   pptx.layout = "HD16x9";
@@ -214,20 +329,32 @@ async function buildPptx(scenes: SceneMeta[], scenePaths: string[]): Promise<str
   pptx.subject =
     "One work environment for non-financial risk. Synthetic institution and data. Illustrative regulatory context, not legal advice.";
 
-  for (let index = 0; index < scenePaths.length; index += 1) {
-    const path = scenePaths[index];
-    const scene = scenes[index];
-    if (!path) continue;
+  const sceneByNumber = new Map(scenes.map((scene) => [scene.sceneNumber, scene]));
+
+  for (const frame of frames) {
+    const scene = sceneByNumber.get(frame.sceneNumber);
 
     const slide = pptx.addSlide();
     slide.background = { color: "0E0F14" };
     // Full bleed image, so the slide matches the live scene exactly.
-    slide.addImage({ path, x: 0, y: 0, w: 13.333, h: 7.5 });
+    slide.addImage({ path: frame.path, x: 0, y: 0, w: 13.333, h: 7.5 });
 
     if (scene) {
+      /*
+       * Every pane of a scene carries that scene's notes, with a line saying
+       * which pane it is. A presenter reading the notes on page 14 needs to
+       * know it is the third of five views of one scene rather than a scene
+       * whose notes have been repeated by mistake.
+       */
+      const paneLine =
+        frame.paneCount > 1
+          ? `View ${frame.paneIndex} of ${frame.paneCount} of this scene${frame.paneLabel ? `: ${frame.paneLabel}` : ""}.`
+          : null;
+
       const notes = [
         `Scene ${scene.sceneNumber} of ${scenes.length}. Chapter: ${scene.chapter}.`,
-        `Budget: ${scene.durationSeconds} seconds.`,
+        ...(paneLine ? [paneLine] : []),
+        `Budget: ${scene.durationSeconds} seconds${frame.paneCount > 1 ? " for the whole scene" : ""}.`,
         "",
         `Key message: ${scene.keyMessage}`,
         "",
@@ -244,7 +371,7 @@ async function buildPptx(scenes: SceneMeta[], scenePaths: string[]): Promise<str
   return pptxPath;
 }
 
-function buildSpeakerScript(scenes: SceneMeta[]): string {
+function buildSpeakerScript(scenes: SceneMeta[], frames: SceneFrame[]): string {
   const totalSeconds = scenes.reduce((sum, scene) => sum + scene.durationSeconds, 0);
   const lines: string[] = [
     "# NFR WorkOS: Live the NFR Day",
@@ -252,7 +379,11 @@ function buildSpeakerScript(scenes: SceneMeta[]): string {
     "",
     "Synthetic institution and data. Illustrative regulatory context, not legal advice.",
     "",
-    `Scenes: ${scenes.length}. Total budget: ${Math.round(totalSeconds / 60)} minutes (${totalSeconds} seconds).`,
+    `Scenes: ${scenes.length}. Pages in the exported deck: ${frames.length}. Total budget: ${Math.round(totalSeconds / 60)} minutes (${totalSeconds} seconds).`,
+    "",
+    "Three scenes reveal several panes in sequence and are exported as one page",
+    "per pane, so the page count exceeds the scene count. The notes on each page",
+    "say which view of which scene it is.",
     "",
     "This file is generated by `npm run export:deck` from the same scene data the live",
     "presentation renders, so it cannot drift from what the audience sees.",
@@ -267,6 +398,14 @@ function buildSpeakerScript(scenes: SceneMeta[]): string {
     }
     lines.push(`### Scene ${scene.sceneNumber}: ${scene.title}`);
     lines.push("");
+    const sceneFrames = frames.filter((frame) => frame.sceneNumber === scene.sceneNumber);
+    if (sceneFrames.length > 1) {
+      lines.push(`**Exported as ${sceneFrames.length} pages:**`, "");
+      for (const frame of sceneFrames) {
+        lines.push(`${frame.paneIndex}. ${frame.paneLabel || "(pane)"}`);
+      }
+      lines.push("");
+    }
     if (scene.subtitle) lines.push(`*${scene.subtitle}*`, "");
     lines.push(`**Budget:** ${scene.durationSeconds} seconds`, "");
     lines.push(`**Key message:** ${scene.keyMessage}`, "");
@@ -308,30 +447,40 @@ async function main(): Promise<void> {
     const scenes = await readSceneMeta(page);
     console.log(`Found ${scenes.length} scenes.`);
 
-    const scenePaths: string[] = [];
+    const frames: SceneFrame[] = [];
     const overflowFailures: string[] = [];
 
     for (const scene of scenes) {
-      const path = await captureScene(page, scene.sceneNumber);
+      const sceneFrames = await captureScene(page, scene.sceneNumber);
+      /*
+       * Overflow is checked on the page as it stands after the last capture
+       * of this scene. That is the same check as before; it is not per pane,
+       * because the stage is a fixed box and a pane that overflowed it would
+       * be clipped rather than extend the document.
+       */
       const overflow = await checkOverflow(page);
       if (overflow.overflows) {
         overflowFailures.push(`Scene ${scene.sceneNumber} (${scene.title}): ${overflow.detail}`);
       }
-      scenePaths.push(path);
+      frames.push(...sceneFrames);
       console.log(
-        `  captured scene ${String(scene.sceneNumber).padStart(2, "0")}  ${scene.title}${overflow.overflows ? "  OVERFLOW" : ""}`,
+        `  captured scene ${String(scene.sceneNumber).padStart(2, "0")}  ${scene.title}` +
+          (sceneFrames.length > 1 ? `  ${sceneFrames.length} panes` : "") +
+          (overflow.overflows ? "  OVERFLOW" : ""),
       );
     }
 
     await page.close();
 
-    const pdfPath = await buildPdf(browser, scenePaths);
+    console.log(`\n${frames.length} pages from ${scenes.length} scenes.`);
+
+    const pdfPath = await buildPdf(browser, frames.map((frame) => frame.path));
     console.log(`PDF written to ${pdfPath}`);
 
-    const pptxPath = await buildPptx(scenes, scenePaths);
+    const pptxPath = await buildPptx(scenes, frames);
     console.log(`PowerPoint written to ${pptxPath}`);
 
-    const scriptPath = buildSpeakerScript(scenes);
+    const scriptPath = buildSpeakerScript(scenes, frames);
     console.log(`Speaker script written to ${scriptPath}`);
 
     if (overflowFailures.length > 0) {

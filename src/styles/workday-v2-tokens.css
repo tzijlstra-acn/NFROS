@@ -1,0 +1,385 @@
+/*
+ * Interactive Workday V2 tokens.
+ *
+ * A deliberately separate scope from the presentation design system.
+ *
+ * The reason is a conflict that cannot be resolved by compromise. A presenter
+ * led deck wants display typography, generous scale and saturated colour,
+ * because it is read from eight metres away by an audience that is not
+ * operating it. A working application wants compact typography, a neutral
+ * ground and colour reserved for meaning, because it is read from sixty
+ * centimetres away by someone who has it open for seven hours. The previous
+ * interactive layer inherited the presentation system and consequently read
+ * as a slide: a 36px heading and a lede paragraph before any control.
+ *
+ * Everything here is scoped under `.workday-v2`. The presentation routes keep
+ * `tokens.css` untouched, so `/story` is unaffected by anything in this file.
+ * Nothing in this file is declared on `:root`.
+ *
+ * Typography is self hosted for the same reason as the presentation families:
+ * the application must render with its intended type in offline mode, and the
+ * build must not depend on reaching a font service.
+ */
+
+@font-face {
+  font-family: "Geist Sans";
+  src: url("/fonts/geist-sans.woff2") format("woff2");
+  font-weight: 100 900;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "Geist Mono";
+  src: url("/fonts/geist-mono.woff2") format("woff2");
+  font-weight: 100 900;
+  font-style: normal;
+  font-display: swap;
+}
+
+.workday-v2 {
+  /* ====================================================================
+     Typography
+     ==================================================================== */
+  --font-ui: "Geist Sans", "Segoe UI", system-ui, sans-serif;
+  --font-data: "Geist Mono", "Cascadia Mono", ui-monospace, monospace;
+
+  /*
+   * The application scale. The ceiling is 24px and it is reserved for an
+   * empty state. No working screen heading exceeds 20px, which is the single
+   * most effective change in moving this layer from deck to application.
+   */
+  --app-text-2xs: 11px;  /* counts inside chips only */
+  --app-text-xs: 12px;   /* metadata, secondary detail */
+  --app-text-sm: 13px;   /* dense rows, compact controls */
+  --app-text-base: 14px; /* default interface text */
+  --app-text-md: 15px;   /* primary row text, assistant response */
+  --app-text-lg: 16px;   /* section heading */
+  --app-text-xl: 18px;   /* work object title */
+  --app-text-2xl: 20px;  /* primary focus title */
+  --app-text-3xl: 24px;  /* rare hero or empty state only */
+
+  --app-leading-tight: 1.2;
+  --app-leading-snug: 1.35;
+  --app-leading-normal: 1.5;
+
+  /*
+   * Tracking is near zero. The presentation system tracks labels at 0.09em,
+   * which is right for a slide and wrong for a row that the eye scans
+   * vertically rather than reads horizontally.
+   */
+  --app-tracking-tight: -0.011em;
+  --app-tracking-normal: 0;
+  --app-tracking-label: 0.01em;
+
+  /* ====================================================================
+     Surfaces: graphite neutral
+     ==================================================================== */
+  --app-bg: #0b0d10;
+  --app-shell: #0f1216;
+  --app-surface: #14181e;
+  --app-surface-raised: #1a1f27;
+  --app-surface-hover: #202630;
+  --app-surface-active: #262d39;
+
+  --app-border: rgb(255 255 255 / 7%);
+  --app-border-strong: rgb(255 255 255 / 12%);
+  --app-border-loud: rgb(255 255 255 / 20%);
+
+  /* ====================================================================
+     Text
+     ==================================================================== */
+  --app-text: #f4f6f8;
+  --app-text-secondary: #b7bec9;
+  --app-text-muted: #7f8998;
+  --app-text-faint: #5f6875;
+
+  /* ====================================================================
+     Semantic colour
+     ==================================================================== */
+  --app-ai: #8b82ff;
+  --app-info: #56b7db;
+  --app-success: #4fc28b;
+  --app-warning: #e8b65c;
+  --app-danger: #ec6b78;
+
+  /*
+   * Text variants.
+   *
+   * The base hues above are calibrated for borders, dots, bars and icon
+   * strokes. Several of them fail the WCAG AA 4.5:1 threshold as small text
+   * on their own tint, which matters because these colours carry the AI
+   * state and the human judgment state, and a reader must be able to tell
+   * those apart. Each variant below is the only value permitted for text.
+   */
+  --app-ai-text: #afa8ff;
+  --app-info-text: #8ed3ee;
+  --app-success-text: #80d9ae;
+  --app-warning-text: #f3cd8a;
+  --app-danger-text: #f59aa3;
+
+  /*
+   * Tints at 10 percent, lower than the presentation system at 12 percent,
+   * because the graphite ground is darker and the same alpha reads louder.
+   */
+  --app-ai-tint: rgb(139 130 255 / 10%);
+  --app-info-tint: rgb(86 183 219 / 10%);
+  --app-success-tint: rgb(79 194 139 / 10%);
+  --app-warning-tint: rgb(232 182 92 / 10%);
+  --app-danger-tint: rgb(236 107 120 / 10%);
+
+  --app-ai-edge: rgb(139 130 255 / 34%);
+  --app-info-edge: rgb(86 183 219 / 34%);
+  --app-success-edge: rgb(79 194 139 / 34%);
+  --app-warning-edge: rgb(232 182 92 / 34%);
+  --app-danger-edge: rgb(236 107 120 / 34%);
+
+  /*
+   * Selection.
+   *
+   * The presentation system uses pink for selection. Pink is deliberately
+   * absent from this scope: in an application it competes with the danger
+   * tone at a glance, and selection is a structural state rather than a
+   * semantic one. Selection here is a neutral raise plus one active edge.
+   */
+  --app-selected-bg: var(--app-surface-active);
+  --app-selected-edge: var(--app-border-loud);
+  --app-focus-edge: var(--app-ai);
+
+  /* ====================================================================
+     Geometry
+     ==================================================================== */
+  --app-topbar-h: 48px;
+  --app-rail-w: 58px;
+  --app-rail-w-expanded: 208px;
+  --app-partner-w: 336px;
+  --app-partner-w-collapsed: 48px;
+  --app-liveday-h: 50px;
+  --app-drawer-w: 420px;
+
+  /* ====================================================================
+     Spacing. 4px base, the same rhythm as the presentation system so that a
+     shared domain component keeps its internal proportions.
+     ==================================================================== */
+  --app-1: 4px;
+  --app-2: 8px;
+  --app-3: 12px;
+  --app-4: 16px;
+  --app-5: 20px;
+  --app-6: 24px;
+  --app-8: 32px;
+  --app-10: 40px;
+  --app-12: 48px;
+
+  /* Radii: tighter than the presentation system. */
+  --app-radius-sm: 4px;
+  --app-radius: 6px;
+  --app-radius-lg: 10px;
+  --app-radius-pill: 999px;
+
+  /* Elevation only where something genuinely floats. */
+  --app-shadow-1: 0 1px 2px rgb(0 0 0 / 40%);
+  --app-shadow-2: 0 4px 16px rgb(0 0 0 / 44%);
+  --app-shadow-3: 0 16px 48px rgb(0 0 0 / 56%);
+
+  /* ====================================================================
+     Motion. Each duration is named for what it explains.
+     ==================================================================== */
+  --app-t-control: 120ms;
+  --app-t-hover: 180ms;
+  --app-t-drawer: 240ms;
+  --app-t-suggestion: 320ms;
+  --app-t-object: 450ms;
+  --app-t-propagate: 700ms;
+  --app-ease: cubic-bezier(0.22, 0.85, 0.28, 1);
+  --app-ease-spatial: cubic-bezier(0.34, 1.06, 0.36, 1);
+
+  /* Row metrics, so every list in the product lines up. */
+  --app-row-h: 36px;
+  --app-row-h-lg: 48px;
+}
+
+/*
+ * ==========================================================================
+ * The bridge.
+ * ==========================================================================
+ *
+ * The repository contains a large amount of genuinely good domain work that
+ * the interactive layer must keep: the evidence citation list, the uncertainty
+ * panel, the contradiction card, the decision flow, and six substantial role
+ * visualisations running to several thousand lines. All of it references the
+ * presentation token names from `tokens.css`.
+ *
+ * Rewriting those components against the new names would be a large, risky
+ * change that produces no new capability, and it would fork them away from the
+ * V1 interface which must keep working during the transition.
+ *
+ * So instead of moving the components to the new tokens, this block moves the
+ * old token names to the new values, inside the workday scope only. A reused
+ * component written against `--surface-1` and `--text-2` renders in graphite
+ * and Geist without being touched, and the same component on `/story` is
+ * unaffected because nothing here escapes `.workday-v2`.
+ *
+ * Two of these remappings do more than restyle, and are worth naming because
+ * they enforce acceptance criteria structurally rather than by review:
+ *
+ *   The type scale is capped. `--text-2xl` was 36px and is 20px here, and
+ *   `--text-3xl` and `--text-4xl` collapse to 24px. A reused component that
+ *   asks for display type therefore cannot produce a deck sized heading on a
+ *   working screen, which is a stronger guarantee than auditing each call
+ *   site and hoping none is added later.
+ *
+ *   Pink is removed. It was the presentation system's selection colour. In an
+ *   application it competes with the danger tone at a glance, so it is mapped
+ *   onto the AI accent and selection becomes a neutral raise plus one edge.
+ */
+.workday-v2 {
+  /* Typography families. */
+  --font-display: var(--font-ui);
+  --font-body: var(--font-ui);
+  --font-mono: var(--font-data);
+
+  /* Type scale, capped at 20px for a heading and 24px for an empty state. */
+  --text-xs: 12px;
+  --text-sm: 13px;
+  --text-base: 14px;
+  --text-md: 15px;
+  --text-lg: 16px;
+  --text-xl: 18px;
+  --text-2xl: 20px;
+  --text-3xl: 24px;
+  --text-4xl: 24px;
+
+  /* Tracking: the presentation system tracks labels at 0.09em. */
+  --tracking-label: var(--app-tracking-label);
+  --tracking-wide: var(--app-tracking-label);
+  --tracking-tight: var(--app-tracking-tight);
+
+  /* Surfaces. */
+  --bg: var(--app-bg);
+  --surface-0: var(--app-shell);
+  --surface-1: var(--app-surface);
+  --surface-2: var(--app-surface-raised);
+  --surface-3: var(--app-surface-hover);
+  --surface-raised: var(--app-surface-raised);
+
+  /* Text. */
+  --text-1: var(--app-text);
+  --text-2: var(--app-text-secondary);
+  --text-3: var(--app-text-secondary);
+  --text-4: var(--app-text-muted);
+  --text-disabled: var(--app-text-faint);
+
+  /* Borders. */
+  --border-1: var(--app-border);
+  --border-2: var(--app-border-strong);
+  --border-strong: var(--app-border-loud);
+
+  /* Semantic hues. */
+  --accent: var(--app-ai);
+  --accent-strong: var(--app-ai);
+  --accent-dim: var(--app-ai);
+  --accent-text: var(--app-ai-text);
+  --cyan: var(--app-info);
+  --green: var(--app-success);
+  --amber: var(--app-warning);
+  --red: var(--app-danger);
+  /* Pink is deliberately not a workday interaction colour. */
+  --pink: var(--app-ai);
+
+  --accent-tint: var(--app-ai-tint);
+  --pink-tint: var(--app-ai-tint);
+  --cyan-tint: var(--app-info-tint);
+  --green-tint: var(--app-success-tint);
+  --amber-tint: var(--app-warning-tint);
+  --red-tint: var(--app-danger-tint);
+
+  --accent-edge: var(--app-ai-edge);
+  --cyan-edge: var(--app-info-edge);
+  --green-edge: var(--app-success-edge);
+  --amber-edge: var(--app-warning-edge);
+  --red-edge: var(--app-danger-edge);
+
+  /* Semantic aliases used by the visualisations. */
+  --ai: var(--app-ai);
+  --human: var(--app-warning);
+  --evidence: var(--app-success);
+  --risk: var(--app-danger);
+  --data: var(--app-info);
+  --gap: var(--app-warning);
+
+  /* Radii and elevation. */
+  --radius-sm: var(--app-radius-sm);
+  --radius-md: var(--app-radius);
+  --radius-lg: var(--app-radius-lg);
+  --radius-xl: var(--app-radius-lg);
+  --shadow-1: var(--app-shadow-1);
+  --shadow-2: var(--app-shadow-1);
+  --shadow-3: var(--app-shadow-2);
+  --shadow-4: var(--app-shadow-3);
+
+  /* Motion. */
+  --duration-instant: var(--app-t-control);
+  --duration-fast: var(--app-t-hover);
+  --duration-base: var(--app-t-drawer);
+  --duration-slow: var(--app-t-object);
+  --ease-out: var(--app-ease);
+  --ease-spatial: var(--app-ease-spatial);
+
+  --focus-ring: 0 0 0 2px var(--app-bg), 0 0 0 4px var(--app-ai);
+}
+
+/*
+ * The presentation `.display` class sets Space Grotesk and a tight tracking.
+ * The family is already remapped above, but the class also carries a weight
+ * that reads as a deck heading at application sizes, so it is normalised here.
+ */
+.workday-v2 .display {
+  font-family: var(--font-ui);
+  font-weight: 560;
+  letter-spacing: var(--app-tracking-tight);
+}
+
+/*
+ * The presentation `.label` class is an uppercase, heavily tracked mono label.
+ * That treatment is correct on a slide and wrong on a row that the eye scans
+ * vertically, so inside the workday it becomes sentence case at the metadata
+ * size. Mono is retained only where the content is genuinely data, which the
+ * `.mono` class marks separately.
+ */
+.workday-v2 .label {
+  font-family: var(--font-ui);
+  text-transform: none;
+  letter-spacing: var(--app-tracking-label);
+  font-size: var(--app-text-xs);
+  color: var(--app-text-muted);
+  font-weight: 500;
+}
+
+/* The presentation lede is a narrative paragraph. In the workday it is body. */
+.workday-v2 .lede {
+  font-size: var(--app-text-sm);
+  line-height: var(--app-leading-normal);
+  color: var(--app-text-secondary);
+  max-width: 76ch;
+}
+
+/*
+ * Narrow projection. At 1366 the AI Partner becomes a presence rail that the
+ * user opens as an overlay, and the navigation rail never expands. The centre
+ * work object keeps the majority of the width at every size, which is the
+ * acceptance criterion that drives this breakpoint.
+ */
+@media (max-width: 1439px) {
+  .workday-v2 {
+    --app-partner-w: 300px;
+    --app-drawer-w: 380px;
+  }
+}
+
+@media (max-width: 1366px) {
+  .workday-v2 {
+    --app-partner-w: 48px;
+    --app-drawer-w: 360px;
+  }
+}

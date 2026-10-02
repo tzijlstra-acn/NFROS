@@ -1,0 +1,2181 @@
+/*
+ * Interactive Workday V2 component styles.
+ *
+ * Every selector in this file is scoped under `.workday-v2`. The presentation
+ * stylesheet and the V1 interactive layer are untouched by it, which is what
+ * allows both versions to be served from the same routes for comparison.
+ *
+ * The organising principle, stated once here because it explains most of the
+ * decisions below: a row is the default, a card is the exception. The previous
+ * interactive layer put nearly everything in a bordered panel, which produced
+ * visual correctness without hierarchy, because when every element has an edge
+ * no element has emphasis. Here, lists are rows separated by a single hairline
+ * divider and grouped by alignment; a card appears only for a primary
+ * decision, a new suggestion, an execution receipt or a critical event.
+ */
+
+/* ==========================================================================
+   Shell
+   ========================================================================== */
+
+/*
+ * Fixed to the viewport rather than sized to it.
+ *
+ * This is inherited from the V1 shell and the reason is worth keeping: a
+ * viewport sized grid with `overflow: hidden` still leaves the document
+ * scrollable programmatically, and `window.scrollTo` genuinely carried the
+ * top bar and the permanent synthetic data disclosure off screen. Taking the
+ * shell out of flow removes the in-flow content that could overflow, so the
+ * document cannot scroll by any means. Content is reached through the inner
+ * scrollers.
+ */
+.workday-v2 {
+  position: fixed;
+  inset: 0;
+  display: grid;
+  grid-template-rows: var(--app-topbar-h) minmax(0, 1fr) var(--app-liveday-h);
+  overflow: hidden;
+  background: var(--app-bg);
+  color: var(--app-text);
+  font-family: var(--font-ui);
+  font-size: var(--app-text-base);
+  line-height: var(--app-leading-normal);
+  font-feature-settings: "cv11" 1, "ss01" 1;
+  -webkit-font-smoothing: antialiased;
+}
+
+html:has(.workday-v2),
+html:has(.workday-v2) body {
+  overflow: hidden;
+  background: var(--app-bg);
+}
+
+/* The ambient presentation wash has no place in a working application. */
+.workday-v2 ~ .ambient,
+html:has(.workday-v2) .ambient {
+  display: none;
+}
+
+.app-body {
+  display: grid;
+  grid-template-columns: var(--app-rail-w) minmax(0, 1fr) var(--app-partner-w);
+  min-height: 0;
+  transition: grid-template-columns var(--app-t-drawer) var(--app-ease);
+}
+
+.app-body[data-rail="expanded"] {
+  grid-template-columns: var(--app-rail-w-expanded) minmax(0, 1fr) var(--app-partner-w);
+}
+
+/*
+ * The open state names 336px rather than reading the token.
+ *
+ * The token is overridden to 48px under the narrow media query, which exists
+ * for the collapsed case. The server cannot know the viewport, so it emits
+ * `data-partner="open"` for every width; at 1366 that gave the partner column
+ * 48px while the dock inside it was still 336px wide, so 288px of the dock and
+ * all three of its tabs were laid out past the right edge of the screen, in a
+ * container that hides its overflow. The client then adopted the viewport and
+ * swapped to the presence rail, which is why it corrected itself after about
+ * two and a half seconds and why a measurement taken later found nothing.
+ *
+ * 1366 is the size most likely to be on a meeting room projector, so a
+ * two second misdraw there is the one place it matters most.
+ */
+.app-body[data-partner="open"] {
+  grid-template-columns: var(--app-rail-w) minmax(0, 1fr) 336px;
+}
+
+.app-body[data-rail="expanded"][data-partner="open"] {
+  grid-template-columns: var(--app-rail-w-expanded) minmax(0, 1fr) 336px;
+}
+
+.app-body[data-partner="collapsed"] {
+  grid-template-columns: var(--app-rail-w) minmax(0, 1fr) var(--app-partner-w-collapsed);
+}
+
+.app-body[data-rail="expanded"][data-partner="collapsed"] {
+  grid-template-columns: var(--app-rail-w-expanded) minmax(0, 1fr) var(--app-partner-w-collapsed);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .app-body {
+    transition: none;
+  }
+}
+
+/* ==========================================================================
+   Top bar
+   ========================================================================== */
+
+/*
+ * `overflow: hidden` plus `min-width: 0` on the flexible children.
+ *
+ * An earlier version of the V1 bar set a min-content width wider than the
+ * viewport, which laid the whole shell out at roughly 2068px and pushed
+ * controls off stage with no scrollbar to reveal them. The V2 bar carries far
+ * fewer elements, but the structural guard is kept because the failure mode
+ * is silent.
+ */
+.app-topbar {
+  display: flex;
+  align-items: center;
+  gap: var(--app-3);
+  padding: 0 var(--app-3);
+  background: var(--app-shell);
+  border-bottom: 1px solid var(--app-border);
+  min-width: 0;
+  overflow: hidden;
+}
+
+.app-brand {
+  display: flex;
+  align-items: center;
+  gap: var(--app-2);
+  text-decoration: none;
+  color: var(--app-text);
+  flex-shrink: 0;
+  padding: var(--app-1) var(--app-2);
+  border-radius: var(--app-radius);
+}
+
+.app-brand:hover {
+  background: var(--app-surface-hover);
+}
+
+.app-brand-mark {
+  display: grid;
+  place-items: center;
+  width: 22px;
+  height: 22px;
+  border-radius: 5px;
+  background: var(--app-ai-tint);
+  box-shadow: inset 0 0 0 1px var(--app-ai-edge);
+  color: var(--app-ai-text);
+  flex-shrink: 0;
+}
+
+.app-brand-name {
+  font-size: var(--app-text-base);
+  font-weight: 560;
+  letter-spacing: var(--app-tracking-tight);
+  white-space: nowrap;
+}
+
+.app-brand-logo {
+  height: 20px;
+  width: auto;
+  max-width: 132px;
+  object-fit: contain;
+  display: block;
+}
+
+/*
+ * The configured mark, shown beside the name rather than instead of it.
+ * Square because the supplied artwork is a 24 unit viewBox glyph, not a
+ * horizontal wordmark that could carry the identity on its own.
+ */
+.app-brand-mark-img {
+  width: 20px;
+  height: 20px;
+  display: block;
+  flex-shrink: 0;
+  border-radius: 5px;
+}
+
+/* Co-branding: two marks separated by a hairline, never stacked logos. */
+.app-brand-pair {
+  display: flex;
+  align-items: center;
+  gap: var(--app-2);
+}
+
+.app-brand-pair::before {
+  content: "";
+  width: 1px;
+  height: 16px;
+  background: var(--app-border-strong);
+}
+
+.app-context {
+  display: flex;
+  align-items: center;
+  gap: var(--app-2);
+  min-width: 0;
+  flex: 1;
+  overflow: hidden;
+}
+
+.app-context-sep {
+  color: var(--app-text-faint);
+  flex-shrink: 0;
+}
+
+.app-topbar-right {
+  display: flex;
+  align-items: center;
+  gap: var(--app-1);
+  flex-shrink: 0;
+}
+
+/* ==========================================================================
+   Navigation rail
+   ========================================================================== */
+
+.app-rail {
+  display: flex;
+  flex-direction: column;
+  background: var(--app-shell);
+  border-right: 1px solid var(--app-border);
+  padding: var(--app-2) 0;
+  min-width: 0;
+  overflow: hidden auto;
+  scrollbar-width: thin;
+}
+
+.app-rail-list {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: 0 var(--app-2);
+  list-style: none;
+  margin: 0;
+}
+
+.app-rail-spacer {
+  flex: 1;
+  min-height: var(--app-4);
+}
+
+/*
+ * The active indicator is a 2px left edge rather than a filled background.
+ *
+ * A filled tint on a 58px rail reads as a large block of colour at the edge of
+ * vision, which competes with genuine state elsewhere. An edge plus a brighter
+ * icon is unambiguous and quiet.
+ */
+.app-rail-item {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: var(--app-3);
+  height: 38px;
+  padding: 0 var(--app-2);
+  border-radius: var(--app-radius);
+  color: var(--app-text-muted);
+  text-decoration: none;
+  font-size: var(--app-text-sm);
+  white-space: nowrap;
+  transition: background var(--app-t-hover) var(--app-ease),
+    color var(--app-t-hover) var(--app-ease);
+}
+
+.app-rail-item:hover {
+  background: var(--app-surface-hover);
+  color: var(--app-text-secondary);
+}
+
+.app-rail-item[aria-current="page"] {
+  color: var(--app-text);
+  background: var(--app-surface-hover);
+}
+
+.app-rail-item[aria-current="page"]::before {
+  content: "";
+  position: absolute;
+  left: calc(var(--app-2) * -1 + 2px);
+  top: 7px;
+  bottom: 7px;
+  width: 2px;
+  border-radius: 1px;
+  background: var(--app-ai);
+}
+
+.app-rail-icon {
+  display: grid;
+  place-items: center;
+  width: 26px;
+  height: 26px;
+  flex-shrink: 0;
+  color: currentcolor;
+}
+
+.app-rail-item[aria-current="page"] .app-rail-icon {
+  color: var(--app-ai-text);
+}
+
+.app-rail-label {
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* Collapsed: the label is removed from layout, not merely hidden. */
+.app-body:not([data-rail="expanded"]) .app-rail-label,
+.app-body:not([data-rail="expanded"]) .app-rail-section-label {
+  display: none;
+}
+
+.app-body:not([data-rail="expanded"]) .app-rail-item {
+  justify-content: center;
+  gap: 0;
+  padding: 0;
+}
+
+.app-rail-badge {
+  margin-left: auto;
+  flex-shrink: 0;
+}
+
+/* The unread dot shown on a collapsed rail item. */
+.app-rail-dot {
+  position: absolute;
+  top: 6px;
+  right: 6px;
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--app-warning);
+  box-shadow: 0 0 0 2px var(--app-shell);
+}
+
+.app-rail-section-label {
+  padding: var(--app-3) var(--app-3) var(--app-1);
+  font-size: var(--app-text-2xs);
+  color: var(--app-text-faint);
+  text-transform: none;
+  letter-spacing: var(--app-tracking-label);
+}
+
+/* ==========================================================================
+   Centre workspace
+   ========================================================================== */
+
+.app-main {
+  min-width: 0;
+  overflow-y: auto;
+  overflow-x: hidden;
+  background: var(--app-bg);
+  scrollbar-width: thin;
+}
+
+.app-main-inner {
+  padding: var(--app-5) var(--app-6) var(--app-10);
+  max-width: 1320px;
+}
+
+/*
+ * The workspace header.
+ *
+ * One line of context, one title at 20px, and the object identity. No lede
+ * paragraph: the explanatory text that used to live here moved into the AI
+ * Partner and the evidence drawer, where it is read on demand rather than
+ * read past.
+ */
+.app-workspace-head {
+  display: flex;
+  flex-direction: column;
+  gap: var(--app-1);
+  margin-bottom: var(--app-5);
+}
+
+.app-eyebrow {
+  display: flex;
+  align-items: center;
+  gap: var(--app-2);
+  font-size: var(--app-text-xs);
+  color: var(--app-text-muted);
+  min-height: 18px;
+}
+
+.app-title {
+  font-size: var(--app-text-2xl);
+  font-weight: 560;
+  line-height: var(--app-leading-tight);
+  letter-spacing: var(--app-tracking-tight);
+  margin: 0;
+  color: var(--app-text);
+}
+
+.app-section-title {
+  font-size: var(--app-text-lg);
+  font-weight: 540;
+  letter-spacing: var(--app-tracking-tight);
+  margin: 0;
+  color: var(--app-text);
+}
+
+.app-object-title {
+  font-size: var(--app-text-xl);
+  font-weight: 540;
+  letter-spacing: var(--app-tracking-tight);
+  margin: 0;
+}
+
+.app-hero-title {
+  font-size: var(--app-text-3xl);
+  font-weight: 560;
+  letter-spacing: var(--app-tracking-tight);
+  margin: 0;
+}
+
+.app-section {
+  margin-bottom: var(--app-6);
+}
+
+.app-section-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--app-3);
+  margin-bottom: var(--app-2);
+  min-height: 24px;
+}
+
+.app-one-line {
+  font-size: var(--app-text-sm);
+  color: var(--app-text-secondary);
+  margin: 0;
+  max-width: 76ch;
+}
+
+/* ==========================================================================
+   Text utilities
+   ========================================================================== */
+
+.app-data {
+  font-family: var(--font-data);
+  font-size: var(--app-text-xs);
+  font-variant-numeric: tabular-nums;
+  letter-spacing: 0;
+}
+
+.app-data-md {
+  font-family: var(--font-data);
+  font-size: var(--app-text-sm);
+  font-variant-numeric: tabular-nums;
+}
+
+.app-meta {
+  font-size: var(--app-text-xs);
+  color: var(--app-text-muted);
+}
+
+.app-secondary {
+  color: var(--app-text-secondary);
+}
+
+.app-muted {
+  color: var(--app-text-muted);
+}
+
+.app-faint {
+  color: var(--app-text-faint);
+}
+
+.app-strong {
+  font-weight: 540;
+  color: var(--app-text);
+}
+
+.app-truncate {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  min-width: 0;
+}
+
+.app-clamp-2 {
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.app-tone-ai { color: var(--app-ai-text); }
+.app-tone-info { color: var(--app-info-text); }
+.app-tone-success { color: var(--app-success-text); }
+.app-tone-warning { color: var(--app-warning-text); }
+.app-tone-danger { color: var(--app-danger-text); }
+
+/* ==========================================================================
+   Layout utilities
+   ========================================================================== */
+
+.app-row {
+  display: flex;
+  align-items: center;
+  gap: var(--app-2);
+  min-width: 0;
+}
+
+.app-row-3,
+.app-row-4 {
+  display: flex;
+  align-items: center;
+  min-width: 0;
+}
+
+.app-row-3 { gap: var(--app-3); }
+.app-row-4 { gap: var(--app-4); }
+.app-row-top { align-items: flex-start; }
+.app-row-wrap { flex-wrap: wrap; }
+.app-between { justify-content: space-between; }
+.app-grow { flex: 1; min-width: 0; }
+.app-shrink-0 { flex-shrink: 0; }
+
+.app-stack {
+  display: flex;
+  flex-direction: column;
+  gap: var(--app-2);
+  min-width: 0;
+}
+
+/*
+ * Each gap variant is a complete stack, not a modifier.
+ *
+ * They were gap only at first, which meant `className="app-stack-1"` without
+ * `app-stack` produced a horizontal row: the gap applied and the flex
+ * direction did not. The failure is quiet and specific, two times on one
+ * line reading as one number, so the direction is declared on every variant
+ * rather than relying on a second class being remembered at each call site.
+ */
+.app-stack-1,
+.app-stack-2,
+.app-stack-3,
+.app-stack-4,
+.app-stack-5,
+.app-stack-6 {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.app-stack-1 { gap: var(--app-1); }
+.app-stack-2 { gap: var(--app-2); }
+.app-stack-3 { gap: var(--app-3); }
+.app-stack-4 { gap: var(--app-4); }
+.app-stack-5 { gap: var(--app-5); }
+.app-stack-6 { gap: var(--app-6); }
+
+.app-divider {
+  height: 1px;
+  background: var(--app-border);
+  border: 0;
+  margin: 0;
+}
+
+.app-divider-v {
+  width: 1px;
+  align-self: stretch;
+  background: var(--app-border);
+  margin: var(--app-2) 0;
+  flex-shrink: 0;
+}
+
+.app-grid-2 {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--app-4);
+}
+
+.app-grid-3 {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: var(--app-3);
+}
+
+@media (max-width: 1366px) {
+  .app-grid-3 {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+/* ==========================================================================
+   Rows: the default list element
+   ========================================================================== */
+
+.app-list {
+  display: flex;
+  flex-direction: column;
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+/* A hairline between rows, never a border around each one. */
+.app-list > * + * {
+  border-top: 1px solid var(--app-border);
+}
+
+.app-item {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: var(--app-3);
+  min-height: var(--app-row-h);
+  padding: var(--app-2) var(--app-3);
+  min-width: 0;
+  text-decoration: none;
+  color: inherit;
+  background: transparent;
+  border: 0;
+  width: 100%;
+  text-align: left;
+  font: inherit;
+  border-radius: var(--app-radius-sm);
+  transition: background var(--app-t-hover) var(--app-ease);
+}
+
+.app-item-lg {
+  min-height: var(--app-row-h-lg);
+  align-items: flex-start;
+  padding: var(--app-3);
+}
+
+.app-item[data-interactive="true"] {
+  cursor: pointer;
+}
+
+.app-item[data-interactive="true"]:hover {
+  background: var(--app-surface-hover);
+}
+
+.app-item[data-selected="true"] {
+  background: var(--app-selected-bg);
+  box-shadow: inset 0 0 0 1px var(--app-selected-edge);
+}
+
+/*
+ * The changed marker.
+ *
+ * A 2px left edge, animated in once. This is the single visual device that
+ * says "this is what moved", and it is used on rows, on graph nodes and on
+ * the focus item for the same meaning in all three places.
+ */
+.app-item[data-changed="true"]::before,
+.app-changed-edge::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  top: 4px;
+  bottom: 4px;
+  width: 2px;
+  border-radius: 1px;
+  background: var(--app-ai);
+  animation: app-edge-in var(--app-t-object) var(--app-ease) both;
+}
+
+.app-item-main {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  min-width: 0;
+  flex: 1;
+}
+
+.app-item-title {
+  font-size: var(--app-text-md);
+  color: var(--app-text);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.app-item-sub {
+  font-size: var(--app-text-xs);
+  color: var(--app-text-muted);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.app-item-trail {
+  display: flex;
+  align-items: center;
+  gap: var(--app-2);
+  flex-shrink: 0;
+}
+
+/* ==========================================================================
+   Cards: used selectively
+   ========================================================================== */
+
+.app-card {
+  background: var(--app-surface);
+  border: 1px solid var(--app-border);
+  border-radius: var(--app-radius-lg);
+  padding: var(--app-4);
+}
+
+.app-card-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--app-3);
+  margin-bottom: var(--app-3);
+  min-width: 0;
+}
+
+.app-card-raised {
+  background: var(--app-surface-raised);
+  box-shadow: var(--app-shadow-1);
+}
+
+/* One accented edge rather than a tinted fill, for a card that carries state. */
+.app-card[data-accent="ai"] { border-left: 2px solid var(--app-ai); }
+.app-card[data-accent="warning"] { border-left: 2px solid var(--app-warning); }
+.app-card[data-accent="danger"] { border-left: 2px solid var(--app-danger); }
+.app-card[data-accent="success"] { border-left: 2px solid var(--app-success); }
+.app-card[data-accent="info"] { border-left: 2px solid var(--app-info); }
+
+/* ==========================================================================
+   Buttons
+   ========================================================================== */
+
+.app-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--app-2);
+  height: 30px;
+  padding: 0 var(--app-3);
+  border-radius: var(--app-radius);
+  border: 1px solid transparent;
+  background: var(--app-surface-raised);
+  color: var(--app-text);
+  font-family: inherit;
+  font-size: var(--app-text-sm);
+  font-weight: 500;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: background var(--app-t-control) var(--app-ease),
+    border-color var(--app-t-control) var(--app-ease),
+    color var(--app-t-control) var(--app-ease);
+}
+
+.app-btn:hover:not(:disabled) {
+  background: var(--app-surface-hover);
+}
+
+.app-btn:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+.app-btn-lg {
+  height: 34px;
+  padding: 0 var(--app-4);
+  font-size: var(--app-text-base);
+}
+
+.app-btn-sm {
+  height: 26px;
+  padding: 0 var(--app-2);
+  font-size: var(--app-text-xs);
+}
+
+/* Primary: one per focus area. */
+.app-btn-primary {
+  background: var(--app-ai);
+  color: #0b0a16;
+  font-weight: 560;
+}
+
+.app-btn-primary:hover:not(:disabled) {
+  background: #9d95ff;
+}
+
+.app-btn-secondary {
+  background: transparent;
+  border-color: var(--app-border-strong);
+  color: var(--app-text-secondary);
+}
+
+.app-btn-secondary:hover:not(:disabled) {
+  background: var(--app-surface-hover);
+  color: var(--app-text);
+}
+
+.app-btn-quiet {
+  background: transparent;
+  color: var(--app-text-muted);
+}
+
+.app-btn-quiet:hover:not(:disabled) {
+  background: var(--app-surface-hover);
+  color: var(--app-text);
+}
+
+/*
+ * A human decision action.
+ *
+ * Amber semantics are retained because they carry meaning across the whole
+ * product, but the button is not amber filled. A filled amber control at every
+ * decision point reads as a warning about the interface rather than a
+ * statement about the work.
+ */
+.app-btn-decide {
+  background: var(--app-warning-tint);
+  border-color: var(--app-warning-edge);
+  color: var(--app-warning-text);
+  font-weight: 540;
+}
+
+.app-btn-decide:hover:not(:disabled) {
+  background: rgb(232 182 92 / 16%);
+}
+
+.app-btn-danger {
+  background: transparent;
+  border-color: var(--app-danger-edge);
+  color: var(--app-danger-text);
+}
+
+.app-btn-danger:hover:not(:disabled) {
+  background: var(--app-danger-tint);
+}
+
+.app-btn-block {
+  width: 100%;
+}
+
+.app-icon-btn {
+  display: inline-grid;
+  place-items: center;
+  width: 28px;
+  height: 28px;
+  border-radius: var(--app-radius);
+  border: 0;
+  background: transparent;
+  color: var(--app-text-muted);
+  cursor: pointer;
+  flex-shrink: 0;
+  transition: background var(--app-t-control) var(--app-ease),
+    color var(--app-t-control) var(--app-ease);
+}
+
+.app-icon-btn:hover:not(:disabled) {
+  background: var(--app-surface-hover);
+  color: var(--app-text);
+}
+
+.app-icon-btn:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.app-icon-btn[aria-pressed="true"],
+.app-icon-btn[aria-expanded="true"] {
+  background: var(--app-surface-active);
+  color: var(--app-text);
+}
+
+/* ==========================================================================
+   Chips: status, source, severity, authority, count. Nothing else.
+   ========================================================================== */
+
+.app-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  height: 20px;
+  padding: 0 var(--app-2);
+  border-radius: var(--app-radius-sm);
+  background: var(--app-surface-raised);
+  color: var(--app-text-secondary);
+  font-size: var(--app-text-xs);
+  font-weight: 500;
+  white-space: nowrap;
+  flex-shrink: 0;
+  line-height: 1;
+}
+
+.app-chip[data-tone="ai"] {
+  background: var(--app-ai-tint);
+  color: var(--app-ai-text);
+  box-shadow: inset 0 0 0 1px var(--app-ai-edge);
+}
+
+.app-chip[data-tone="info"] {
+  background: var(--app-info-tint);
+  color: var(--app-info-text);
+  box-shadow: inset 0 0 0 1px var(--app-info-edge);
+}
+
+.app-chip[data-tone="success"] {
+  background: var(--app-success-tint);
+  color: var(--app-success-text);
+  box-shadow: inset 0 0 0 1px var(--app-success-edge);
+}
+
+.app-chip[data-tone="warning"] {
+  background: var(--app-warning-tint);
+  color: var(--app-warning-text);
+  box-shadow: inset 0 0 0 1px var(--app-warning-edge);
+}
+
+.app-chip[data-tone="danger"] {
+  background: var(--app-danger-tint);
+  color: var(--app-danger-text);
+  box-shadow: inset 0 0 0 1px var(--app-danger-edge);
+}
+
+.app-chip-count {
+  font-family: var(--font-data);
+  font-variant-numeric: tabular-nums;
+  min-width: 18px;
+  justify-content: center;
+  padding: 0 5px;
+}
+
+/* An identifier. Mono, quiet, selectable. */
+.app-oid {
+  font-family: var(--font-data);
+  font-size: var(--app-text-xs);
+  color: var(--app-text-muted);
+  letter-spacing: 0;
+  white-space: nowrap;
+  user-select: all;
+}
+
+/* ==========================================================================
+   State dots
+   ========================================================================== */
+
+.app-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  flex-shrink: 0;
+  background: var(--app-text-faint);
+}
+
+.app-dot[data-tone="ai"] { background: var(--app-ai); }
+.app-dot[data-tone="info"] { background: var(--app-info); }
+.app-dot[data-tone="success"] { background: var(--app-success); }
+.app-dot[data-tone="warning"] { background: var(--app-warning); }
+.app-dot[data-tone="danger"] { background: var(--app-danger); }
+
+/*
+ * A live dot pulses only while something is genuinely running. The animation
+ * is driven by a data attribute that the application sets from real state, so
+ * an idle partner does not advertise work it is not doing.
+ */
+.app-dot[data-live="true"] {
+  animation: app-pulse 1.8s var(--app-ease-spatial) infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .app-dot[data-live="true"] {
+    animation: none;
+    box-shadow: 0 0 0 2px var(--app-ai-tint);
+  }
+}
+
+/* ==========================================================================
+   Tabs
+   ========================================================================== */
+
+.app-tabs {
+  display: flex;
+  align-items: stretch;
+  gap: 0;
+  border-bottom: 1px solid var(--app-border);
+  min-width: 0;
+}
+
+.app-tab {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  gap: var(--app-2);
+  height: 34px;
+  padding: 0 var(--app-3);
+  border: 0;
+  background: transparent;
+  color: var(--app-text-muted);
+  font: inherit;
+  font-size: var(--app-text-sm);
+  cursor: pointer;
+  white-space: nowrap;
+  transition: color var(--app-t-control) var(--app-ease);
+}
+
+.app-tab:hover {
+  color: var(--app-text-secondary);
+}
+
+.app-tab[aria-selected="true"] {
+  color: var(--app-text);
+}
+
+.app-tab[aria-selected="true"]::after {
+  content: "";
+  position: absolute;
+  left: var(--app-2);
+  right: var(--app-2);
+  bottom: -1px;
+  height: 2px;
+  border-radius: 1px;
+  background: var(--app-ai);
+}
+
+/* ==========================================================================
+   Segmented control
+   ========================================================================== */
+
+.app-segmented {
+  display: inline-flex;
+  padding: 2px;
+  gap: 2px;
+  background: var(--app-surface);
+  border: 1px solid var(--app-border);
+  border-radius: var(--app-radius);
+}
+
+.app-segmented-option {
+  height: 24px;
+  padding: 0 var(--app-2);
+  border: 0;
+  border-radius: var(--app-radius-sm);
+  background: transparent;
+  color: var(--app-text-muted);
+  font: inherit;
+  font-size: var(--app-text-xs);
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.app-segmented-option:hover {
+  color: var(--app-text-secondary);
+}
+
+.app-segmented-option[aria-pressed="true"] {
+  background: var(--app-surface-active);
+  color: var(--app-text);
+}
+
+/* ==========================================================================
+   Menus and popovers
+   ========================================================================== */
+
+.app-pop {
+  position: absolute;
+  z-index: 70;
+  min-width: 220px;
+  padding: var(--app-1);
+  background: var(--app-surface-raised);
+  border: 1px solid var(--app-border-strong);
+  border-radius: var(--app-radius-lg);
+  box-shadow: var(--app-shadow-3);
+  animation: app-pop-in var(--app-t-control) var(--app-ease) both;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .app-pop {
+    animation: none;
+  }
+}
+
+.app-pop-item {
+  display: flex;
+  align-items: center;
+  gap: var(--app-2);
+  width: 100%;
+  min-height: 30px;
+  padding: var(--app-1) var(--app-2);
+  border: 0;
+  border-radius: var(--app-radius-sm);
+  background: transparent;
+  color: var(--app-text-secondary);
+  font: inherit;
+  font-size: var(--app-text-sm);
+  text-align: left;
+  text-decoration: none;
+  cursor: pointer;
+}
+
+.app-pop-item:hover,
+.app-pop-item[data-active="true"] {
+  background: var(--app-surface-hover);
+  color: var(--app-text);
+}
+
+.app-pop-item[aria-checked="true"] {
+  color: var(--app-text);
+}
+
+.app-pop-label {
+  padding: var(--app-2) var(--app-2) var(--app-1);
+  font-size: var(--app-text-2xs);
+  color: var(--app-text-faint);
+}
+
+.app-pop-sep {
+  height: 1px;
+  margin: var(--app-1) 0;
+  background: var(--app-border);
+}
+
+/* ==========================================================================
+   Drawer
+   ========================================================================== */
+
+.app-drawer-scrim {
+  position: fixed;
+  inset: 0;
+  z-index: 80;
+  background: rgb(0 0 0 / 48%);
+  animation: app-fade-in var(--app-t-drawer) var(--app-ease) both;
+}
+
+.app-drawer {
+  position: fixed;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 81;
+  width: var(--app-drawer-w);
+  max-width: 92vw;
+  display: flex;
+  flex-direction: column;
+  background: var(--app-shell);
+  border-left: 1px solid var(--app-border-strong);
+  box-shadow: var(--app-shadow-3);
+  animation: app-slide-in var(--app-t-drawer) var(--app-ease) both;
+}
+
+.app-drawer-head {
+  display: flex;
+  align-items: center;
+  gap: var(--app-2);
+  padding: var(--app-3) var(--app-3) var(--app-3) var(--app-4);
+  border-bottom: 1px solid var(--app-border);
+  flex-shrink: 0;
+}
+
+.app-drawer-body {
+  flex: 1;
+  overflow-y: auto;
+  padding: var(--app-4);
+  scrollbar-width: thin;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .app-drawer,
+  .app-drawer-scrim {
+    animation: none;
+  }
+}
+
+/* ==========================================================================
+   AI Partner
+   ========================================================================== */
+
+.app-partner {
+  display: flex;
+  flex-direction: column;
+  background: var(--app-shell);
+  border-left: 1px solid var(--app-border);
+  min-width: 0;
+  overflow: hidden;
+}
+
+.app-partner-head {
+  display: flex;
+  flex-direction: column;
+  gap: var(--app-2);
+  padding: var(--app-3);
+  border-bottom: 1px solid var(--app-border);
+  flex-shrink: 0;
+}
+
+.app-partner-body {
+  flex: 1;
+  overflow-y: auto;
+  min-height: 0;
+  scrollbar-width: thin;
+}
+
+.app-partner-foot {
+  flex-shrink: 0;
+  border-top: 1px solid var(--app-border);
+  padding: var(--app-2) var(--app-3) var(--app-3);
+}
+
+/*
+ * The presence rail at 1366.
+ *
+ * The partner collapses to a 48px column of state rather than disappearing,
+ * so the user can still see that it is monitoring and can open it without
+ * losing the centre workspace.
+ */
+.app-partner-presence {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--app-3);
+  padding: var(--app-3) 0;
+  background: var(--app-shell);
+  border-left: 1px solid var(--app-border);
+}
+
+.app-partner-presence-label {
+  writing-mode: vertical-rl;
+  font-size: var(--app-text-xs);
+  color: var(--app-text-muted);
+  letter-spacing: var(--app-tracking-label);
+  white-space: nowrap;
+}
+
+/* The abstract status mark. Not a face, not a robot, not an orb. */
+.app-partner-mark {
+  position: relative;
+  display: grid;
+  place-items: center;
+  width: 22px;
+  height: 22px;
+  border-radius: var(--app-radius-sm);
+  background: var(--app-surface-raised);
+  box-shadow: inset 0 0 0 1px var(--app-border-strong);
+  flex-shrink: 0;
+}
+
+.app-partner-mark[data-state="preparing"],
+.app-partner-mark[data-state="checking-evidence"],
+.app-partner-mark[data-state="executing"] {
+  background: var(--app-ai-tint);
+  box-shadow: inset 0 0 0 1px var(--app-ai-edge);
+}
+
+.app-partner-mark[data-state="needs-you"] {
+  background: var(--app-warning-tint);
+  box-shadow: inset 0 0 0 1px var(--app-warning-edge);
+}
+
+/*
+ * The only permitted sheen, and only while a real operation is running.
+ * Driven by `data-running`, which the application sets from actual state.
+ */
+.app-sheen[data-running="true"] {
+  position: relative;
+  overflow: hidden;
+}
+
+.app-sheen[data-running="true"]::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    100deg,
+    transparent 20%,
+    rgb(139 130 255 / 10%) 50%,
+    transparent 80%
+  );
+  background-size: 220% 100%;
+  animation: app-sheen 1.4s linear infinite;
+  pointer-events: none;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .app-sheen[data-running="true"]::after {
+    animation: none;
+    background: rgb(139 130 255 / 5%);
+  }
+}
+
+/* ==========================================================================
+   Suggestion card
+   ========================================================================== */
+
+.app-suggestion {
+  display: flex;
+  flex-direction: column;
+  gap: var(--app-3);
+  padding: var(--app-3);
+  background: var(--app-surface);
+  border: 1px solid var(--app-border);
+  border-left: 2px solid var(--app-ai);
+  border-radius: var(--app-radius);
+  animation: app-rise var(--app-t-suggestion) var(--app-ease) both;
+}
+
+.app-suggestion[data-priority="critical"] {
+  border-left-color: var(--app-danger);
+}
+
+.app-suggestion[data-priority="high"] {
+  border-left-color: var(--app-warning);
+}
+
+.app-suggestion[data-constrained="true"] {
+  border-left-style: dashed;
+}
+
+.app-suggestion-headline {
+  font-size: var(--app-text-md);
+  font-weight: 540;
+  line-height: var(--app-leading-snug);
+  color: var(--app-text);
+  margin: 0;
+}
+
+.app-suggestion-body {
+  font-size: var(--app-text-sm);
+  color: var(--app-text-secondary);
+  line-height: var(--app-leading-normal);
+  margin: 0;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .app-suggestion {
+    animation: none;
+  }
+}
+
+/* A checklist of what the partner did. Compact, no bullets. */
+.app-did-list {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.app-did-item {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--app-2);
+  font-size: var(--app-text-xs);
+  color: var(--app-text-secondary);
+  line-height: var(--app-leading-snug);
+}
+
+.app-did-item > svg {
+  flex-shrink: 0;
+  margin-top: 1px;
+}
+
+/* ==========================================================================
+   Activity stream
+   ========================================================================== */
+
+.app-activity {
+  display: flex;
+  flex-direction: column;
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.app-activity-row {
+  display: grid;
+  grid-template-columns: 42px 14px minmax(0, 1fr);
+  gap: var(--app-2);
+  align-items: baseline;
+  padding: var(--app-1) var(--app-3);
+  font-size: var(--app-text-xs);
+  min-height: 24px;
+}
+
+.app-activity-row:hover {
+  background: var(--app-surface-hover);
+}
+
+.app-activity-time {
+  font-family: var(--font-data);
+  font-size: var(--app-text-2xs);
+  color: var(--app-text-faint);
+  font-variant-numeric: tabular-nums;
+}
+
+.app-activity-label {
+  color: var(--app-text-secondary);
+  min-width: 0;
+}
+
+.app-activity-detail {
+  grid-column: 3;
+  padding: var(--app-2) 0 var(--app-3);
+  display: flex;
+  flex-direction: column;
+  gap: var(--app-1);
+  font-size: var(--app-text-2xs);
+  color: var(--app-text-muted);
+}
+
+/* ==========================================================================
+   Chat
+   ========================================================================== */
+
+.app-chat {
+  display: flex;
+  flex-direction: column;
+  gap: var(--app-3);
+  padding: var(--app-3);
+}
+
+.app-chat-turn {
+  display: flex;
+  flex-direction: column;
+  gap: var(--app-2);
+  min-width: 0;
+}
+
+.app-chat-turn[data-author="user"] {
+  align-items: flex-end;
+}
+
+.app-chat-user-bubble {
+  max-width: 88%;
+  padding: var(--app-2) var(--app-3);
+  border-radius: var(--app-radius) var(--app-radius) 2px var(--app-radius);
+  background: var(--app-surface-active);
+  font-size: var(--app-text-sm);
+  color: var(--app-text);
+}
+
+.app-chat-partner {
+  display: flex;
+  flex-direction: column;
+  gap: var(--app-2);
+  width: 100%;
+  font-size: var(--app-text-md);
+  line-height: var(--app-leading-normal);
+  color: var(--app-text);
+}
+
+/* Typed response parts, each visually distinct from prose. */
+.app-part {
+  display: flex;
+  flex-direction: column;
+  gap: var(--app-1);
+  padding: var(--app-2) var(--app-3);
+  border-radius: var(--app-radius);
+  font-size: var(--app-text-sm);
+  border-left: 2px solid var(--app-border-strong);
+  background: var(--app-surface);
+}
+
+.app-part[data-kind="evidence"] {
+  border-left-color: var(--app-success);
+}
+
+.app-part[data-kind="uncertainty"] {
+  border-left-color: var(--app-warning);
+}
+
+.app-part[data-kind="recommendation"] {
+  border-left-color: var(--app-ai);
+}
+
+.app-part[data-kind="proposed-action"],
+.app-part[data-kind="approval-request"] {
+  border-left-color: var(--app-warning);
+  background: var(--app-warning-tint);
+}
+
+.app-part[data-kind="execution-receipt"] {
+  border-left-color: var(--app-success);
+  background: var(--app-success-tint);
+}
+
+.app-part[data-kind="blocked"] {
+  border-left-color: var(--app-danger);
+  background: var(--app-danger-tint);
+}
+
+.app-part[data-kind="source-status"] {
+  border-left-color: var(--app-info);
+}
+
+.app-part-label {
+  font-size: var(--app-text-2xs);
+  color: var(--app-text-muted);
+}
+
+.app-composer {
+  display: flex;
+  flex-direction: column;
+  gap: var(--app-2);
+}
+
+.app-composer-field {
+  display: flex;
+  align-items: flex-end;
+  gap: var(--app-2);
+  padding: var(--app-2);
+  background: var(--app-surface);
+  border: 1px solid var(--app-border-strong);
+  border-radius: var(--app-radius);
+}
+
+.app-composer-field:focus-within {
+  border-color: var(--app-ai-edge);
+}
+
+.app-composer-input {
+  flex: 1;
+  min-width: 0;
+  background: transparent;
+  border: 0;
+  resize: none;
+  color: var(--app-text);
+  font: inherit;
+  font-size: var(--app-text-sm);
+  line-height: var(--app-leading-snug);
+  max-height: 120px;
+  outline: none;
+}
+
+.app-composer-input::placeholder {
+  color: var(--app-text-faint);
+}
+
+.app-prompt-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--app-1);
+}
+
+.app-prompt-chip {
+  height: 22px;
+  padding: 0 var(--app-2);
+  border-radius: var(--app-radius-pill);
+  border: 1px solid var(--app-border-strong);
+  background: transparent;
+  color: var(--app-text-muted);
+  font: inherit;
+  font-size: var(--app-text-xs);
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.app-prompt-chip:hover {
+  background: var(--app-surface-hover);
+  color: var(--app-text);
+}
+
+/* ==========================================================================
+   Live day bar
+   ========================================================================== */
+
+.app-liveday {
+  display: flex;
+  align-items: center;
+  gap: var(--app-3);
+  padding: 0 var(--app-3);
+  background: var(--app-shell);
+  border-top: 1px solid var(--app-border);
+  min-width: 0;
+  overflow: hidden;
+}
+
+.app-liveday-clock {
+  display: flex;
+  align-items: baseline;
+  gap: var(--app-2);
+  flex-shrink: 0;
+  font-family: var(--font-data);
+  font-variant-numeric: tabular-nums;
+}
+
+.app-liveday-now {
+  font-size: var(--app-text-md);
+  color: var(--app-text);
+  letter-spacing: 0;
+}
+
+/* When the user has scrubbed back, the viewed time leads and live follows. */
+.app-liveday-clock[data-behind="true"] .app-liveday-now {
+  color: var(--app-warning-text);
+}
+
+.app-liveday-live {
+  font-size: var(--app-text-xs);
+  color: var(--app-text-faint);
+}
+
+/*
+ * The event track.
+ *
+ * A row of markers positioned by scenario time, not a scrubbable slider with
+ * a thumb. Each marker is a button, so the whole track is keyboard reachable
+ * by tabbing and by the arrow shortcuts.
+ */
+.app-track {
+  position: relative;
+  flex: 1;
+  min-width: 0;
+  height: 28px;
+  display: flex;
+  align-items: center;
+}
+
+.app-track-line {
+  position: absolute;
+  left: 0;
+  right: 0;
+  height: 2px;
+  border-radius: 1px;
+  background: var(--app-border-strong);
+}
+
+.app-track-progress {
+  position: absolute;
+  left: 0;
+  height: 2px;
+  border-radius: 1px;
+  background: var(--app-ai);
+  transition: width var(--app-t-object) var(--app-ease);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .app-track-progress {
+    transition: none;
+  }
+}
+
+.app-track-marker {
+  position: absolute;
+  top: 50%;
+  translate: -50% -50%;
+  width: 16px;
+  height: 16px;
+  display: grid;
+  place-items: center;
+  border: 0;
+  background: transparent;
+  padding: 0;
+  cursor: pointer;
+  border-radius: 50%;
+}
+
+.app-track-marker::before {
+  content: "";
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--app-text-faint);
+  box-shadow: 0 0 0 2px var(--app-shell);
+  transition: all var(--app-t-control) var(--app-ease);
+}
+
+.app-track-marker:hover::before {
+  scale: 1.3;
+}
+
+.app-track-marker[data-unread="true"]::before {
+  background: var(--app-warning);
+}
+
+.app-track-marker[data-decision="true"]::before {
+  background: var(--app-warning);
+  width: 9px;
+  height: 9px;
+}
+
+.app-track-marker[data-shared="true"]::before {
+  background: var(--app-danger);
+  width: 10px;
+  height: 10px;
+}
+
+.app-track-marker[data-current="true"]::before {
+  background: var(--app-ai);
+  width: 11px;
+  height: 11px;
+  box-shadow: 0 0 0 2px var(--app-shell), 0 0 0 4px var(--app-ai-tint);
+}
+
+.app-track-marker[data-past="true"]::before {
+  background: var(--app-text-muted);
+}
+
+/* The catch-up call to action. Attention without a continuous flash. */
+.app-catchup {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--app-2);
+  height: 26px;
+  padding: 0 var(--app-3);
+  border-radius: var(--app-radius-pill);
+  border: 1px solid var(--app-warning-edge);
+  background: var(--app-warning-tint);
+  color: var(--app-warning-text);
+  font: inherit;
+  font-size: var(--app-text-xs);
+  font-weight: 540;
+  cursor: pointer;
+  flex-shrink: 0;
+  animation: app-attention-once var(--app-t-propagate) var(--app-ease) both;
+}
+
+.app-catchup:hover {
+  background: rgb(232 182 92 / 18%);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .app-catchup {
+    animation: none;
+  }
+}
+
+/* ==========================================================================
+   Heads-up card for a new event. Never a modal.
+   ========================================================================== */
+
+.app-headsup-stack {
+  position: fixed;
+  right: var(--app-4);
+  bottom: calc(var(--app-liveday-h) + var(--app-4));
+  z-index: 75;
+  display: flex;
+  flex-direction: column;
+  gap: var(--app-2);
+  width: 340px;
+  max-width: calc(100vw - var(--app-8));
+  pointer-events: none;
+}
+
+.app-headsup {
+  pointer-events: auto;
+  display: flex;
+  flex-direction: column;
+  gap: var(--app-1);
+  padding: var(--app-3);
+  background: var(--app-surface-raised);
+  border: 1px solid var(--app-border-strong);
+  border-left: 2px solid var(--app-info);
+  border-radius: var(--app-radius);
+  box-shadow: var(--app-shadow-2);
+  animation: app-slide-up var(--app-t-suggestion) var(--app-ease) both;
+}
+
+.app-headsup[data-severity="critical"] {
+  border-left-color: var(--app-danger);
+}
+
+.app-headsup[data-severity="high"] {
+  border-left-color: var(--app-warning);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .app-headsup {
+    animation: app-fade-in var(--app-t-control) var(--app-ease) both;
+  }
+}
+
+/* ==========================================================================
+   Loading
+   ========================================================================== */
+
+/*
+ * Skeletons reserve the real dimensions of the content they stand in for, so
+ * populating does not shift the layout under a cursor that is about to click.
+ */
+.app-skeleton {
+  position: relative;
+  overflow: hidden;
+  border-radius: var(--app-radius-sm);
+  background: var(--app-surface-raised);
+}
+
+.app-skeleton::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    100deg,
+    transparent 20%,
+    rgb(255 255 255 / 5%) 50%,
+    transparent 80%
+  );
+  background-size: 220% 100%;
+  animation: app-sheen 1.5s linear infinite;
+}
+
+/* Reduced motion gets a neutral fill, never a moving highlight. */
+@media (prefers-reduced-motion: reduce) {
+  .app-skeleton::after {
+    animation: none;
+    background: rgb(255 255 255 / 3%);
+  }
+}
+
+.app-skeleton-row {
+  display: flex;
+  align-items: center;
+  gap: var(--app-3);
+  min-height: var(--app-row-h);
+  padding: var(--app-2) var(--app-3);
+}
+
+/* The staged list shown while the partner works. */
+.app-stages {
+  display: flex;
+  flex-direction: column;
+  gap: var(--app-1);
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.app-stage {
+  display: flex;
+  align-items: center;
+  gap: var(--app-2);
+  font-size: var(--app-text-xs);
+  color: var(--app-text-faint);
+  min-height: 20px;
+}
+
+.app-stage[data-state="done"] {
+  color: var(--app-text-secondary);
+}
+
+.app-stage[data-state="active"] {
+  color: var(--app-ai-text);
+}
+
+.app-stage-glyph {
+  display: grid;
+  place-items: center;
+  width: 14px;
+  height: 14px;
+  flex-shrink: 0;
+}
+
+/* ==========================================================================
+   Source attribution row
+   ========================================================================== */
+
+.app-sources {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--app-2);
+  font-size: var(--app-text-xs);
+  color: var(--app-text-muted);
+}
+
+.app-source {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 2px var(--app-2) 2px 5px;
+  border-radius: var(--app-radius-sm);
+  background: var(--app-surface);
+  box-shadow: inset 0 0 0 1px var(--app-border);
+  white-space: nowrap;
+}
+
+.app-source[data-freshness="stale"] {
+  color: var(--app-warning-text);
+  box-shadow: inset 0 0 0 1px var(--app-warning-edge);
+}
+
+.app-source[data-conflicted="true"] {
+  color: var(--app-danger-text);
+  box-shadow: inset 0 0 0 1px var(--app-danger-edge);
+}
+
+.app-source[data-loading="true"] {
+  color: var(--app-info-text);
+}
+
+.app-source-link {
+  color: inherit;
+  text-decoration: none;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.app-source-link:hover {
+  text-decoration: underline;
+}
+
+/* ==========================================================================
+   Command palette
+   ========================================================================== */
+
+.app-cmd-scrim {
+  position: fixed;
+  inset: 0;
+  z-index: 90;
+  background: rgb(0 0 0 / 56%);
+  display: grid;
+  place-items: start center;
+  padding-top: 12vh;
+  animation: app-fade-in var(--app-t-control) var(--app-ease) both;
+}
+
+.app-cmd {
+  width: min(620px, 92vw);
+  max-height: 64vh;
+  display: flex;
+  flex-direction: column;
+  background: var(--app-surface-raised);
+  border: 1px solid var(--app-border-strong);
+  border-radius: var(--app-radius-lg);
+  box-shadow: var(--app-shadow-3);
+  overflow: hidden;
+  animation: app-rise var(--app-t-control) var(--app-ease) both;
+}
+
+.app-cmd-input {
+  width: 100%;
+  height: 46px;
+  padding: 0 var(--app-4);
+  border: 0;
+  border-bottom: 1px solid var(--app-border);
+  background: transparent;
+  color: var(--app-text);
+  font: inherit;
+  font-size: var(--app-text-md);
+  outline: none;
+}
+
+.app-cmd-input::placeholder {
+  color: var(--app-text-faint);
+}
+
+.app-cmd-list {
+  overflow-y: auto;
+  padding: var(--app-1);
+  list-style: none;
+  margin: 0;
+  scrollbar-width: thin;
+}
+
+.app-cmd-group {
+  padding: var(--app-2) var(--app-3) var(--app-1);
+  font-size: var(--app-text-2xs);
+  color: var(--app-text-faint);
+}
+
+.app-cmd-item {
+  display: flex;
+  align-items: center;
+  gap: var(--app-3);
+  width: 100%;
+  min-height: 34px;
+  padding: var(--app-1) var(--app-3);
+  border: 0;
+  border-radius: var(--app-radius);
+  background: transparent;
+  color: var(--app-text-secondary);
+  font: inherit;
+  font-size: var(--app-text-sm);
+  text-align: left;
+  cursor: pointer;
+}
+
+.app-cmd-item[data-active="true"] {
+  background: var(--app-surface-hover);
+  color: var(--app-text);
+}
+
+.app-cmd-hint {
+  margin-left: auto;
+  font-family: var(--font-data);
+  font-size: var(--app-text-2xs);
+  color: var(--app-text-faint);
+  flex-shrink: 0;
+}
+
+.app-kbd {
+  display: inline-grid;
+  place-items: center;
+  min-width: 18px;
+  height: 18px;
+  padding: 0 4px;
+  border-radius: 4px;
+  background: var(--app-surface);
+  box-shadow: inset 0 0 0 1px var(--app-border-strong);
+  font-family: var(--font-data);
+  font-size: 10px;
+  color: var(--app-text-muted);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .app-cmd-scrim,
+  .app-cmd {
+    animation: none;
+  }
+}
+
+/* ==========================================================================
+   Empty states and notices
+   ========================================================================== */
+
+.app-empty {
+  display: flex;
+  flex-direction: column;
+  gap: var(--app-2);
+  align-items: flex-start;
+  padding: var(--app-5) var(--app-3);
+  color: var(--app-text-muted);
+  font-size: var(--app-text-sm);
+}
+
+.app-notice {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--app-2);
+  padding: var(--app-2) var(--app-3);
+  border-radius: var(--app-radius);
+  font-size: var(--app-text-xs);
+  line-height: var(--app-leading-snug);
+  background: var(--app-surface);
+  border-left: 2px solid var(--app-border-strong);
+  color: var(--app-text-secondary);
+}
+
+.app-notice[data-tone="warning"] {
+  background: var(--app-warning-tint);
+  border-left-color: var(--app-warning);
+  color: var(--app-warning-text);
+}
+
+.app-notice[data-tone="danger"] {
+  background: var(--app-danger-tint);
+  border-left-color: var(--app-danger);
+  color: var(--app-danger-text);
+}
+
+.app-notice[data-tone="info"] {
+  background: var(--app-info-tint);
+  border-left-color: var(--app-info);
+  color: var(--app-info-text);
+}
+
+/*
+ * The regulatory disclosure.
+ *
+ * Required on every regulatory reference in the product. Quiet, but never
+ * omitted and never collapsed behind a disclosure control.
+ */
+.app-regulatory-note {
+  font-size: var(--app-text-2xs);
+  color: var(--app-text-faint);
+  font-style: normal;
+}
+
+/* The permanent synthetic data disclosure. */
+.app-synthetic {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  font-size: var(--app-text-2xs);
+  color: var(--app-text-faint);
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+.app-synthetic::before {
+  content: "";
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  background: var(--app-text-faint);
+}
+
+/* ==========================================================================
+   Focus and accessibility
+   ========================================================================== */
+
+.workday-v2 :focus-visible {
+  outline: 2px solid var(--app-focus-edge);
+  outline-offset: 2px;
+  border-radius: var(--app-radius-sm);
+}
+
+.workday-v2 ::selection {
+  background: var(--app-ai-tint);
+  color: var(--app-text);
+}
+
+.app-sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+  border: 0;
+}
+
+/* ==========================================================================
+   Animations
+   ========================================================================== */
+
+@keyframes app-fade-in {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes app-rise {
+  from { opacity: 0; translate: 0 6px; }
+  to { opacity: 1; translate: 0 0; }
+}
+
+@keyframes app-slide-in {
+  from { translate: 16px 0; opacity: 0; }
+  to { translate: 0 0; opacity: 1; }
+}
+
+@keyframes app-slide-up {
+  from { translate: 0 12px; opacity: 0; }
+  to { translate: 0 0; opacity: 1; }
+}
+
+@keyframes app-pop-in {
+  from { opacity: 0; scale: 0.97; }
+  to { opacity: 1; scale: 1; }
+}
+
+@keyframes app-edge-in {
+  from { scale: 1 0; }
+  to { scale: 1 1; }
+}
+
+@keyframes app-sheen {
+  from { background-position: 180% 0; }
+  to { background-position: -80% 0; }
+}
+
+@keyframes app-pulse {
+  0%, 100% { box-shadow: 0 0 0 0 rgb(139 130 255 / 36%); }
+  70% { box-shadow: 0 0 0 5px rgb(139 130 255 / 0%); }
+}
+
+/* Once, on arrival. Not a loop: a looping call to action is noise. */
+@keyframes app-attention-once {
+  0% { scale: 1; }
+  35% { scale: 1.04; }
+  100% { scale: 1; }
+}
+
+/*
+ * The global reduced motion contract for this scope.
+ *
+ * Play still advances the scenario. What is removed is spatial morphing,
+ * pulse rings and auto scrolling; what is kept is every piece of state
+ * information, expressed in text and opacity instead.
+ */
+@media (prefers-reduced-motion: reduce) {
+  .workday-v2 *,
+  .workday-v2 *::before,
+  .workday-v2 *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}

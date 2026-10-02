@@ -41,6 +41,7 @@ import {
   getSuppliers,
 } from "@/db/repositories/workday";
 import { getSharedEventIncident } from "@/db/repositories/workday";
+import { getSqlite } from "@/db/client";
 import { lexicalSearch } from "@/server/retrieval/search";
 import { evaluateAuthority, listToolRegistry, ROLE_AUTHORITY_SCOPES } from "@/server/security/authority";
 import { AUTONOMY_LEVELS, ROLE_IDS } from "@/db/schema/core";
@@ -64,23 +65,73 @@ export interface EvaluationResult {
 const IDENTIFIER_PATTERN =
   /\b(?:EVD|CTL|TST|RSK|TP|CTR|INC|OBL|MSN|KRI|PRC|ITOL|DEC|IBS|SVC|CMT|AG|REG|EXC|UTC|P)-[0-9A-Za-z.-]+/g;
 
-/** Collects every identifier that genuinely exists in the seeded scenario. */
+/**
+ * Collects every identifier that genuinely exists in the seeded scenario.
+ *
+ * This enumerates the schema rather than naming tables, and the reason is a
+ * defect this function had.
+ *
+ * It previously listed ten tables and read only their `id` column, while
+ * `IDENTIFIER_PATTERN` matches eighteen prefixes. Contracts, actions, risks,
+ * processes, indicators, services, committee items and portfolio themes were
+ * never collected, and no `reference` column was collected from anything. The
+ * grader therefore reported real identifiers as invented: a live run flagged
+ * `CTR-2023-0117-A3`, which is a contract id, a contract reference AND an
+ * action reference, and `MSN-2026-0191`, which is an action id cited in a
+ * seeded evidence document.
+ *
+ * That is the worst failure mode available to this particular check. An
+ * invented citation is treated as an automatic failure because it is a
+ * hallucination wearing the costume of a source, so a false positive here does
+ * not merely add noise: it accuses the model of the one thing the product
+ * exists to prevent, and it trains a reader to ignore the grader.
+ *
+ * Enumerating `sqlite_master` fixes it and keeps it fixed. A table added later
+ * is covered without anyone remembering to add it here, which is the property
+ * the hand written list did not have.
+ */
 export function collectKnownIdentifiers(runId = DEFAULT_RUN_ID): Set<string> {
   const known = new Set<string>();
-  const add = (id: string | null | undefined): void => {
-    if (id) known.add(id);
-  };
+  const sqlite = getSqlite();
 
-  for (const row of getAllEvidenceDocuments("23:59", runId)) add(row.id);
-  for (const row of getControls(runId)) add(row.id);
-  for (const row of getControlTests(runId)) add(row.id);
-  for (const row of getSuppliers(runId)) add(row.id);
-  for (const row of getIncidents(runId)) add(row.id);
-  for (const row of getObligations(undefined, runId)) add(row.id);
-  for (const row of getRegulatoryPublications(runId)) add(row.id);
-  for (const row of getImpactTolerances(runId)) add(row.id);
-  for (const row of getAllDecisions("23:59", runId)) add(row.id);
-  for (const row of getEntities(runId)) add(row.id);
+  const tables = sqlite
+    .prepare("select name from sqlite_master where type = 'table' and name not like 'sqlite_%'")
+    .all() as Array<{ name: string }>;
+
+  /*
+   * Only columns that actually hold an identifier are read. Scanning every
+   * text column would pull prose into the set and make the check vacuous,
+   * which would be a quieter version of the same problem.
+   */
+  const identifierColumns = ["id", "reference", "external_id", "paragraph_reference"];
+
+  for (const table of tables) {
+    const columns = (
+      sqlite.prepare(`pragma table_info(${table.name})`).all() as Array<{ name: string }>
+    ).map((column) => column.name);
+
+    for (const column of identifierColumns) {
+      if (!columns.includes(column)) continue;
+      try {
+        const rows = sqlite
+          .prepare(`select "${column}" as value from "${table.name}"`)
+          .all() as Array<{ value: unknown }>;
+        for (const row of rows) {
+          if (typeof row.value !== "string" || row.value.length === 0) continue;
+          /*
+           * Matched against the same pattern the grader uses, so the two
+           * cannot drift. A value that the grader would never extract from an
+           * answer does not belong in the set of things it may find.
+           */
+          const matches = row.value.match(IDENTIFIER_PATTERN);
+          if (matches && matches.includes(row.value)) known.add(row.value);
+        }
+      } catch {
+        // A virtual table without a readable column is skipped rather than
+        // taking the whole collection down.
+      }
+    }
+  }
 
   return known;
 }

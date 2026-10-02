@@ -73,6 +73,17 @@ export interface PopulationFieldProps {
   selectedCaseId?: string | null;
   onSelectCase?: (caseId: string) => void;
   heading?: string;
+  /**
+   * Cases that have just entered the population.
+   *
+   * A 2px edge on the left of the cell, kept separate from the corner notch
+   * that marks a fallback route case: "arrived since you last looked" and
+   * "came in through the fallback route" are different facts and a tester has
+   * to be able to read both off the same cell.
+   */
+  changedCaseIds?: readonly string[];
+  /** The marker's accessible name. Passed in so it can be German. */
+  changedLabel?: string;
 }
 
 /* ==========================================================================
@@ -144,7 +155,17 @@ export function PopulationField({
   selectedCaseId = null,
   onSelectCase,
   heading = "Full population, control test",
+  changedCaseIds,
+  changedLabel = "Changed recently",
 }: PopulationFieldProps) {
+  /* Keyed on the joined string rather than the array: a caller that rebuilds
+     the array every render would otherwise rebuild this set every render. */
+  const changedCasesKey = (changedCaseIds ?? []).join("|");
+  const changedCases = useMemo(
+    () => new Set(changedCasesKey.length === 0 ? [] : changedCasesKey.split("|")),
+    [changedCasesKey],
+  );
+
   const patternId = useId().replace(/:/g, "");
   const [grouping, setGrouping] = useState<PopulationGrouping>(groupBy);
   const [hoverId, setHoverId] = useState<string | null>(null);
@@ -397,6 +418,8 @@ export function PopulationField({
             const item = cell.item;
             const isSelected = selectedCaseId === item.id;
             const isHovered = hoverId === item.id;
+            const hasChanged = changedCases.has(item.id);
+            const caseLabel = describeCase(item);
             return (
               <g
                 key={item.id}
@@ -405,7 +428,8 @@ export function PopulationField({
                 }}
                 role="button"
                 tabIndex={cell.index === activeIndex ? 0 : -1}
-                aria-label={describeCase(item)}
+                aria-label={hasChanged ? `${caseLabel} ${changedLabel}.` : caseLabel}
+                data-changed={hasChanged ? true : undefined}
                 aria-pressed={isSelected}
                 style={{ cursor: onSelectCase ? "pointer" : "default", outline: "none" }}
                 onMouseEnter={() => setHoverId(item.id)}
@@ -423,6 +447,17 @@ export function PopulationField({
                   }
                 }}
               >
+                {hasChanged ? (
+                  <rect
+                    x={cell.x - 4}
+                    y={cell.y}
+                    width="2"
+                    height={CELL}
+                    rx="1"
+                    fill="var(--accent)"
+                  />
+                ) : null}
+
                 {/* Drawn focus and selection rings: CSS focus styling does not paint here. */}
                 {isHovered || isSelected ? (
                   <rect

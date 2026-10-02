@@ -69,6 +69,15 @@ export interface PortfolioThreadProps {
   selectedRoleId?: string | null;
   onSelectLens?: (roleId: string) => void;
   heading?: string;
+  /**
+   * Lenses whose function has recorded a change since the matter arose.
+   *
+   * The portfolio claim is that one thread replaces six reports, so the lead
+   * needs to see which of the six have actually moved. Omitted by default.
+   */
+  changedLensRoleIds?: readonly string[];
+  /** The marker's accessible name. Passed in so it can be German. */
+  changedLabel?: string;
 }
 
 /* ==========================================================================
@@ -150,8 +159,19 @@ export function PortfolioThread({
   selectedRoleId = null,
   onSelectLens,
   heading = "One matter, six lenses, one thread",
+  changedLensRoleIds,
+  changedLabel = "Changed recently",
 }: PortfolioThreadProps) {
   const [activeRoleId, setActiveRoleId] = useState<string | null>(null);
+
+  /* Keyed on the joined string rather than the array: a caller that rebuilds
+     the array every render would otherwise rebuild this set every render. */
+  const changedLensesKey = (changedLensRoleIds ?? []).join("|");
+  const changedLenses = useMemo(
+    () => new Set(changedLensesKey.length === 0 ? [] : changedLensesKey.split("|")),
+    [changedLensesKey],
+  );
+
 
   const layout = useMemo(() => {
     // Half the lenses go left, half right, in the order supplied. Placement is
@@ -338,12 +358,15 @@ export function PortfolioThread({
           const dim = focusRoleId !== null && focusRoleId !== lens.roleId;
           const isFocused = focusRoleId === lens.roleId;
           const tone = statusTone(lens.positionStatus);
+          const hasChanged = changedLenses.has(lens.roleId);
+          const lensLabel = describeLens(lens);
           return (
             <g
               key={lens.roleId}
               tabIndex={0}
               role="button"
-              aria-label={describeLens(lens)}
+              aria-label={hasChanged ? `${lensLabel} ${changedLabel}.` : lensLabel}
+              data-changed={hasChanged ? true : undefined}
               opacity={dim ? 0.24 : 1}
               style={{ cursor: onSelectLens ? "pointer" : "default", outline: "none" }}
               onMouseEnter={() => setActiveRoleId(lens.roleId)}
@@ -368,6 +391,17 @@ export function PortfolioThread({
                   fill="none"
                   stroke="var(--accent)"
                   strokeWidth="2"
+                />
+              ) : null}
+
+              {hasChanged ? (
+                <rect
+                  x={item.x - 7}
+                  y={item.y + 2}
+                  width="2"
+                  height={LENS_H - 4}
+                  rx="1"
+                  fill="var(--accent)"
                 />
               ) : null}
               <rect

@@ -148,6 +148,22 @@ export interface StoryDeckProps {
   chapters: readonly StoryChapter[];
   /** One based scene number to open on. Used by the export capture. */
   initialSceneNumber?: number;
+  /**
+   * Zero based reveal step to resolve to in presenter safe or export mode.
+   *
+   * This exists because of a real defect in the deck export. A multi pane
+   * scene shows one pane per step, and three scenes gate a pane on an EXACT
+   * step rather than on a step range. Presenter safe and export mode both
+   * resolve immediately to the FINAL step, so those intermediate panes were
+   * never rendered: the export of scene 12 omitted four of its five panes,
+   * including the service dependency map, and scene 14 omitted three,
+   * including the portfolio decision thread. The exported deck therefore had
+   * sixteen pages and was missing eight panes of content.
+   *
+   * With this set, the capture can ask for one frame per pane. Unset, the
+   * behaviour is exactly as before: resolve to the final step.
+   */
+  initialStep?: number;
   /** Presenter safe mode: every reveal resolves immediately to its end state. */
   safeMode?: boolean;
   /** Export mode. Implies presenter safe mode, and hides the tap affordances. */
@@ -168,6 +184,7 @@ export function StoryDeck({
   scenes,
   chapters,
   initialSceneNumber = 1,
+  initialStep,
   safeMode = false,
   exportMode = false,
   debug = false,
@@ -204,7 +221,16 @@ export function StoryDeck({
    * to the same behaviour: the reveal is already finished.
    */
   const immediate = safeMode || exportMode || reducedMotion;
-  const effectiveStep = immediate ? finalStep : step;
+
+  /*
+   * In immediate mode the reveal resolves at once. To WHICH step is the
+   * question: the final one by default, or a requested one when the caller
+   * names it, which is how the export captures a pane that is only shown at
+   * an intermediate step. Clamped, because the value arrives from a URL.
+   */
+  const requestedStep =
+    initialStep === undefined ? null : Math.max(0, Math.min(finalStep, Math.floor(initialStep)));
+  const effectiveStep = immediate ? (requestedStep ?? finalStep) : step;
 
   const chapter = React.useMemo(
     () => (scene === undefined ? undefined : chapters.find((entry) => entry.id === scene.chapter)),

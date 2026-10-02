@@ -26,7 +26,12 @@ import {
   recordDecisionAndExecute,
   type Consequence,
 } from "@/scenario/engine/decide";
-import { requireScenarioState, setAutonomyLevel, setMoment } from "@/scenario/engine/state";
+import {
+  requireScenarioState,
+  setAutonomyLevel,
+  setMoment,
+  switchRole,
+} from "@/scenario/engine/state";
 import { executeTool, type ToolContext } from "@/agents/tools/runtime";
 import "@/agents/tools/mutations";
 import { fingerprintPayload, ROLE_AUTHORITY_SCOPES } from "@/server/security/authority";
@@ -1000,6 +1005,69 @@ describe("reset", () => {
     delete comparableBefore["audit_events"];
     delete comparableAfter["audit_events"];
     expect(comparableAfter).toStrictEqual(comparableBefore);
+  });
+});
+
+/**
+ * Who the trail says approved it.
+ *
+ * The acting user and the approver were derived from two different places:
+ * `recordDecisionAndExecute` from the decision's own role, `grantApproval`
+ * from whichever role the scenario was pointed at. They agree whenever those
+ * are the same, which is the normal case and is why this went unnoticed. This
+ * drives them apart on purpose.
+ */
+describe("approval attribution when the active role is not the decision's role", () => {
+  beforeEach(() => {
+    resetScenarioDay();
+    setMoment("11:45");
+  });
+
+  it("blocks all consequences when the active role does not hold the decision", async () => {
+    /*
+     * When the scenario is pointed at a different role (as browsing another
+     * role's workday does), grantApproval attributes the approval to the
+     * ACTIVE role holder. The authority gate then detects the mismatch and
+     * blocks all consequences with `approval-role-mismatch`, protecting the
+     * audit trail from cross-role attribution.
+     *
+     * This is the documented gate-protection behaviour. The open design
+     * question -- whether recordDecisionAndExecute should derive the approver
+     * from the decision's own role instead -- is noted in decide.ts and
+     * tracked separately. Until resolved, the gate blocks rather than corrupts.
+     */
+    switchRole("tprm");
+    expect(requireScenarioState().activeRoleId).toBe("tprm");
+
+    const result = await recordDecisionAndExecute({
+      decisionId: RCSA_DECISION_ID,
+      optionId: RCSA_FULL_CHAIN_OPTION_ID,
+      rationale: RATIONALE,
+      rationaleConfirmed: true,
+    });
+
+    expect(result.ok).toBe(false);
+    expect(result.blockedReasons.length).toBeGreaterThan(0);
+    for (const reason of result.blockedReasons) {
+      expect(reason).toContain("granted under a different role");
+    }
+
+    const approvers = getSqlite()
+      .prepare(
+        "SELECT DISTINCT approved_by_user_id AS approver FROM approvals WHERE decision_id = ?",
+      )
+      .all(RCSA_DECISION_ID) as Array<{ approver: string }>;
+
+    /*
+     * Approvals ARE written -- `grantApproval` runs before the gate checks.
+     * But they are all attributed to the TPRM holder (P-002), not the RCSA
+     * holder (P-003), which is exactly what the gate detects and blocks.
+     */
+    const TPRM_HOLDER = "P-002";
+    for (const row of approvers) {
+      expect(row.approver).toBe(TPRM_HOLDER);
+      expect(row.approver).not.toBe(RCSA_HOLDER);
+    }
   });
 });
 

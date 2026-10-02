@@ -464,14 +464,299 @@ brief and is recorded as such rather than glossed.
 
 ---
 
-## 7. Things a reviewer should challenge first
+## 7. Interactive Workday V2 decisions
 
-1. **Section 4.3**, the residual rating that could not be reproduced. Either the
+Every judgment call in the interactive redesign. The reasoning for the design
+itself is in `docs/INTERACTIVE_WORKDAY_V2.md`; this records the choices that a
+reviewer could reasonably have made differently.
+
+### 7.1 Two visual scopes rather than one
+
+The presentation system was kept and the interactive layer was moved onto a
+separate scoped system, rather than unifying them or restyling the deck.
+
+The alternative considered was one system serving both. It was rejected because
+the two surfaces have genuinely incompatible requirements: a deck is read from
+eight metres by an audience that is not operating it, and an application is
+read from sixty centimetres by someone who has it open for seven hours. Any
+single scale is wrong for one of them, and V1 demonstrated which way the
+compromise falls.
+
+The cost is two stylesheets to maintain and a bridge between them. Challenge
+this if the presentation and the application are ever expected to converge.
+
+### 7.2 The old token names were remapped rather than the components rewritten
+
+The bridge block in `src/styles/workday-v2-tokens.css` redefines the
+presentation token names to application values inside `.workday-v2`, so roughly
+six thousand lines of reused domain components adopt the new system untouched.
+
+The honest alternative was rewriting those components against the new names.
+That was rejected as a large change producing no new capability, and one that
+would have forked them away from the V1 interface which has to keep working
+during the transition.
+
+The cost is a layer of indirection a newcomer will not expect: a component
+asking for `--surface-1` gets a different colour depending on which scope it is
+rendered in. The bridge is commented at length for exactly that reason.
+
+### 7.3 The type scale is capped by remapping, not by review
+
+`--text-2xl` is 36px in the presentation system and 20px in the workday scope,
+and `--text-3xl` and `--text-4xl` both collapse to 24px. A reused component
+cannot therefore produce a deck sized heading on a working screen.
+
+This was chosen over auditing each call site because a structural guarantee
+survives a future change and a review does not. The cost is that a component
+genuinely needing 36px inside the workday cannot have it without an explicit
+override, which is the intended outcome.
+
+### 7.4 V1 is a fallback, not a supported variant
+
+Both interfaces are served from the same routes through `?ui=v1` and `?ui=v2`,
+read the same database, scenario run, repositories, server actions and
+authority gate, and differ only in presentation.
+
+There is deliberately no third implementation and no per-user persistence. Two
+permanent business implementations would be a maintenance trap, which the brief
+states directly. V1 exists so a reviewer can see the before and after side by
+side and so a regression has somewhere to fall back to.
+
+A reviewer should challenge how long V1 stays. The answer should be weeks, not
+quarters, and the V1 files are deliberately named `v1.tsx` so the deletion is a
+single mechanical step.
+
+### 7.5 The live event table is a projection, and the derivation is recorded
+
+`workday_live_events` holds 78 rows, every one derived from content that already
+existed, with the source recorded in `derivedFrom` and `derivedFromId`: 22 from
+the timeline, 26 from decisions, 12 from meetings, 12 from the inbox, 6 from
+background actions.
+
+The alternative was authoring an event stream directly, which would have been
+faster and produced a denser day. It was rejected because the product's central
+claim is that one institution and one day are shared across six functions, and
+a parallel event source would quietly break it while looking fine.
+
+The cost is that the projection is a capped deterministic sample rather than
+every candidate row, so a reviewer hunting one specific seeded inbox message
+may not find it on the track.
+
+### 7.6 Automatic pause is restricted to two event kinds
+
+The player stops at a `decision-required` event whose judgment kind is not
+`agenda`, and at the 14:05 shared event. Nowhere else.
+
+A broader rule was tried first and was wrong in both directions: pausing on
+everything carrying `requires_decision` stopped the player at the 07:45 morning
+brief, before the day had started, and still missed 14:05.
+
+### 7.7 There were briefly two live day bars, and the interim one was deleted
+
+An interim bar was written inside the shell directory while the player was
+still being built, so the shell geometry could be reviewed against a real
+component. It was deleted rather than kept, and the reason is not taste: it
+drove the clock with `actionSetMoment`, so stepping backwards rewound LIVE time
+for the whole scenario rather than moving the viewed moment. That breaks the
+rule the live day rests on, which is that time is a view and decisions are
+facts.
+
+### 7.8 Approve on a suggestion card navigates rather than executes
+
+A suggestion card's primary action routes to the decision flow. It does not
+execute, and the AI Partner dock executes nothing at all: every action is a
+callback and `src/components/workday-v2/PartnerClient.tsx` is the only place
+the dock meets the application.
+
+A one click Approve would have been a better demonstration and a worse product.
+The rationale and the confirmation that the rationale is the accountable
+person's own are captured in the decision flow, and the gate refuses without
+them, so a shortcut past it would bypass the single most important control in
+the product.
+
+### 7.9 Motion requires two conditions, not one
+
+The AI sheen and the live dot run only when a real running flag is set AND the
+partner state is one of checking evidence, preparing or executing. A `ready`
+partner with work in flight elsewhere stays still.
+
+An interface that pulses while nothing is happening is lying about work, and it
+is the easiest lie for an AI product to tell. The cost is that a genuinely busy
+moment can look still if the state was not updated, which is the right way for
+this to fail.
+
+### 7.10 Stale is not blocking
+
+The required source gate holds a recommendation when a required source is
+MISSING, and merely constrains it when a source is present but stale. A stale
+source is reported through the freshness in the source row rather than through
+the outstanding list.
+
+Blocking on staleness would stop the product producing anything the moment a
+simulator went quiet, and the rule the brief states is about a required source
+being unavailable, not about it being old. The translation is in
+`src/server/bootstrap.ts` and is commented there.
+
+### 7.11 A context with no recorded source requirements is treated as available
+
+The AI layer does not block when a context declares no required sources.
+Defaulting the other way would hold every suggestion at `retrieving` until the
+integration requirement map covered every judgment kind, which reads as a
+deadlock rather than as discipline. The integration seed reports the judgment
+kinds its map does not cover, so the gap is visible rather than silent.
+
+### 7.12 The selection URL format lives outside the client module
+
+`parseSelectionParam` and the `?select=` format are in
+`src/workday/selection-url.ts`, not in `SelectionProvider.tsx`, and the
+provider re-exports them.
+
+This is not organisational tidiness. The provider carries the client directive,
+and a server component calling a function out of a client module fails at
+runtime with "Attempted to call parseSelectionParam() from the server". The
+parsing has to happen on the server, because the server is the only side that
+can resolve an identifier to a title.
+
+### 7.13 `next/dynamic` options are repeated at each call site
+
+`src/components/workday-v2/RoleWorkObject.tsx` writes `{ loading:
+WorkspaceSkeleton }` out six times rather than sharing a constant. The bundler
+analyses the call statically and rejects anything that is not an inline object
+literal, with an error that only appears at build time. The repetition is the
+price of the analysis and is commented.
+
+### 7.14 The stack utilities each declare their own flex direction
+
+`.app-stack-1` through `.app-stack-6` each set `display: flex` and
+`flex-direction: column`, rather than being gap-only modifiers on `.app-stack`.
+
+They began as modifiers and the failure was quiet and specific: a class used
+without its base produced a horizontal row, so a calendar entry rendered its
+start and end time as one unreadable number. Declaring the direction on every
+variant removes the possibility.
+
+### 7.15 The brand accent token is resolved but not applied
+
+`BrandIdentity.accentToken` names a custom property and is surfaced in the
+branding settings screen, but the workday does not re-tint from it. Doing so
+needs care, because the configured default IS the product accent and a naive
+`--app-ai: var(--app-ai)` is circular. A client specific accent is a documented
+gap rather than a silent one.
+
+### 7.16 Administrator chrome is English only
+
+German strings exist for the terminology comparison, because that is the thing
+the screen is about, but the settings navigation and headings are English. The
+NFR workday itself is fully bilingual. A deployment with German speaking
+administrators would need this completed.
+
+### 7.17 German falls back to English on two projected surfaces
+
+Projected activity entries and inbox derived live events carry English content
+inside a German frame, because `background_actions` has no German target label
+and `timeline_role_moments` has no German headline. Decision, meeting and
+timeline titles are fully German.
+
+This was left as a visible fallback rather than machine translated. A wrong
+German label in a risk product is worse than an English one, because a reader
+cannot tell which it is.
+
+### 7.18 The live path is verified, and verifying it found three defects
+
+Three credentials were supplied during the build. The first two are rejected by
+the provider with HTTP 401 `invalid_api_key`, confirmed with a raw request
+straight to `api.openai.com` bypassing all application code. The third works:
+744 models visible, `gpt-5.1` resolved as primary and `gpt-5-mini` as fast.
+
+Running the live path found three real defects that the fallback had been
+hiding. All three are fixed, and they are recorded here because each is a
+general lesson rather than a local slip.
+
+**The smoke test asked for 16 output tokens.** Ample for the word "ready" and
+completely wrong for the model that answers it: the gpt-5 family draws its
+reasoning tokens from the same output budget, so 16 was spent on reasoning
+before any text was produced. The provider returned a 200 with status
+`incomplete` and zero output tokens, and the old code reported that as
+`ok: true`. That is the exact failure this codebase works to avoid elsewhere, a
+green status a presenter would act on that does not mean what it says. The
+budget is now 256 with low reasoning effort, `ok` requires usable text, and the
+result carries a `producedText` field.
+
+**Live suggestion generation never succeeded.** It relied on the prompt plus a
+brace extractor, and the model returned plain strings inside the five grounding
+arrays, which expect typed statement objects. Validation correctly rejected
+drafts whose prose was good. The grounding block is the one part of the schema
+that must not be relaxed to make a call succeed, so the fix was to send the
+schema: `z.toJSONSchema` with the provider's strict `json_schema` mode makes
+the wrong shape impossible rather than retried. Local validation after it is
+not redundant, because structured output guarantees shape and says nothing
+about whether an evidence identifier resolves.
+
+**Two per entry length limits were set by eye and rejected correct output.**
+`checksCompleted` and `actionsCompleted` capped entries at 200 characters,
+measured against seeded copy that happened to be terser than real model output.
+Raised to 320, with the number stated in the prompt so the model aims below it
+rather than discovering it through a rejection.
+
+What is now verified live: the smoke test, model probing, suggestion generation
+for both demonstration roles with real citations and correctly empty action
+lists, a chat turn producing typed parts with cited evidence, and the full
+evaluation suite with its four grounded probes.
+
+Presenter safe and offline mode remain complete and are still the default,
+because the brief requires the complete local experience to work without
+external credentials and because predictable timing matters more than novelty
+in a live demonstration.
+
+### 7.19 Five label defects in the hero visualisations, one root cause
+
+Visual review of the redesigned workbench found five text defects in the hero
+visualisations. All five were present in V1 as well, at every viewport, so none
+is a regression. They are recorded together because they share one cause and
+the cause generalises.
+
+SVG text neither wraps nor clips. A label simply draws wherever it is told, over
+whatever is already there. Every one of these was a label whose length depended
+on seeded content that happened to be shorter when the component was written.
+
+| Component | Defect | Fix |
+|---|---|---|
+| `RiskControlGraph` | Short columns were centred against the tallest, so with 24 controls against 8 processes the two left columns sat at the midpoint of a 2000px canvas and the first screenful showed two empty headers | Centring offset capped at 160px |
+| `RiskControlGraph` | `inh 16` and `residual 12` shared a baseline and merged into "residual 12nh 16" when the two scores were close | Two baselines, card 12px taller |
+| `RiskControlGraph` | An indicator value that is a phrase, for example "2.7 percent of instructions entering the repair queue", drew through the reference beside it | Value truncated to the measured remaining width, full text on the title |
+| `RiskControlGraph` | "OUTSIDE APPETITE" is 106px of monospace in a 92px pill | Pill widened to 118px |
+| `ObligationLineage` | The obligation card repeated the paragraph reference that the paragraph column already showed on the same row, and the repetition collided with the right anchored entity scope | Identifier only, reference on the title |
+| `ServiceDependencyMap` | The entity label sat 4px below a two line service name and was not truncated, so it drew through the title and past the card edge | Card 12px taller, label truncated to the measured width |
+
+The general lesson, which is worth applying to any future visualisation in this
+repository: a left anchored label and a right anchored label on the same
+baseline are a collision waiting for longer content, and the fix is to budget
+the width from the geometry rather than to judge it against the current data.
+Where a label must be shortened, the full text goes on a `title` element so
+nothing is lost.
+
+A reviewer should note that these were found by LOOKING at the rendered screens
+rather than by any test. The Playwright suite asserts structure and the unit
+tests assert logic, and neither would have caught a label drawn over another
+label. That gap is the argument for the visual review step rather than against
+the tests.
+
+---
+
+## 8. Things a reviewer should challenge first
+
+1. **Section 7.18**, the three defects the live path was hiding. Two of them
+   were misleading green statuses rather than crashes, which is the class of
+   defect a fallback is best at concealing.
+2. **Section 4.3**, the residual rating that could not be reproduced. Either the
    methodology table or the bible figure is wrong, and the product currently
    reflects the methodology.
-2. **Section 4.2**, the inconsistent fallback durations, which are unresolved
+3. **Section 7.2**, the token bridge. It is the single most surprising thing in
+   the codebase for a newcomer, and the alternative was a very large rewrite.
+4. **Section 4.2**, the inconsistent fallback durations, which are unresolved
    upstream.
-3. **Section 6.5**, the missing automated grounding evaluations.
-4. **Section 2.2**, `lint` not being a real linter.
-5. **Section 3.3 and 3.4**, the two schema columns that carry more meaning than
+5. **Section 7.4**, how long V1 stays. The answer should be weeks, not quarters.
+6. **Section 6.5**, the missing automated grounding evaluations.
+7. **Section 2.2**, `lint` not being a real linter.
+8. **Section 3.3 and 3.4**, the two schema columns that carry more meaning than
    their type suggests.

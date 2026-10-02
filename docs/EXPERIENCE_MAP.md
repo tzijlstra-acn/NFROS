@@ -1412,13 +1412,46 @@ Stated as state, not as narrative, because state is what the product produces.
 | Open conflicts | None registered | Four resolved within the day, one open with an owner and a destination |
 | New Massnahmen | | Eight, across five roles, in one portfolio |
 
-### 13.2 The three things a viewer should take from the day
+### 13.2 Where each cell is now rendered
+
+The sixty cells are unchanged. What changed is the interface that renders them,
+and anyone comparing this document against a running screen needs the mapping.
+
+| What this document calls it | Where it appears in the interactive workday |
+|---|---|
+| The moment itself | The live day bar at the foot of the shell. Each of the ten moments is a marker on the event track; the marker carries unread state per role and a heavier mark where a material decision waits |
+| `todayNarrative` and `todaySignals` | The Today versus future comparison, reached from the demo menu. No longer a lede paragraph at the head of the route |
+| `futureNarrative` and `futureSignals` | The same comparison, plus the Already completed list inside the Now card |
+| The role headline | The eyebrow line above the page title, beside the moment |
+| The decision presented at the moment | The Now card, which is the one item that needs the user, with why it appeared, what changed, what was already completed, what is needed and the next action |
+| The next two or three items | The Next section of the focus queue |
+| Work completed without the user | Handled automatically, collapsed by default |
+| What is being monitored | Watching, compact, at the foot of the queue |
+| Evidence, uncertainty, policy, approvals, activity, audit | The context drawer, opened from the compact triggers under the work object. The same seven tabs in the same order as the V1 intelligence rail |
+| The role work object | The centre workspace, below the queue on Today and filling the workbench |
+| The background work reveal | The Activity tab of the AI Partner, as a chronological stream with real timings |
+| The shared 14:05 event | A `shared-event` row visible to every role from one record, which is what makes the propagation claim structurally true rather than six copies of a story |
+
+Two properties of this document survive the redesign deliberately and are worth
+naming, because an interface change is the easiest way to lose them.
+
+The day still ends on an open question. Conflict D is unresolved at 16:45, it
+has an owner and a destination, and nothing in the new interface closes it. The
+Watching section is where it lives at the end of the day, which is the correct
+place for a question that is genuinely still open.
+
+Nothing human-owned is pre-decided. The focus queue is derived from real state,
+so an item appears in Needs you because a decision row is open, and moves out
+of it because a human recorded a decision. The queue cannot show a decision as
+handled that nobody took.
+
+### 13.3 The three things a viewer should take from the day
 
 1. **The morning mattered more than the event.** `P-004`'s configuration request at 08:52 is the single act that determines the day's outcome, and it happened five hours and thirteen minutes before the event, from a lane 2 disclosure that named the missing evidence and the contractual route to obtain it. The event confirmed what the morning had already framed.
 2. **The product's credibility is its refusal.** At 14:34, `ARR-…-05` gave `P-003` exactly what her 11:58 dissent needed, and the product told her not to use it because it was a telemetry inference contradicted by a named stakeholder. A system that hands a professional the answer they want is not a professional tool.
 3. **The day ends with an open question.** Conflict D is unresolved at 16:45, owned by `P-005`, destined for `AG-…-08` on 13.10.2026. A working day that resolves every question is not a credible working day, and the product should end on the honest state rather than on a closing summary.
 
-### 13.3 Anti-patterns, explicitly prohibited
+### 13.4 Anti-patterns, explicitly prohibited
 
 - A lane 4 moment with a pre-selected option, a ranked option list, or a pre-drafted rationale.
 - A reveal count that does not resolve to a seeded ledger row with inputs and outputs.

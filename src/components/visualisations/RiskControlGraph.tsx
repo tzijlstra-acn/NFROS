@@ -114,6 +114,19 @@ export interface RiskControlGraphProps {
   selectedNodeId?: string | null;
   onSelectNode?: (nodeId: string) => void;
   heading?: string;
+  /**
+   * Nodes a recent signal reached.
+   *
+   * Drawn as a 2px edge marker, the same device the application uses on a list
+   * row, so "this is what moved" means one thing in both places. Omitted by
+   * default, which is the previous behaviour exactly: no marker is drawn and
+   * nothing about the layout changes.
+   */
+  changedNodeIds?: readonly string[];
+  /** Suppresses the subject heading when the caller already renders it. */
+  hideHeading?: boolean;
+  /** The marker's accessible name. Passed in so it can be German. */
+  changedLabel?: string;
 }
 
 /* ==========================================================================
@@ -133,7 +146,17 @@ const LANES = {
 
 const PROCESS_H = 58;
 const PROCESS_GAP = 26;
-const RISK_H = 118;
+/*
+ * 130 rather than 118.
+ *
+ * The inherent score label and the residual position label were both drawn at
+ * `barY + 22`, each centred on its own marker. That is fine while the two
+ * scores are far apart and unreadable when they are close, which is the
+ * interesting case: RSK-0211 is inherent 16 against residual 12 and the two
+ * labels merged into "residual 12nh 16". The labels now sit on two baselines
+ * and the card is twelve pixels taller to hold them.
+ */
+const RISK_H = 130;
 const RISK_GAP = 34;
 const INDICATOR_H = 24;
 const INDICATOR_GAP = 5;
@@ -240,8 +263,20 @@ export function RiskControlGraph({
   selectedNodeId = null,
   onSelectNode,
   heading = "Process, risk and control",
+  changedNodeIds,
+  changedLabel = "Changed recently",
+  hideHeading = false,
 }: RiskControlGraphProps) {
   const [activeId, setActiveId] = useState<string | null>(null);
+
+  /* Keyed on the joined string rather than the array, because a caller that
+     rebuilds the array on every render would otherwise rebuild this set on
+     every render and defeat the memo. */
+  const changedKey = (changedNodeIds ?? []).join("|");
+  const changedNodes = useMemo(
+    () => new Set(changedKey.length === 0 ? [] : changedKey.split("|")),
+    [changedKey],
+  );
 
   const layout = useMemo(() => {
     const sortedProcesses = [...processes].sort((a, b) => a.id.localeCompare(b.id));
@@ -279,9 +314,28 @@ export function RiskControlGraph({
     const controlColH = columnHeight(controlPlaced, CONTROL_GAP);
     const contentH = Math.max(riskColH, processColH, controlColH, 200);
 
-    // Each column is centred against the tallest column, which keeps the edge
-    // bundle roughly horizontal and avoids long diagonal sweeps.
-    const offset = (colH: number) => TOP + Math.max(0, (contentH - colH) / 2);
+    /*
+     * Each short column is pulled towards the vertical centre of the tallest
+     * one, which keeps the edge bundle roughly horizontal and avoids long
+     * diagonal sweeps. The offset is CAPPED, and the cap is the fix for a real
+     * defect rather than a tuning preference.
+     *
+     * Uncapped centring is correct when the columns are a similar height and
+     * wrong when they are not. This graph routinely has 24 controls against 8
+     * processes and 9 risks, which makes the canvas roughly two thousand
+     * pixels tall and places the two short columns at its midpoint. The first
+     * screenful then shows the processes and risks headers with nothing under
+     * them, and a reader reasonably concludes the graph failed to load. It
+     * looked that way in both interfaces, at every viewport.
+     *
+     * 160px keeps the short columns inside the first screen while retaining
+     * most of the benefit: the edges to the upper controls stay near
+     * horizontal, and the edges to the lower ones fan out, which reads as a
+     * fan rather than as a tangle.
+     */
+    const MAX_CENTRING_OFFSET = 160;
+    const offset = (colH: number) =>
+      TOP + Math.min(MAX_CENTRING_OFFSET, Math.max(0, (contentH - colH) / 2));
     const riskOffset = offset(riskColH);
     const processOffset = offset(processColH);
     const controlOffset = offset(controlColH);
@@ -431,7 +485,16 @@ export function RiskControlGraph({
   return (
     <figure className="stack stack-4" style={{ margin: 0 }}>
       <figcaption className="row row-3 row-wrap row-between">
-        <span className="panel-title">{heading}</span>
+        {/*
+          * The heading is suppressed when the caller already shows it.
+          *
+          * A V2 role workspace renders the subject as its object title
+          * immediately above this figure, so repeating it here produced the
+          * same line twice, eighty pixels apart. The chips are never
+          * suppressed: they are the figure's own summary of what it contains
+          * and they have no equivalent above it.
+          */}
+        {hideHeading ? <span /> : <span className="panel-title">{heading}</span>}
         <div className="row row-2 row-wrap">
           {divergentControls.length > 0 ? (
             <Chip tone="pink">{divergentControls.length} control divergence</Chip>
@@ -547,6 +610,8 @@ export function RiskControlGraph({
             h={PROCESS_H}
             onSelectNode={onSelectNode}
             setActive={setActiveId}
+            changed={changedNodes.has(node.id)}
+            changedLabel={changedLabel}
           >
             <rect
               x={LANES.process.x}
@@ -599,6 +664,8 @@ export function RiskControlGraph({
                 h={RISK_H}
                 onSelectNode={onSelectNode}
                 setActive={setActiveId}
+                changed={changedNodes.has(node.id)}
+                changedLabel={changedLabel}
               >
                 <RiskCard node={node} y={y} />
               </GraphNode>
@@ -638,6 +705,8 @@ export function RiskControlGraph({
                       h={INDICATOR_H}
                       onSelectNode={onSelectNode}
                       setActive={setActiveId}
+                      changed={changedNodes.has(indicator.id)}
+                      changedLabel={changedLabel}
                     >
                       <IndicatorChip indicator={indicator} x={LANES.risk.x + 26} y={chipY} w={LANES.risk.w - 26} />
                     </GraphNode>
@@ -662,6 +731,8 @@ export function RiskControlGraph({
             h={h}
             onSelectNode={onSelectNode}
             setActive={setActiveId}
+            changed={changedNodes.has(node.id)}
+            changedLabel={changedLabel}
           >
             <ControlCard node={node} y={y} h={h} />
           </GraphNode>
@@ -870,6 +941,8 @@ function GraphNode({
   h,
   onSelectNode,
   setActive,
+  changed = false,
+  changedLabel = "Changed recently",
   children,
 }: {
   id: string;
@@ -882,13 +955,18 @@ function GraphNode({
   h: number;
   onSelectNode?: (nodeId: string) => void;
   setActive: (nodeId: string | null) => void;
+  changed?: boolean;
+  changedLabel?: string;
   children: React.ReactNode;
 }) {
   return (
     <g
       tabIndex={0}
       role="button"
-      aria-label={ariaLabel}
+      /* The marker is geometry, so without this a screen reader user would
+         never learn that the node moved. */
+      aria-label={changed ? `${ariaLabel} ${changedLabel}.` : ariaLabel}
+      data-changed={changed ? true : undefined}
       opacity={dim ? 0.16 : 1}
       style={{ cursor: onSelectNode ? "pointer" : "default", outline: "none" }}
       onMouseEnter={() => setActive(id)}
@@ -913,6 +991,18 @@ function GraphNode({
           fill="none"
           stroke="var(--accent)"
           strokeWidth="2"
+        />
+      ) : null}
+      {/* A 2px edge, never a fill. The node already carries effectiveness or
+          appetite in its own tone, and recency must not compete with it. */}
+      {changed ? (
+        <rect
+          x={x - 7}
+          y={y + 2}
+          width="2"
+          height={Math.max(8, h - 4)}
+          rx="1"
+          fill="var(--accent)"
         />
       ) : null}
       {children}
@@ -968,9 +1058,14 @@ function RiskCard({ node, y }: { node: RiskNodeView; y: number }) {
         </>
       ) : outside ? (
         <>
-          <rect x={x + w - 106} y={y + 8} width="92" height="15" rx="3" fill="var(--red-tint)" stroke="var(--red)" strokeWidth="1" />
+          {/*
+            * 118 wide, not 92. "OUTSIDE APPETITE" is sixteen monospaced
+            * characters at 11px, which is about 106px, so the text drew
+            * through both ends of a 92px pill.
+            */}
+          <rect x={x + w - 126} y={y + 8} width="118" height="15" rx="3" fill="var(--red-tint)" stroke="var(--red)" strokeWidth="1" />
           <text
-            x={x + w - 60}
+            x={x + w - 67}
             y={y + 19}
             textAnchor="middle"
             fontSize="11"
@@ -1038,17 +1133,17 @@ function RiskCard({ node, y }: { node: RiskNodeView; y: number }) {
             />
             <rect x={firstX - 4} y={barY - 1} width="8" height="8" fill="var(--text-1)" stroke="var(--bg)" strokeWidth="1" />
             <circle cx={secondX} cy={barY + 3} r="5" fill="var(--pink)" stroke="var(--bg)" strokeWidth="1" />
-            <text x={firstX} y={barY + 22} textAnchor="middle" fontSize="11" fill="var(--text-2)">
+            <text x={firstX} y={barY + 34} textAnchor="middle" fontSize="11" fill="var(--text-2)">
               {node.firstLine?.lineLabel} {node.firstLine?.score}
             </text>
-            <text x={secondX} y={barY + 22} textAnchor="middle" fontSize="11" fill="var(--pink)">
+            <text x={secondX} y={barY + 34} textAnchor="middle" fontSize="11" fill="var(--pink)">
               {node.secondLine?.lineLabel} {node.secondLine?.score}
             </text>
           </>
         ) : singleX !== null ? (
           <>
             <circle cx={singleX} cy={barY + 3} r="5" fill="var(--text-1)" stroke="var(--bg)" strokeWidth="1" />
-            <text x={singleX} y={barY + 22} textAnchor="middle" fontSize="11" fill="var(--text-2)">
+            <text x={singleX} y={barY + 34} textAnchor="middle" fontSize="11" fill="var(--text-2)">
               residual {node.residualScore}
             </text>
           </>
@@ -1235,6 +1330,35 @@ function IndicatorChip({
         : "var(--green)";
   // Non-colour cue: every status also carries a glyph.
   const glyph = indicator.status === "red" ? "x" : indicator.status === "amber" ? "!" : "=";
+
+  /*
+   * The value is truncated to the width that is actually left over.
+   *
+   * SVG text does not wrap and does not clip, so a label simply draws over
+   * whatever is beside it. The reference is left anchored and the value is
+   * right anchored, which is correct until a unit is a phrase rather than a
+   * symbol. Several seeded indicators have exactly that: one reads
+   * "2.7 percent of instructions entering the repair queue" and another
+   * "3.84 overrides per 10,000 instructions released". Those drew straight
+   * through the reference and produced an unreadable overlap, visible in both
+   * interfaces at every viewport.
+   *
+   * The budget is computed rather than guessed: the reference is monospaced at
+   * 11px, which is reliably 6.6px per character, and the value is set in the
+   * interface font at 11px, which averages close to 5.6px. The full text stays
+   * available through the title element, so nothing is lost.
+   */
+  const valueText =
+    indicator.currentValue !== undefined
+      ? `${indicator.currentValue}${indicator.unit ? ` ${indicator.unit}` : ""}`
+      : indicator.status;
+
+  const referenceWidth = indicator.reference.length * 6.6;
+  const availableWidth = w - 22 - referenceWidth - 16 - 9;
+  const valueBudget = Math.max(4, Math.floor(availableWidth / 5.6));
+  const valueLabel =
+    valueText.length > valueBudget ? `${valueText.slice(0, valueBudget - 3).trimEnd()}...` : valueText;
+
   return (
     <>
       <rect
@@ -1254,9 +1378,8 @@ function IndicatorChip({
         {indicator.reference}
       </text>
       <text x={x + w - 9} y={y + 16} textAnchor="end" fontSize="11" fill="var(--text-2)">
-        {indicator.currentValue !== undefined
-          ? `${indicator.currentValue}${indicator.unit ? ` ${indicator.unit}` : ""}`
-          : indicator.status}
+        {valueLabel}
+        <title>{`${indicator.reference}: ${valueText}`}</title>
       </text>
     </>
   );

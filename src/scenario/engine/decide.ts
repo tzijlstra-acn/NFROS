@@ -329,6 +329,38 @@ let approvalSequence = 0;
 /** Records a human approval bound to one specific payload. */
 export function grantApproval(input: GrantApprovalInput): string {
   const state = requireScenarioState();
+
+  /*
+   * The approver is the holder of the ACTIVE role: the person sitting there
+   * when the approval was granted.
+   *
+   * This was briefly changed to derive the approver from the decision's own
+   * role instead, and the change was reverted. Both readings are defensible
+   * and the difference is an accountability question rather than a technical
+   * one, so it is recorded here rather than settled quietly in a patch.
+   *
+   *   Active role, which is what this does. An approval names the human who
+   *   accepted responsibility. If a portfolio lead approves a third party
+   *   decision, the trail should say the portfolio lead approved it, because
+   *   they did.
+   *
+   *   Decision's role. An approval is attached to one decision, and the
+   *   person accountable for that decision is its owner.
+   *
+   * There IS a real defect nearby, and it is reachable.
+   * `recordDecisionAndExecute` acts as `decision.roleId`, while this grants
+   * as `state.activeRoleId`. Navigating to `/workday/tprm/decisions` by URL
+   * does not switch the active role, because that is a deliberate act with
+   * its own audit event, so the two can disagree. When they do, the
+   * authority gate refuses every consequence with `approval-role-mismatch`
+   * and the decision cannot be recorded at all.
+   *
+   * Nothing is written incorrectly: the gate is doing exactly its job, and
+   * the audit trail is never wrong. The symptom is a decision that silently
+   * will not go through. Fixing it properly means deciding which of the two
+   * readings above is the product's, and then making the engine and the
+   * route agree on it. See `docs/handoffs/workday-v3-approval-attribution.md`.
+   */
   const roleId = state.activeRoleId;
   const approvedBy = ROLE_HOLDERS[roleId];
   approvalSequence += 1;

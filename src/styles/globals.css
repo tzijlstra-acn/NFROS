@@ -1,4 +1,9 @@
 @import "./tokens.css";
+@import "./workday-v2-tokens.css";
+@import "./workday-v2.css";
+@import "./workday-v3-tokens.css";
+@import "./workday-v3.css";
+@import "./workday-v3-decisions.css";
 
 /* ==========================================================================
    Reset and base
