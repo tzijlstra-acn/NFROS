@@ -5,13 +5,13 @@
  * wherever a surface needs the full catalogue or a lookup by id or role.
  *
  * Two apps are installed and production-shaped (RCSA Cycle Assistant and
- * Third-Party Onboarding). The remaining apps are preview or concept status
+ * Third-Party Onboarding). The remaining apps are demo or concept status
  * and are defined here so the administrator settings screen can show the
  * roadmap without separate maintenance.
  *
- * Do not import preview app definitions from outside this module. The
+ * Do not import demo app definitions from outside this module. The
  * installed apps expose their own definition files for use in the process
- * page, the seed and the run factory. Preview apps exist only in this
+ * page, the seed and the run factory. Demo apps exist only in this
  * catalogue.
  */
 
@@ -20,7 +20,7 @@ import { THIRD_PARTY_ONBOARDING_APP } from "./tprm/definition";
 import type { RoleAppDefinition } from "./contracts";
 
 /* ---------------------------------------------------------------------------
-   Preview apps: RCSA
+   Demo apps: RCSA
    --------------------------------------------------------------------------- */
 
 const RCSA_EVENT_DRIVEN_REASSESSMENT: RoleAppDefinition = {
@@ -64,7 +64,7 @@ const RCSA_RAPID_ASSESSMENT: RoleAppDefinition = {
 };
 
 /* ---------------------------------------------------------------------------
-   Preview apps: TPRM
+   Demo apps: TPRM
    --------------------------------------------------------------------------- */
 
 const TPRM_PERIODIC_REASSESSMENT: RoleAppDefinition = {

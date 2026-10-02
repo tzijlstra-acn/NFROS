@@ -49,6 +49,7 @@ export const WORKDAY_UI_VERSIONS = ["v1", "v2", "v3.1"] as const;
  */
 export const V3_NATIVE_SEGMENTS: readonly string[] = [
   "",
+  "work",
   "decisions",
   "processes",
 ];

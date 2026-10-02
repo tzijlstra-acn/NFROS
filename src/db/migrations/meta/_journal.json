@@ -15,6 +15,13 @@
       "when": 1790832110742,
       "tag": "0001_long_apocalypse",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "6",
+      "when": 1790933705381,
+      "tag": "0002_bouncy_moon_knight",
+      "breakpoints": true
     }
   ]
 }

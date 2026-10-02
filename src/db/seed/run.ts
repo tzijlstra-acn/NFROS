@@ -74,6 +74,18 @@ import {
   portfolioThemes,
   toolCalls,
 } from "@/db/schema/decisions";
+import {
+  aiRoutines,
+  meetingMinutes,
+  roleAppRuns,
+  roleAppStageRuns,
+} from "@/db/schema/role-app-runtime";
+import {
+  roleAppRunsData,
+  roleAppStageRunsData,
+  aiRoutinesData,
+  meetingMinutesData,
+} from "@/db/seed/role-app-runtime";
 
 import * as institution from "@/scenario/data/institution";
 import * as thirdParty from "@/scenario/data/third-party";
@@ -136,6 +148,8 @@ export interface SeedSummary {
  * yesterday's conclusions already on the record.
  */
 const RUN_SCOPED_TABLES = [
+  "role_app_stage_tasks", "role_app_stage_runs", "role_app_artifacts", "role_app_events",
+  "role_app_runs", "action_updates", "ai_routines", "meeting_minutes",
   "execution_receipt_lines", "approvals", "tool_calls", "agent_messages", "agent_runs",
   "agent_sessions", "cached_ai_outputs", "monitoring_activations", "background_actions",
   "portfolio_themes", "committee_items", "decision_options", "decisions", "actions", "issues",
@@ -371,6 +385,12 @@ export function seedScenario(runId: string = DEFAULT_RUN_ID): SeedSummary {
 
     /* Per role timeline detail */
     total += insertAll(timelineRoleMoments, timelineMoments.timelineRoleMoments, counts, "timelineRoleMoments");
+
+    /* Role-app runtime: runs, stage runs, AI routines, meeting minutes */
+    total += insertAll(roleAppRuns, roleAppRunsData, counts, "roleAppRuns");
+    total += insertAll(roleAppStageRuns, roleAppStageRunsData, counts, "roleAppStageRuns");
+    total += insertAll(aiRoutines, aiRoutinesData, counts, "aiRoutines");
+    total += insertAll(meetingMinutes, meetingMinutesData, counts, "meetingMinutes");
 
     /*
      * The integration projection, inside the transaction and last.

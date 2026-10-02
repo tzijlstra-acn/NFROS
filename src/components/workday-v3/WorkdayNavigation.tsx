@@ -19,6 +19,7 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import {
+  IconBriefcase,
   IconChevronsLeft,
   IconChevronsRight,
   IconGavel,
@@ -37,6 +38,7 @@ export interface NavigationCounts {
 
 const LABELS = {
   home: { en: "Home", de: "Start" },
+  work: { en: "Work", de: "Arbeit" },
   processes: { en: "Processes", de: "Prozesse" },
   decisions: { en: "Decisions", de: "Entscheidungen" },
   collapse: { en: "Collapse", de: "Einklappen" },
@@ -46,11 +48,12 @@ const LABELS = {
 type LabelKey = keyof typeof LABELS;
 
 /*
- * Three primary items, and every one of them resolves.
+ * Four primary items, and every one of them resolves.
  *
- * Home is the focus queue. Processes is the new landing for role-specific
+ * Home is the focus queue. Work is the personal work surface: agenda,
+ * meetings, actions and inbox. Processes is the landing for role-specific
  * process work (RCSA cycle, third-party onboarding). Decisions is the
- * authority queue. All three have V3 implementations; the rail does not point
+ * authority queue. All four have V3 implementations; the rail does not point
  * at anything that does not exist.
  */
 const PRIMARY: Array<{
@@ -60,6 +63,7 @@ const PRIMARY: Array<{
   count?: (counts: NavigationCounts) => number;
 }> = [
   { key: "home", icon: IconHome, segment: "", count: (c) => c.myWork },
+  { key: "work", icon: IconBriefcase, segment: "/work" },
   { key: "processes", icon: IconSitemap, segment: "/processes" },
   { key: "decisions", icon: IconGavel, segment: "/decisions", count: (c) => c.decisions },
 ];

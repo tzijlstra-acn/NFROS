@@ -83,7 +83,7 @@ export default function RoleAppsSettingsPage() {
       <SettingsHead
         eyebrow="Administrator area"
         title="Role apps"
-        lede="A role app is a structured, stage-gated process that the AI partner guides a named role through. Two flagship apps are installed and fully interactive. The remaining apps are preview or concept status and are shown here for configuration visibility."
+        lede="A role app is a structured, stage-gated process that the AI partner guides a named role through. Two available apps are installed and fully interactive. The remaining apps are demo or concept status and are shown here for configuration visibility."
       />
 
       <SettingsSection title="Registry summary">
@@ -91,9 +91,9 @@ export default function RoleAppsSettingsPage() {
           <Field label="Total apps defined" value={String(ROLE_APP_REGISTRY.length)} />
           <Field label="Installed" value={String(installedCount)} />
           <Field
-            label="Preview or concept"
+            label="Demo or concept"
             value={String(ROLE_APP_REGISTRY.length - installedCount)}
-            note="Preview apps are visible in this catalogue and in the workday role selector but do not have a routed process page."
+            note="Demo apps are visible in this catalogue and in the workday role selector but do not have a routed process page."
           />
           <Field label="Roles with apps" value="RCSA (Operational Risk Partner), TPRM (Third-Party Risk Manager)" />
         </FieldList>

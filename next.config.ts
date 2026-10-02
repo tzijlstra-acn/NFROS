@@ -20,34 +20,40 @@ const nextConfig: NextConfig = {
 
     for (const role of flagship) {
       rules.push(
+        /*
+         * V3.3 maps all personal-work routes to the Work Hub with the
+         * appropriate tab pre-selected. The old assistant route drops the
+         * partner=open query because the partner panel is now opened from
+         * within the role home, not by a dedicated route.
+         */
+        {
+          source: `/workday/${role}/calendar`,
+          destination: `/workday/${role}/work?view=agenda`,
+          permanent: false,
+        },
+        {
+          source: `/workday/${role}/meetings`,
+          destination: `/workday/${role}/work?view=meetings`,
+          permanent: false,
+        },
+        {
+          source: `/workday/${role}/mail`,
+          destination: `/workday/${role}/work?view=inbox`,
+          permanent: false,
+        },
+        {
+          source: `/workday/${role}/collaboration`,
+          destination: `/workday/${role}/work?view=inbox`,
+          permanent: false,
+        },
         {
           source: `/workday/${role}/workbench`,
           destination: `/workday/${role}/processes`,
           permanent: false,
         },
         {
-          source: `/workday/${role}/meetings`,
-          destination: `/workday/${role}/processes`,
-          permanent: false,
-        },
-        {
-          source: `/workday/${role}/mail`,
-          destination: `/workday/${role}`,
-          permanent: false,
-        },
-        {
-          source: `/workday/${role}/calendar`,
-          destination: `/workday/${role}`,
-          permanent: false,
-        },
-        {
-          source: `/workday/${role}/collaboration`,
-          destination: `/workday/${role}/processes`,
-          permanent: false,
-        },
-        {
           source: `/workday/${role}/assistant`,
-          destination: `/workday/${role}?partner=open`,
+          destination: `/workday/${role}`,
           permanent: false,
         },
       );

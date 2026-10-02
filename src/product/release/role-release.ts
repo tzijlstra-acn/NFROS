@@ -6,10 +6,10 @@
  * Nothing is derived from the database; the selector renders from this data
  * alone so it works before and after the scenario is seeded.
  *
- * V3.2 release: two flagship roles (rcsa, tprm) and four preview roles.
+ * V3.3 release: two available roles (rcsa, tprm), two demo roles, two planned roles.
  */
 
-export type RoleReleaseStatus = "flagship" | "preview" | "hidden";
+export type RoleReleaseStatus = "available" | "demo" | "planned" | "hidden";
 
 export type RoleReleaseDefinition = {
   roleId: string;
@@ -24,7 +24,7 @@ export type RoleReleaseDefinition = {
 export const ROLE_RELEASE_DEFINITIONS: RoleReleaseDefinition[] = [
   {
     roleId: "rcsa",
-    status: "flagship",
+    status: "available",
     releaseLabel: "Operational Risk Partner",
     summary:
       "Challenge risk and control assessments, record second-line positions, and trigger reassessment when evidence changes.",
@@ -35,7 +35,7 @@ export const ROLE_RELEASE_DEFINITIONS: RoleReleaseDefinition[] = [
   },
   {
     roleId: "tprm",
-    status: "flagship",
+    status: "available",
     releaseLabel: "Third-Party Risk Manager",
     summary: "Assess, onboard, and monitor third-party arrangements end to end.",
     summaryDe:
@@ -45,7 +45,7 @@ export const ROLE_RELEASE_DEFINITIONS: RoleReleaseDefinition[] = [
   },
   {
     roleId: "control-assurance",
-    status: "preview",
+    status: "demo",
     releaseLabel: "Control Assurance Specialist",
     summary: "Test and certify controls across the operational risk framework.",
     summaryDe:
@@ -55,7 +55,7 @@ export const ROLE_RELEASE_DEFINITIONS: RoleReleaseDefinition[] = [
   },
   {
     roleId: "incident-resilience",
-    status: "preview",
+    status: "demo",
     releaseLabel: "Incident and Resilience Lead",
     summary:
       "Manage operational incidents and track recovery against resilience targets.",
@@ -66,7 +66,7 @@ export const ROLE_RELEASE_DEFINITIONS: RoleReleaseDefinition[] = [
   },
   {
     roleId: "regulatory-change",
-    status: "preview",
+    status: "planned",
     releaseLabel: "Regulatory Change Manager",
     summary:
       "Track regulatory publications, assess impact, and drive implementation across teams.",
@@ -77,7 +77,7 @@ export const ROLE_RELEASE_DEFINITIONS: RoleReleaseDefinition[] = [
   },
   {
     roleId: "nfr-governance",
-    status: "preview",
+    status: "planned",
     releaseLabel: "NFR Portfolio Lead",
     summary:
       "Oversee the non-financial risk portfolio and coordinate across risk domains.",

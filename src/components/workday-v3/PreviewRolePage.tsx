@@ -1,10 +1,10 @@
 /**
- * Preview role page.
+ * Demo and planned role page.
  *
- * Shown when a user navigates directly to a preview-role URL. It is a
+ * Shown when a user navigates directly to a demo or planned role URL. It is a
  * standalone light page with no navigation rail, explaining that the role
  * is not part of the current two-role interactive release and pointing
- * toward the flagship roles and the presentation.
+ * toward the available roles and the presentation.
  *
  * Server component. No client-side state needed.
  */
@@ -13,6 +13,13 @@ import Link from "next/link";
 import type { RoleReleaseDefinition } from "@/product/release/role-release";
 
 export function PreviewRolePage({ role }: { role: RoleReleaseDefinition }) {
+  const statusLabel =
+    role.status === "demo"
+      ? "Demo role"
+      : role.status === "planned"
+        ? "Planned role"
+        : "Preview role";
+
   return (
     <div
       style={{
@@ -33,7 +40,7 @@ export function PreviewRolePage({ role }: { role: RoleReleaseDefinition }) {
           letterSpacing: "0.01em",
         }}
       >
-        Preview role
+        {statusLabel}
       </span>
 
       <h1
@@ -96,7 +103,7 @@ export function PreviewRolePage({ role }: { role: RoleReleaseDefinition }) {
             textDecoration: "none",
           }}
         >
-          Choose a flagship role
+          Choose an available role
         </Link>
         <Link
           href="/story"

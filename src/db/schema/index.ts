@@ -13,3 +13,4 @@ export * from "./decisions";
 export * from "./product";
 export * from "./integration";
 export * from "./live";
+export * from "./role-app-runtime";

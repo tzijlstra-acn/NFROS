@@ -1,5 +1,5 @@
 /**
- * Role selector for V3.2.
+ * Role selector for V3.3.
  *
  * Light canvas, no navigation rail, no dark panels. This is the first screen
  * a user sees when they enter the interactive workday. The page is scoped
@@ -19,8 +19,9 @@ import {
   type RoleReleaseDefinition,
 } from "@/product/release/role-release";
 
-const flagship = ROLE_RELEASE_DEFINITIONS.filter((r) => r.status === "flagship");
-const preview = ROLE_RELEASE_DEFINITIONS.filter((r) => r.status === "preview");
+const available = ROLE_RELEASE_DEFINITIONS.filter((r) => r.status === "available");
+const demo = ROLE_RELEASE_DEFINITIONS.filter((r) => r.status === "demo");
+const planned = ROLE_RELEASE_DEFINITIONS.filter((r) => r.status === "planned");
 
 export function RoleSelector() {
   return (
@@ -103,7 +104,7 @@ export function RoleSelector() {
             </h1>
           </div>
 
-          {/* Flagship roles */}
+          {/* Available roles */}
           <section>
             <p
               style={{
@@ -123,13 +124,13 @@ export function RoleSelector() {
                 gap: "var(--wd-3)",
               }}
             >
-              {flagship.map((role) => (
+              {available.map((role) => (
                 <FlagshipRow key={role.roleId} role={role} />
               ))}
             </div>
           </section>
 
-          {/* Preview roles */}
+          {/* Demo roles */}
           <section>
             <p
               style={{
@@ -140,7 +141,7 @@ export function RoleSelector() {
                 marginBottom: "var(--wd-3)",
               }}
             >
-              Preview roles
+              Demo
             </p>
             <div
               style={{
@@ -152,8 +153,37 @@ export function RoleSelector() {
                 overflow: "hidden",
               }}
             >
-              {preview.map((role, index) => (
-                <PreviewRow key={role.roleId} role={role} isFirst={index === 0} />
+              {demo.map((role, index) => (
+                <DemoRow key={role.roleId} role={role} isFirst={index === 0} />
+              ))}
+            </div>
+          </section>
+
+          {/* Planned roles */}
+          <section>
+            <p
+              style={{
+                fontSize: "var(--wd-text-xs)",
+                fontWeight: "var(--wd-weight-medium)",
+                color: "var(--wd-text-muted)",
+                letterSpacing: "0.01em",
+                marginBottom: "var(--wd-3)",
+              }}
+            >
+              Planned
+            </p>
+            <div
+              style={{
+                display: "flex",
+                flexDirection: "column",
+                background: "var(--wd-surface)",
+                border: "1px solid var(--wd-border)",
+                borderRadius: "var(--wd-radius-lg)",
+                overflow: "hidden",
+              }}
+            >
+              {planned.map((role, index) => (
+                <PlannedRow key={role.roleId} role={role} isFirst={index === 0} />
               ))}
             </div>
           </section>
@@ -256,7 +286,7 @@ function FlagshipRow({ role }: { role: RoleReleaseDefinition }) {
   );
 }
 
-function PreviewRow({ role, isFirst }: { role: RoleReleaseDefinition; isFirst: boolean }) {
+function DemoRow({ role, isFirst }: { role: RoleReleaseDefinition; isFirst: boolean }) {
   return (
     <div
       style={{
@@ -309,7 +339,7 @@ function PreviewRow({ role, isFirst }: { role: RoleReleaseDefinition; isFirst: b
           flexShrink: 0,
         }}
       >
-        Preview
+        Demo
       </span>
       <Link
         href={`/workday/${role.roleId}`}
@@ -323,8 +353,68 @@ function PreviewRow({ role, isFirst }: { role: RoleReleaseDefinition; isFirst: b
           flexShrink: 0,
         }}
       >
-        View preview
+        View demo
       </Link>
+    </div>
+  );
+}
+
+function PlannedRow({ role, isFirst }: { role: RoleReleaseDefinition; isFirst: boolean }) {
+  return (
+    <div
+      style={{
+        display: "flex",
+        alignItems: "center",
+        gap: "var(--wd-4)",
+        padding: "var(--wd-3) var(--wd-4)",
+        borderTop: isFirst ? undefined : "1px solid var(--wd-border)",
+        opacity: 0.6,
+      }}
+    >
+      <div
+        style={{
+          flex: 1,
+          minWidth: 0,
+          display: "flex",
+          flexDirection: "column",
+          gap: 2,
+        }}
+      >
+        <span
+          style={{
+            fontSize: "var(--wd-text-sm)",
+            fontWeight: "var(--wd-weight-medium)",
+            color: "var(--wd-text-muted)",
+          }}
+        >
+          {role.releaseLabel}
+        </span>
+        <span
+          style={{
+            fontSize: "var(--wd-text-xs)",
+            color: "var(--wd-text-muted)",
+          }}
+        >
+          {role.summary}
+        </span>
+      </div>
+      <span
+        style={{
+          display: "inline-flex",
+          alignItems: "center",
+          height: 20,
+          padding: "0 var(--wd-2)",
+          borderRadius: "var(--wd-radius-sm)",
+          background: "var(--wd-surface-hover)",
+          color: "var(--wd-text-muted)",
+          fontSize: "var(--wd-text-xs)",
+          fontWeight: "var(--wd-weight-medium)",
+          whiteSpace: "nowrap",
+          flexShrink: 0,
+        }}
+      >
+        Planned
+      </span>
     </div>
   );
 }
