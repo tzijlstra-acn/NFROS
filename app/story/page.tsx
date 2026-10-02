@@ -34,6 +34,7 @@ import {
 } from "@/scenario/data/story";
 import { StoryDeck } from "@/components/presentation/StoryDeck";
 import { PresentationV21 } from "@/presentation-v2-1/components/PresentationV21";
+import { PresentationV22 } from "@/presentation-v2-2/components/PresentationV22";
 import "@/styles/presentation.css";
 
 export const dynamic = "force-dynamic";
@@ -41,7 +42,7 @@ export const dynamic = "force-dynamic";
 export const metadata: Metadata = {
   title: "Live the NFR Day: presentation",
   description:
-    "Sixteen scenes across one working day at a synthetic institution. Synthetic institution and data. Illustrative regulatory context, not legal advice.",
+    "NFROS Risk Audience Presentation V2.2. Synthetic institution and data. Illustrative regulatory context, not legal advice.",
   robots: { index: false, follow: false },
 };
 
@@ -68,9 +69,31 @@ export default async function StoryPage({
 
   const exportMode = isOn(params, "export");
 
-  // V2.1 deck: ?deck=v2.1 routes to the new design system.
-  // ?deck=current is an explicit alias for the original deck (default when deck param is absent).
-  const deckVersion = firstValue(params, "deck") ?? "v1";
+  // Deck version routing.
+  //
+  // Route matrix:
+  //   No param, ?deck=current, ?deck=v2.2  -> PresentationV22 (current default)
+  //   ?deck=v2.1                            -> PresentationV21 (V2.1 design system)
+  //   ?deck=legacy, ?deck=v1, ?deck=v2      -> original 16-scene StoryDeck
+  const deckVersion = firstValue(params, "deck") ?? "current";
+
+  if (deckVersion === "v2.2" || deckVersion === "current") {
+    // V2.2 URL scheme: core=N (1-based), appendix=app-XX, from=slide-XX
+    // Backward compat: slide=N still works (used by export scripts)
+    const coreParam = firstValue(params, "core") ?? firstValue(params, "slide") ?? "1";
+    const initialCoreSlide = Math.max(1, Math.floor(Number(coreParam)));
+    const initialAppendixId = firstValue(params, "appendix") ?? null;
+    const initialFrom = firstValue(params, "from") ?? null;
+    return (
+      <PresentationV22
+        initialCoreSlide={initialCoreSlide}
+        initialAppendixId={initialAppendixId}
+        initialFrom={initialFrom}
+        exportMode={exportMode}
+      />
+    );
+  }
+
   if (deckVersion === "v2.1") {
     const initialSlide = Math.max(
       1,

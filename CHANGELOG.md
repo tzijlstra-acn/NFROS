@@ -4,6 +4,41 @@ All notable changes to NFR WorkOS are recorded here.
 
 Format based on Keep a Changelog (keepachangelog.com).
 
+## [2.2.0] - V2.2 Presentation: Accenture Brand Aligned
+
+### Added
+
+- Route default fixed: was /story loading V1; now loads V2.2 by default
+- Route aliases: /story, /story?deck=current, and /story?deck=v2.2 all open V2.2
+- Typed data structures (no string parsing): CoreSlide22, Outcome, ServiceLayer, RolloutStep, RoleColumn, ProcessRow
+- Motion system added: tokens, variants, RevealSequence, MotionPath, SharedSlideTransition (motion v13.4.6)
+- Appendix navigation: core-to-appendix links, URL state, return-to-origin (C key)
+- Product capture infrastructure: data-presentation-region markers, capture script, verify script
+- Brand preflight check: npm run check:accenture-brand
+- User copy checker: npm run check:user-copy
+- Export script updated to V2.2 (reads data-presentation-slides DOM attribute)
+- New npm scripts: capture:presentation-assets, verify:presentation-assets, check:user-copy, check:accenture-brand, test:presentation, export:presentation
+- Speaker script: docs/PRESENTATION_V2_2_SCRIPT.md
+- QA guide: docs/PRESENTATION_V2_2_QA_GUIDE.md
+- Truth audit handoff: docs/handoffs/presentation-v2-2-truth-audit.md
+- Handoff index: docs/handoffs/presentation-v2-2-index.md
+
+### Changed
+
+- 210 double-hyphen punctuation violations removed: V2.2 data files clean
+- RCSA stage count corrected to 8 (was incorrectly shown as 6 in V2.1 materials)
+- TPRM stage count corrected to 8 (was incorrectly shown as 6 in V2.1 materials)
+- Accenture brand tokens applied: CSS --pv22-* system, #A100FF purple, 0px radius
+- Copy voice updated throughout: no em dash, no double-hyphen punctuation, no umlaut characters
+
+### Not changed
+
+- Product features and commercial model unchanged from V2.1
+- Appendix slide count unchanged (A1 through A23)
+- Synthetic institution and data label retained on all data references
+
+---
+
 ## [4.0.0] -- 2026-10-02
 
 ### Added

@@ -1,0 +1,61 @@
+:root {
+  /* Accenture colour system */
+  --pv22-brand-purple:          #A100FF;
+  --pv22-brand-purple-dark:     #7500C0;
+  --pv22-brand-purple-darkest:  #460073;
+  --pv22-brand-purple-light:    #C2A3FF;
+  --pv22-brand-purple-lightest: #E6DCFF;
+
+  /* Neutral canvas */
+  --pv22-canvas:         #F5F6F8;
+  --pv22-surface:        #FFFFFF;
+  --pv22-text:           #172033;
+  --pv22-text-secondary: #475467;
+  --pv22-border:         #E4E7EC;
+
+  /* Accent (use corePurple) */
+  --pv22-accent: #A100FF;
+
+  /* Semantic colours (kept from V2.1 but now on-brand) */
+  --pv22-human:     #7500C0;
+  --pv22-evidence:  #15803D;
+  --pv22-risk:      #B42318;
+  --pv22-info:      #2563EB;
+
+  /* Typography */
+  --pv22-font-family:      Arial, sans-serif; /* overridden when Graphik available */
+  --pv22-font-mono:        "IBM Plex Mono", monospace;
+
+  /* Font sizes (same as V2.1) */
+  --pv22-fs-xs:   11px;
+  --pv22-fs-sm:   13px;
+  --pv22-fs-base: 15px;
+  --pv22-fs-md:   17px;
+  --pv22-fs-lg:   20px;
+  --pv22-fs-xl:   24px;
+  --pv22-fs-2xl:  30px;
+  --pv22-fs-3xl:  38px;
+  --pv22-fs-4xl:  48px;
+  --pv22-fs-5xl:  60px;
+
+  /* Spacing */
+  --pv22-1: 4px;
+  --pv22-2: 8px;
+  --pv22-3: 12px;
+  --pv22-4: 16px;
+  --pv22-5: 20px;
+  --pv22-6: 24px;
+  --pv22-8: 32px;
+  --pv22-10: 40px;
+  --pv22-12: 48px;
+  --pv22-16: 64px;
+
+  /* Geometry: squares, not circles */
+  --pv22-radius:      0px;   /* default: angular */
+  --pv22-radius-sm:   0px;
+  --pv22-radius-product: 4px; /* small radius only for captured product frames */
+
+  /* Slide canvas */
+  --pv22-slide-w: 1920px;
+  --pv22-slide-h: 1080px;
+}
