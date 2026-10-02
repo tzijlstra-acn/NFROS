@@ -1,19 +1,18 @@
 "use client";
 
 /**
- * PresentationV22
+ * PresentationV23
  *
- * Root component for the NFROS V2.2 presentation engine. Manages keyboard
- * navigation, URL-synced state, animated slide transitions, and all overlay
- * UI (help, agenda, end-of-core, download).
- *
- * Rendered by app/story/page.tsx when ?deck=v2.2 or ?deck=current is set.
+ * Root component for the NFROS V2.3 presentation engine. Manages keyboard
+ * navigation, URL-synced state, animated slide transitions, focusStep for
+ * product-proof focus regions, and all overlay UI.
  *
  * Keyboard shortcuts:
  *   ArrowRight / ArrowDown / Space   advance one slide
  *   ArrowLeft / ArrowUp              go back one slide
  *   Home                             first slide
  *   End                              last slide
+ *   1 / 2 / 3                        set focusStep when slide has focusRegions
  *   A                                toggle agenda overlay
  *   C (in appendix)                  return to origin core slide
  *   C (in core)                      toggle agenda overlay
@@ -26,35 +25,38 @@
  */
 
 import React, { useState, useEffect, useCallback, useRef } from "react";
+import "@/presentation-v2-3/styles/presentation-v2-3.css";
 import "@/presentation-v2-2/styles/presentation-v2-2.css";
 
-import { CORE_SLIDES_V22 } from "../data/core-story";
-import { APPENDIX_SLIDES } from "../data/appendix";
-import { useSlideNavigation } from "../hooks/useSlideNavigation";
-import { SharedSlideTransition } from "../motion/SharedSlideTransition";
-import { CoreSlideV22 } from "./CoreSlideV22";
-import { AppendixSlideV22 } from "./AppendixSlideV22";
+import { CORE_SLIDES_V23 } from "../data/core-story";
+import { APPENDIX_SLIDES } from "@/presentation-v2-2/data/appendix";
+import { useSlideNavigation } from "@/presentation-v2-2/hooks/useSlideNavigation";
+import { SharedSlideTransition } from "@/presentation-v2-2/motion/SharedSlideTransition";
+import { AppendixSlideV22 } from "@/presentation-v2-2/components/AppendixSlideV22";
+import { CoreSlide23Dispatcher } from "./CoreSlide23Dispatcher";
+import type { CoreSlide23 } from "../data/types";
+import type { AppendixReference } from "@/presentation-v2-2/data/types";
 
 // ---------------------------------------------------------------------------
 // Constants
 // ---------------------------------------------------------------------------
 
-const CORE_SLIDE_COUNT = CORE_SLIDES_V22.length; // 13
+const CORE_SLIDE_COUNT = CORE_SLIDES_V23.length; // 13
 const APPENDIX_IDS = APPENDIX_SLIDES.map((s) => s.id);
 
 // ---------------------------------------------------------------------------
 // Props
 // ---------------------------------------------------------------------------
 
-export interface PresentationV22Props {
-  initialCoreSlide?: number;       // 1-based; defaults to 1
+type Props = {
+  initialCoreSlide?: number;
   initialAppendixId?: string | null;
   initialFrom?: string | null;
   exportMode?: boolean;
-}
+};
 
 // ---------------------------------------------------------------------------
-// Download menu (V2.2 inline, using pv22- tokens)
+// Downloads
 // ---------------------------------------------------------------------------
 
 const DOWNLOADS = [
@@ -72,27 +74,28 @@ const DOWNLOADS = [
   },
 ] as const;
 
-function DownloadMenuV22({ onClose }: { onClose: () => void }) {
+function DownloadMenu({ onClose }: { onClose: () => void }) {
   return (
     <>
       <div role="presentation" onClick={onClose} style={{ position: "fixed", inset: 0, zIndex: 59 }} />
-      <div className="pv22-download-menu" role="dialog" aria-label="Download options">
+      <div className="pv23-download-menu" role="dialog" aria-label="Download options">
         <div
           style={{
             display: "flex",
             alignItems: "center",
             justifyContent: "space-between",
-            gap: "var(--pv22-space-4)",
-            paddingBottom: "var(--pv22-space-2)",
-            borderBottom: "1px solid var(--pv22-color-border)",
-            marginBottom: "var(--pv22-space-1)",
+            gap: "var(--pv23-4)",
+            paddingBottom: "var(--pv23-2)",
+            borderBottom: "1px solid var(--pv23-border)",
+            marginBottom: "var(--pv23-1)",
           }}
         >
           <span
             style={{
-              fontFamily: "var(--pv22-font-mono)",
-              fontSize: "var(--pv22-text-xs)",
-              color: "var(--pv22-color-secondary)",
+              fontFamily: "var(--pv23-font-mono)",
+              fontSize: "var(--pv23-t-footnote)",
+              lineHeight: "var(--pv23-t-footnote-lh)",
+              color: "var(--pv23-text-secondary)",
               textTransform: "uppercase",
               letterSpacing: "0.08em",
             }}
@@ -107,9 +110,10 @@ function DownloadMenuV22({ onClose }: { onClose: () => void }) {
               background: "none",
               border: "none",
               cursor: "pointer",
-              fontFamily: "var(--pv22-font-mono)",
-              fontSize: "var(--pv22-text-xs)",
-              color: "var(--pv22-color-secondary)",
+              fontFamily: "var(--pv23-font-mono)",
+              fontSize: "var(--pv23-t-footnote)",
+              lineHeight: "var(--pv23-t-footnote-lh)",
+              color: "var(--pv23-text-secondary)",
               padding: 0,
             }}
           >
@@ -124,29 +128,31 @@ function DownloadMenuV22({ onClose }: { onClose: () => void }) {
             style={{
               display: "flex",
               flexDirection: "column",
-              gap: "2px",
-              padding: "var(--pv22-space-3) var(--pv22-space-4)",
-              background: "var(--pv22-color-muted-bg)",
-              border: "1px solid var(--pv22-color-border)",
+              gap: 2,
+              padding: "var(--pv23-3) var(--pv23-4)",
+              background: "var(--pv23-canvas)",
+              border: "1px solid var(--pv23-border)",
               textDecoration: "none",
-              color: "var(--pv22-color-text)",
+              color: "var(--pv23-text)",
               cursor: "pointer",
             }}
           >
             <span
               style={{
-                fontFamily: "var(--pv22-font-family)",
-                fontSize: "var(--pv22-text-sm)",
-                fontWeight: 500,
+                fontFamily: "var(--pv23-font-body)",
+                fontSize: "var(--pv23-t-core-meta)",
+                lineHeight: "var(--pv23-t-core-meta-lh)",
+                fontWeight: "var(--pv23-fw-semibold)",
               }}
             >
               {dl.label}
             </span>
             <span
               style={{
-                fontFamily: "var(--pv22-font-mono)",
-                fontSize: "var(--pv22-text-xs)",
-                color: "var(--pv22-color-secondary)",
+                fontFamily: "var(--pv23-font-mono)",
+                fontSize: "var(--pv23-t-footnote)",
+                lineHeight: "var(--pv23-t-footnote-lh)",
+                color: "var(--pv23-text-secondary)",
               }}
             >
               {dl.description}
@@ -162,9 +168,9 @@ function DownloadMenuV22({ onClose }: { onClose: () => void }) {
 // Agenda overlay
 // ---------------------------------------------------------------------------
 
-const AGENDA_ITEMS = CORE_SLIDES_V22[1]?.agendaItems ?? [];
+const AGENDA_ITEMS = CORE_SLIDES_V23[1]?.agendaItems ?? [];
 
-function AgendaOverlayV22({
+function AgendaOverlay({
   activeCoreIndex,
   onClose,
   onOpenAppendix,
@@ -173,11 +179,10 @@ function AgendaOverlayV22({
   onClose: () => void;
   onOpenAppendix: () => void;
 }) {
-  const activeSection = CORE_SLIDES_V22[activeCoreIndex]?.section ?? "";
-
+  const activeSection = CORE_SLIDES_V23[activeCoreIndex]?.section ?? "";
   return (
     <div
-      className="pv22-agenda-overlay"
+      className="pv23-agenda-overlay"
       role="dialog"
       aria-label="Agenda"
       onClick={onClose}
@@ -185,24 +190,25 @@ function AgendaOverlayV22({
       <div
         onClick={(e) => e.stopPropagation()}
         style={{
-          background: "var(--pv22-color-surface)",
-          border: "1px solid var(--pv22-color-border)",
-          padding: "var(--pv22-space-10)",
+          background: "var(--pv23-surface)",
+          border: "1px solid var(--pv23-border)",
+          padding: "var(--pv23-10)",
           width: "min(860px, 90vw)",
           maxHeight: "80dvh",
           overflow: "auto",
           display: "flex",
           flexDirection: "column",
-          gap: "var(--pv22-space-6)",
+          gap: "var(--pv23-6)",
         }}
       >
         <h2
           style={{
-            fontFamily: "var(--pv22-font-family)",
-            fontSize: "var(--pv22-text-xl)",
-            fontWeight: 600,
+            fontFamily: "var(--pv23-font-heading)",
+            fontSize: "var(--pv23-t-core-title)",
+            lineHeight: "var(--pv23-t-core-title-lh)",
+            fontWeight: "var(--pv23-fw-bold)",
             margin: 0,
-            color: "var(--pv22-color-text)",
+            color: "var(--pv23-text)",
           }}
         >
           Agenda
@@ -213,26 +219,28 @@ function AgendaOverlayV22({
             return (
               <div
                 key={i}
-                className={`pv22-agenda-item${isActive ? " pv22-agenda-item--active" : ""}`}
+                className={`pv23-agenda-item${isActive ? " pv23-agenda-item--active" : ""}`}
               >
-                <span className="pv22-agenda-item__number">{String(i + 1).padStart(2, "0")}</span>
-                <span className="pv22-agenda-item__label">{item.text}</span>
+                <span className="pv23-agenda-item__number">{String(i + 1).padStart(2, "0")}</span>
+                <span className="pv23-agenda-item__label">{item.text}</span>
               </div>
             );
           })}
         </div>
-        <div style={{ display: "flex", gap: "var(--pv22-space-3)" }}>
+        <div style={{ display: "flex", gap: "var(--pv23-3)" }}>
           <button
             type="button"
             onClick={onClose}
             style={{
-              padding: "var(--pv22-space-2) var(--pv22-space-6)",
-              background: "var(--pv22-color-accent)",
+              padding: "var(--pv23-2) var(--pv23-6)",
+              background: "var(--pv23-brand-purple)",
               border: "none",
               color: "#fff",
-              fontFamily: "var(--pv22-font-family)",
-              fontSize: "var(--pv22-text-sm)",
+              fontFamily: "var(--pv23-font-body)",
+              fontSize: "var(--pv23-t-core-meta)",
+              lineHeight: "var(--pv23-t-core-meta-lh)",
               cursor: "pointer",
+              borderRadius: 0,
             }}
           >
             Close
@@ -241,13 +249,15 @@ function AgendaOverlayV22({
             type="button"
             onClick={onOpenAppendix}
             style={{
-              padding: "var(--pv22-space-2) var(--pv22-space-6)",
-              background: "var(--pv22-color-surface)",
-              border: "1px solid var(--pv22-color-border)",
-              color: "var(--pv22-color-text)",
-              fontFamily: "var(--pv22-font-family)",
-              fontSize: "var(--pv22-text-sm)",
+              padding: "var(--pv23-2) var(--pv23-6)",
+              background: "var(--pv23-surface)",
+              border: "1px solid var(--pv23-border)",
+              color: "var(--pv23-text)",
+              fontFamily: "var(--pv23-font-body)",
+              fontSize: "var(--pv23-t-core-meta)",
+              lineHeight: "var(--pv23-t-core-meta-lh)",
               cursor: "pointer",
+              borderRadius: 0,
             }}
           >
             Open appendix
@@ -259,15 +269,141 @@ function AgendaOverlayV22({
 }
 
 // ---------------------------------------------------------------------------
+// Inline appendix ref bar (pv23- classes)
+// ---------------------------------------------------------------------------
+
+function RefBar({
+  appendixRefs,
+  coreIndex,
+  onGoToAppendix,
+}: {
+  appendixRefs: AppendixReference[];
+  coreIndex: number;
+  onGoToAppendix: (appendixId: string, fromCoreIndex: number) => void;
+}) {
+  if (appendixRefs.length === 0) return null;
+  return (
+    <div className="pv23-ref-bar" aria-label="Appendix references for this slide">
+      <span className="pv23-ref-bar__label">More detail</span>
+      {appendixRefs.map((ref) => (
+        <button
+          key={ref.appendixId}
+          type="button"
+          className="pv23-ref-chip"
+          title={ref.reason}
+          aria-label={`Open appendix: ${ref.label}`}
+          onClick={() => onGoToAppendix(ref.appendixId, coreIndex)}
+        >
+          {ref.label}
+        </button>
+      ))}
+    </div>
+  );
+}
+
+// ---------------------------------------------------------------------------
+// Core slide shell (section label, counter, notes, ref bar, dispatcher)
+// ---------------------------------------------------------------------------
+
+function CoreSlideV23Shell({
+  slide,
+  slideIndex,
+  totalCoreSlides,
+  exportMode,
+  showNotes,
+  focusStep,
+  onGoToAppendix,
+}: {
+  slide: CoreSlide23;
+  slideIndex: number;
+  totalCoreSlides: number;
+  exportMode?: boolean;
+  showNotes?: boolean;
+  focusStep?: number;
+  onGoToAppendix: (appendixId: string, fromCoreIndex: number) => void;
+}) {
+  const notesHeightPx = showNotes ? 180 : 0;
+
+  return (
+    <div
+      style={{
+        position: "absolute",
+        inset: 0,
+        display: "flex",
+        flexDirection: "column",
+      }}
+    >
+      {/* Section label -- top-left */}
+      {slide.section.length > 0 && (
+        <span className="pv23-section-label" aria-hidden="true">
+          {slide.section}
+        </span>
+      )}
+
+      {/* Content area (flexible, fills remaining height) */}
+      <div
+        style={{
+          flex: 1,
+          minHeight: 0,
+          position: "relative",
+          overflow: "hidden",
+          height: showNotes ? `calc(100% - ${notesHeightPx}px)` : "100%",
+        }}
+      >
+        <CoreSlide23Dispatcher
+          slide={slide}
+          exportMode={exportMode}
+          focusStep={focusStep}
+        />
+      </div>
+
+      {/* Appendix ref bar */}
+      <RefBar
+        appendixRefs={slide.appendixRefs}
+        coreIndex={slideIndex - 1}
+        onGoToAppendix={onGoToAppendix}
+      />
+
+      {/* Speaker notes strip */}
+      {showNotes && (
+        <div
+          aria-label="Speaker notes"
+          className="pv23-speaker-notes"
+          style={{ height: notesHeightPx, flexShrink: 0 }}
+        >
+          <p className="pv23-speaker-notes__label">Notes</p>
+          <p className="pv23-speaker-notes__text">{slide.speakerNotes}</p>
+        </div>
+      )}
+
+      {/* Footer -- bottom-centre */}
+      {slide.footer != null && slide.footer.length > 0 && (
+        <div className="pv23-footer" aria-hidden="true">
+          {slide.footer}
+        </div>
+      )}
+
+      {/* Slide counter -- bottom-right */}
+      <span
+        className="pv23-slide-number"
+        aria-label={`Slide ${slideIndex} of ${totalCoreSlides}`}
+      >
+        {slideIndex} / {totalCoreSlides}
+      </span>
+    </div>
+  );
+}
+
+// ---------------------------------------------------------------------------
 // Component
 // ---------------------------------------------------------------------------
 
-export function PresentationV22({
+export function PresentationV23({
   initialCoreSlide = 1,
   initialAppendixId = null,
   initialFrom = null,
   exportMode = false,
-}: PresentationV22Props) {
+}: Props) {
   const nav = useSlideNavigation(
     CORE_SLIDE_COUNT,
     APPENDIX_IDS,
@@ -276,7 +412,7 @@ export function PresentationV22({
     initialFrom,
   );
 
-  const { state, goToCore, goToAppendix, returnToOrigin, goBack, goForward, goToFirst, goToLast } = nav;
+  const { state, goToAppendix, returnToOrigin, goBack, goForward, goToFirst, goToLast } = nav;
 
   // Local UI state
   const [showNotes, setShowNotes] = useState(false);
@@ -285,6 +421,7 @@ export function PresentationV22({
   const [showDownload, setShowDownload] = useState(false);
   const [motionPaused, setMotionPaused] = useState(false);
   const [showEndPrompt, setShowEndPrompt] = useState(false);
+  const [focusStep, setFocusStep] = useState<number | undefined>(undefined);
 
   const deckRef = useRef<HTMLDivElement>(null);
 
@@ -314,14 +451,26 @@ export function PresentationV22({
       setShowEndPrompt(true);
       return;
     }
+    setFocusStep(undefined);
     goForward();
   }, [goForward, showAgenda, showHelp, state.mode, state.coreIndex]);
 
   const handleGoBack = useCallback(() => {
     if (showAgenda || showHelp) return;
     setShowEndPrompt(false);
+    setFocusStep(undefined);
     goBack();
   }, [goBack, showAgenda, showHelp]);
+
+  // -------------------------------------------------------------------------
+  // Current slide -- used to check for focusRegions
+  // -------------------------------------------------------------------------
+
+  const currentCoreSlide = CORE_SLIDES_V23[state.coreIndex];
+  const currentHasFocusRegions =
+    currentCoreSlide != null &&
+    currentCoreSlide.focusRegions != null &&
+    currentCoreSlide.focusRegions.length > 0;
 
   // -------------------------------------------------------------------------
   // Keyboard handler
@@ -356,11 +505,9 @@ export function PresentationV22({
       if (e.key === "c" || e.key === "C") {
         e.preventDefault();
         if (state.mode === "appendix") {
-          // Return to origin core slide
           returnToOrigin();
           setShowEndPrompt(false);
         } else {
-          // In core: toggle agenda (same shortcut register as A)
           setShowAgenda((v) => !v);
         }
         return;
@@ -394,6 +541,15 @@ export function PresentationV22({
         return;
       }
 
+      // 1 / 2 / 3 keys: set focusStep when current slide has focus regions
+      if (e.key === "1" || e.key === "2" || e.key === "3") {
+        if (currentHasFocusRegions && state.mode === "core") {
+          e.preventDefault();
+          setFocusStep(Number(e.key));
+          return;
+        }
+      }
+
       if (e.key === "ArrowRight" || e.key === "ArrowDown" || e.key === " ") {
         e.preventDefault();
         handleGoForward();
@@ -409,6 +565,7 @@ export function PresentationV22({
       if (e.key === "Home") {
         e.preventDefault();
         setShowEndPrompt(false);
+        setFocusStep(undefined);
         goToFirst();
         return;
       }
@@ -421,6 +578,7 @@ export function PresentationV22({
     },
     [
       closeAllOverlays,
+      currentHasFocusRegions,
       goToFirst,
       goToLast,
       handleGoForward,
@@ -462,23 +620,11 @@ export function PresentationV22({
   }, []);
 
   // -------------------------------------------------------------------------
-  // Derived values
-  // -------------------------------------------------------------------------
-
-  const currentCoreSlide = CORE_SLIDES_V22[state.coreIndex];
-
-  // Unique key for SharedSlideTransition: changes on every slide change
-  const slideKey =
-    state.mode === "core"
-      ? `core-${state.coreIndex}`
-      : `appendix-${state.appendixId ?? "none"}`;
-
-  // -------------------------------------------------------------------------
   // Slide manifest (consumed by the export pipeline via data-presentation-slides)
   // -------------------------------------------------------------------------
 
   const slideManifest = [
-    ...CORE_SLIDES_V22.map((slide, i) => ({
+    ...CORE_SLIDES_V23.map((slide, i) => ({
       index: i + 1,
       type: "core" as const,
       id: slide.id,
@@ -492,6 +638,12 @@ export function PresentationV22({
     })),
   ];
 
+  // Unique key for SharedSlideTransition
+  const slideKey =
+    state.mode === "core"
+      ? `core-${state.coreIndex}`
+      : `appendix-${state.appendixId ?? "none"}`;
+
   // -------------------------------------------------------------------------
   // Render
   // -------------------------------------------------------------------------
@@ -500,16 +652,15 @@ export function PresentationV22({
     <div
       ref={deckRef}
       className={[
-        "pv22-presentation-shell",
-        "pv22-deck",
-        exportMode ? "pv22-export-mode" : "",
-        motionPaused ? "pv22-motion-paused" : "",
+        "pv23-deck",
+        exportMode ? "pv23-export-mode" : "",
+        motionPaused ? "pv23-motion-paused" : "",
       ]
         .filter(Boolean)
         .join(" ")}
       data-presentation-slides={JSON.stringify(slideManifest)}
       role="main"
-      aria-label="NFROS Presentation V2.2"
+      aria-label="NFROS Presentation V2.3"
     >
       {/* Letterbox wrapper */}
       <div
@@ -524,7 +675,7 @@ export function PresentationV22({
         }}
       >
         <div
-          className="pv22-slide"
+          className="pv23-slide"
           style={{ transform: `scale(${scale})` }}
           aria-live="polite"
         >
@@ -534,12 +685,13 @@ export function PresentationV22({
             exportMode={exportMode}
           >
             {state.mode === "core" && currentCoreSlide != null ? (
-              <CoreSlideV22
+              <CoreSlideV23Shell
                 slide={currentCoreSlide}
                 slideIndex={state.coreIndex + 1}
                 totalCoreSlides={CORE_SLIDE_COUNT}
                 exportMode={exportMode}
                 showNotes={showNotes}
+                focusStep={focusStep}
                 onGoToAppendix={goToAppendix}
               />
             ) : state.mode === "appendix" && state.appendixId != null ? (
@@ -555,8 +707,10 @@ export function PresentationV22({
                   alignItems: "center",
                   justifyContent: "center",
                   height: "100%",
-                  color: "var(--pv22-color-secondary)",
-                  fontFamily: "var(--pv22-font-family)",
+                  color: "var(--pv23-text-secondary)",
+                  fontFamily: "var(--pv23-font-body)",
+                  fontSize: "var(--pv23-t-core-body)",
+                  lineHeight: "var(--pv23-t-core-body-lh)",
                 }}
               >
                 Slide not found.
@@ -569,28 +723,28 @@ export function PresentationV22({
       {/* End-of-core prompt */}
       {showEndPrompt && state.mode === "core" && (
         <div
-          className="pv22-end-prompt"
+          className="pv23-end-prompt"
           role="dialog"
           aria-label="End of core presentation"
         >
-          <p className="pv22-end-prompt__title">Core story complete.</p>
-          <div className="pv22-end-prompt__actions">
+          <p className="pv23-end-prompt__title">Core story complete.</p>
+          <div className="pv23-end-prompt__actions">
             <button
-              className="pv22-end-prompt__btn pv22-end-prompt__btn--primary"
+              className="pv23-end-prompt__btn pv23-end-prompt__btn--primary"
               onClick={() => setShowEndPrompt(false)}
               type="button"
             >
               Continue discussion
             </button>
             <button
-              className="pv22-end-prompt__btn"
+              className="pv23-end-prompt__btn"
               onClick={openAppendixFirst}
               type="button"
             >
               Open appendix
             </button>
             <a
-              className="pv22-end-prompt__btn"
+              className="pv23-end-prompt__btn"
               href="/downloads/NFROS_Risk_Audience_Core_and_Appendix.pdf"
               download
             >
@@ -602,7 +756,7 @@ export function PresentationV22({
 
       {/* Agenda overlay */}
       {showAgenda && (
-        <AgendaOverlayV22
+        <AgendaOverlay
           activeCoreIndex={state.coreIndex}
           onClose={() => setShowAgenda(false)}
           onOpenAppendix={() => {
@@ -615,7 +769,7 @@ export function PresentationV22({
       {/* Help overlay */}
       {showHelp && (
         <div
-          className="pv22-help-overlay"
+          className="pv23-help-overlay"
           role="dialog"
           aria-label="Keyboard shortcuts"
           onClick={(e) => {
@@ -625,11 +779,12 @@ export function PresentationV22({
           <div>
             <h2
               style={{
-                fontSize: "var(--pv22-text-xl)",
-                fontWeight: 600,
-                color: "var(--pv22-color-text)",
+                fontSize: "var(--pv23-t-core-subtitle)",
+                lineHeight: "var(--pv23-t-core-subtitle-lh)",
+                fontWeight: "var(--pv23-fw-semibold)",
+                color: "var(--pv23-text)",
                 margin: 0,
-                fontFamily: "var(--pv22-font-family)",
+                fontFamily: "var(--pv23-font-heading)",
               }}
             >
               Keyboard shortcuts
@@ -638,8 +793,9 @@ export function PresentationV22({
               style={{
                 width: "100%",
                 borderCollapse: "collapse",
-                fontSize: "var(--pv22-text-sm)",
-                marginTop: "var(--pv22-space-4)",
+                fontSize: "var(--pv23-t-core-meta)",
+                lineHeight: "var(--pv23-t-core-meta-lh)",
+                marginTop: "var(--pv23-4)",
               }}
             >
               <tbody>
@@ -649,6 +805,7 @@ export function PresentationV22({
                     ["ArrowLeft / ArrowUp", "Previous slide"],
                     ["Home", "First slide"],
                     ["End", "Last slide"],
+                    ["1 / 2 / 3", "Set focus region (slides with product proof)"],
                     ["A", "Toggle agenda overlay"],
                     ["C (in appendix)", "Return to origin core slide"],
                     ["C (in core)", "Toggle agenda overlay"],
@@ -662,22 +819,24 @@ export function PresentationV22({
                 ).map(([key, action]) => (
                   <tr
                     key={key}
-                    style={{ borderBottom: "1px solid var(--pv22-color-border)" }}
+                    style={{ borderBottom: "1px solid var(--pv23-border)" }}
                   >
                     <td
                       style={{
-                        padding: "var(--pv22-space-2) var(--pv22-space-3) var(--pv22-space-2) 0",
-                        width: "260px",
+                        padding: "var(--pv23-2) var(--pv23-3) var(--pv23-2) 0",
+                        width: 280,
                       }}
                     >
                       <kbd
                         style={{
-                          fontFamily: "var(--pv22-font-mono)",
-                          fontSize: "var(--pv22-text-xs)",
-                          background: "var(--pv22-color-muted-bg)",
-                          border: "1px solid var(--pv22-color-border)",
+                          fontFamily: "var(--pv23-font-mono)",
+                          fontSize: "var(--pv23-t-footnote)",
+                          lineHeight: "var(--pv23-t-footnote-lh)",
+                          background: "var(--pv23-canvas)",
+                          border: "1px solid var(--pv23-border)",
                           padding: "1px 6px",
-                          color: "var(--pv22-color-text)",
+                          color: "var(--pv23-text)",
+                          borderRadius: 0,
                         }}
                       >
                         {key}
@@ -685,8 +844,8 @@ export function PresentationV22({
                     </td>
                     <td
                       style={{
-                        padding: "var(--pv22-space-2) 0",
-                        color: "var(--pv22-color-text)",
+                        padding: "var(--pv23-2) 0",
+                        color: "var(--pv23-text)",
                       }}
                     >
                       {action}
@@ -699,14 +858,16 @@ export function PresentationV22({
               type="button"
               onClick={() => setShowHelp(false)}
               style={{
-                marginTop: "var(--pv22-space-5)",
-                padding: "var(--pv22-space-2) var(--pv22-space-6)",
-                background: "var(--pv22-color-accent)",
+                marginTop: "var(--pv23-5)",
+                padding: "var(--pv23-2) var(--pv23-6)",
+                background: "var(--pv23-brand-purple)",
                 border: "none",
                 color: "#fff",
-                fontFamily: "var(--pv22-font-family)",
-                fontSize: "var(--pv22-text-sm)",
+                fontFamily: "var(--pv23-font-body)",
+                fontSize: "var(--pv23-t-core-meta)",
+                lineHeight: "var(--pv23-t-core-meta-lh)",
                 cursor: "pointer",
+                borderRadius: 0,
               }}
             >
               Close
@@ -717,14 +878,14 @@ export function PresentationV22({
 
       {/* Download menu */}
       {!exportMode && showDownload && (
-        <DownloadMenuV22 onClose={() => setShowDownload(false)} />
+        <DownloadMenu onClose={() => setShowDownload(false)} />
       )}
 
       {/* Download trigger button */}
       {!exportMode && (
         <button
           type="button"
-          className="pv22-download-btn"
+          className="pv23-download-btn"
           onClick={() => setShowDownload((v) => !v)}
           aria-label="Open download menu"
         >

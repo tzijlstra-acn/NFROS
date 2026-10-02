@@ -1,0 +1,106 @@
+{
+  "version": "v2.3",
+  "generatedAt": "2026-10-02T15:13:20.356Z",
+  "assets": [
+    {
+      "id": "rcsa-home",
+      "file": "rcsa-home.png",
+      "placeholder": true,
+      "width": 1920,
+      "height": 1080,
+      "sizeBytes": 8563,
+      "sha256": "668342478256b16f3232ee7a7194ba6e8380f658e8c43dafce2e7d26a291c9b2",
+      "generatedAt": "2026-10-02T15:13:20.379Z"
+    },
+    {
+      "id": "tprm-home",
+      "file": "tprm-home.png",
+      "placeholder": true,
+      "width": 1920,
+      "height": 1080,
+      "sizeBytes": 8563,
+      "sha256": "668342478256b16f3232ee7a7194ba6e8380f658e8c43dafce2e7d26a291c9b2",
+      "generatedAt": "2026-10-02T15:13:20.399Z"
+    },
+    {
+      "id": "ai-partner",
+      "file": "ai-partner.png",
+      "placeholder": true,
+      "width": 1920,
+      "height": 1080,
+      "sizeBytes": 8563,
+      "sha256": "668342478256b16f3232ee7a7194ba6e8380f658e8c43dafce2e7d26a291c9b2",
+      "generatedAt": "2026-10-02T15:13:20.418Z"
+    },
+    {
+      "id": "rcsa-process-stage",
+      "file": "rcsa-process-stage.png",
+      "placeholder": true,
+      "width": 1920,
+      "height": 1080,
+      "sizeBytes": 8563,
+      "sha256": "668342478256b16f3232ee7a7194ba6e8380f658e8c43dafce2e7d26a291c9b2",
+      "generatedAt": "2026-10-02T15:13:20.442Z"
+    },
+    {
+      "id": "tprm-process-stage",
+      "file": "tprm-process-stage.png",
+      "placeholder": true,
+      "width": 1920,
+      "height": 1080,
+      "sizeBytes": 8563,
+      "sha256": "668342478256b16f3232ee7a7194ba6e8380f658e8c43dafce2e7d26a291c9b2",
+      "generatedAt": "2026-10-02T15:13:20.463Z"
+    },
+    {
+      "id": "decision-approval",
+      "file": "decision-approval.png",
+      "placeholder": true,
+      "width": 1920,
+      "height": 1080,
+      "sizeBytes": 8563,
+      "sha256": "668342478256b16f3232ee7a7194ba6e8380f658e8c43dafce2e7d26a291c9b2",
+      "generatedAt": "2026-10-02T15:13:20.483Z"
+    },
+    {
+      "id": "execution-receipt",
+      "file": "execution-receipt.png",
+      "placeholder": true,
+      "width": 1920,
+      "height": 1080,
+      "sizeBytes": 8563,
+      "sha256": "668342478256b16f3232ee7a7194ba6e8380f658e8c43dafce2e7d26a291c9b2",
+      "generatedAt": "2026-10-02T15:13:20.503Z"
+    },
+    {
+      "id": "evidence-drawer",
+      "file": "evidence-drawer.png",
+      "placeholder": true,
+      "width": 1920,
+      "height": 1080,
+      "sizeBytes": 8563,
+      "sha256": "668342478256b16f3232ee7a7194ba6e8380f658e8c43dafce2e7d26a291c9b2",
+      "generatedAt": "2026-10-02T15:13:20.524Z"
+    },
+    {
+      "id": "role-app-catalogue",
+      "file": "role-app-catalogue.png",
+      "placeholder": true,
+      "width": 1920,
+      "height": 1080,
+      "sizeBytes": 8563,
+      "sha256": "668342478256b16f3232ee7a7194ba6e8380f658e8c43dafce2e7d26a291c9b2",
+      "generatedAt": "2026-10-02T15:13:20.543Z"
+    },
+    {
+      "id": "operations-health",
+      "file": "operations-health.png",
+      "placeholder": true,
+      "width": 1920,
+      "height": 1080,
+      "sizeBytes": 8563,
+      "sha256": "668342478256b16f3232ee7a7194ba6e8380f658e8c43dafce2e7d26a291c9b2",
+      "generatedAt": "2026-10-02T15:13:20.563Z"
+    }
+  ]
+}

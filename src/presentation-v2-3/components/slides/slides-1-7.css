@@ -1,0 +1,302 @@
+/*
+ * Slide-specific styles for V2.3 core slides 1-7.
+ *
+ * Design constraints:
+ *   - No hardcoded colours (all use --pv23-* variables)
+ *   - No inline font-size pixel values
+ *   - Square geometry (border-radius: 0) everywhere except product frames
+ *   - All classes namespaced with .pv23-slide-*
+ */
+
+/* ==========================================================================
+   Slide 1: HeroSignalSlide
+   ========================================================================== */
+
+.pv23-slide-hero-signal {
+  position: absolute;
+  inset: 0;
+  background: var(--pv23-canvas);
+  overflow: hidden;
+}
+
+.pv23-slide-hero-signal__now-card {
+  background: var(--pv23-surface);
+  border: 1px solid var(--pv23-border);
+  border-radius: 0;
+  overflow: hidden;
+}
+
+.pv23-slide-hero-signal__now-card-bar {
+  height: 3px;
+  background: var(--pv23-brand-purple);
+}
+
+.pv23-slide-hero-signal__lines {
+  display: flex;
+  flex-direction: column;
+  gap: var(--pv23-8);
+}
+
+/* ==========================================================================
+   Slide 2: AgendaMapSlide
+   ========================================================================== */
+
+.pv23-slide-agenda-map {
+  position: absolute;
+  inset: 0;
+  background: var(--pv23-canvas);
+  overflow: hidden;
+}
+
+.pv23-slide-agenda-map__node--active {
+  fill: var(--pv23-brand-purple);
+}
+
+.pv23-slide-agenda-map__node--inactive {
+  fill: var(--pv23-neutral-mid);
+}
+
+/* ==========================================================================
+   Slide 3: FragmentationFlowSlide
+   ========================================================================== */
+
+.pv23-slide-frag-flow {
+  position: absolute;
+  inset: 0;
+  background: var(--pv23-canvas);
+  overflow: hidden;
+}
+
+.pv23-slide-frag-flow__source-node {
+  background: var(--pv23-surface);
+  border: 1px solid var(--pv23-border);
+}
+
+.pv23-slide-frag-flow__person-node {
+  background: var(--pv23-surface);
+  border: 1px solid var(--pv23-border-strong);
+}
+
+.pv23-slide-frag-flow__decision-node {
+  background: var(--pv23-brand-purple-lightest);
+  border: 1px solid var(--pv23-brand-purple);
+}
+
+.pv23-slide-frag-flow__emphasis {
+  display: flex;
+  flex-direction: column;
+  gap: var(--pv23-3);
+  text-align: center;
+}
+
+/* ==========================================================================
+   Slide 4: OperatingSystemSpineSlide
+   ========================================================================== */
+
+.pv23-slide-os-spine {
+  position: absolute;
+  inset: 0;
+  background: var(--pv23-canvas);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0 var(--pv23-20);
+}
+
+.pv23-slide-os-spine__band {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  justify-content: center;
+  padding: 0 var(--pv23-8);
+  gap: var(--pv23-3);
+}
+
+.pv23-slide-os-spine__band--top {
+  background: var(--pv23-surface);
+  border: 1px solid var(--pv23-border);
+  border-bottom: none;
+}
+
+.pv23-slide-os-spine__band--middle {
+  background: var(--pv23-brand-purple-lightest);
+  border-top: 2px solid var(--pv23-brand-purple);
+  border-bottom: 2px solid var(--pv23-brand-purple);
+  border-left: 1px solid var(--pv23-brand-purple);
+  border-right: 1px solid var(--pv23-brand-purple);
+}
+
+.pv23-slide-os-spine__band--bottom {
+  background: var(--pv23-canvas);
+  border: 1px solid var(--pv23-border);
+  border-top: none;
+}
+
+.pv23-slide-os-spine__work-item {
+  width: 24px;
+  height: 24px;
+  background: var(--pv23-brand-purple);
+  position: absolute;
+}
+
+/* ==========================================================================
+   Slide 5: RoleOSFocusSlide
+   ========================================================================== */
+
+.pv23-slide-role-focus {
+  position: absolute;
+  inset: 0;
+  background: var(--pv23-canvas);
+  display: flex;
+  flex-direction: row;
+}
+
+.pv23-slide-role-focus__proof-pane {
+  display: flex;
+  align-items: stretch;
+}
+
+.pv23-slide-role-focus__callout-pane {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: var(--pv23-6);
+}
+
+.pv23-slide-role-focus__step-dots {
+  display: flex;
+  gap: var(--pv23-2);
+  margin-top: var(--pv23-4);
+}
+
+.pv23-slide-role-focus__step-dot {
+  width: 8px;
+  height: 8px;
+}
+
+.pv23-slide-role-focus__step-dot--active {
+  background: var(--pv23-brand-purple);
+}
+
+.pv23-slide-role-focus__step-dot--inactive {
+  background: var(--pv23-border-strong);
+}
+
+/* ==========================================================================
+   Slide 6: RoleMirrorSlide
+   ========================================================================== */
+
+.pv23-slide-role-mirror {
+  position: absolute;
+  inset: 0;
+  background: var(--pv23-canvas);
+  display: flex;
+  flex-direction: row;
+}
+
+.pv23-slide-role-mirror__role-pane {
+  display: flex;
+  flex-direction: column;
+  gap: var(--pv23-4);
+}
+
+.pv23-slide-role-mirror__spine {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.pv23-slide-role-mirror__spine-line {
+  position: absolute;
+  top: 10%;
+  bottom: 10%;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 1px;
+  background: var(--pv23-border-strong);
+}
+
+.pv23-slide-role-mirror__cap-label {
+  background: var(--pv23-surface);
+  border: 1px solid var(--pv23-border);
+  padding: 2px var(--pv23-3);
+  white-space: nowrap;
+}
+
+.pv23-slide-role-mirror__cap-dot {
+  width: 8px;
+  height: 8px;
+  background: var(--pv23-border-strong);
+  flex-shrink: 0;
+}
+
+/* ==========================================================================
+   Slide 7: ProcessRailSlide
+   ========================================================================== */
+
+.pv23-slide-process-rail {
+  position: absolute;
+  inset: 0;
+  background: var(--pv23-canvas);
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: var(--pv23-12);
+  padding: 60px var(--pv23-20);
+}
+
+.pv23-slide-process-rail__row {
+  display: flex;
+  flex-direction: column;
+  gap: var(--pv23-4);
+}
+
+.pv23-slide-process-rail__nodes {
+  display: flex;
+  justify-content: space-between;
+  position: relative;
+}
+
+.pv23-slide-process-rail__node {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  position: relative;
+  flex: 1;
+}
+
+.pv23-slide-process-rail__node-sq {
+  flex-shrink: 0;
+}
+
+.pv23-slide-process-rail__node-sq--active {
+  background: var(--pv23-brand-purple);
+}
+
+.pv23-slide-process-rail__node-sq--completed {
+  background: var(--pv23-neutral-dark);
+}
+
+.pv23-slide-process-rail__node-sq--future {
+  background: transparent;
+  border: 1px solid var(--pv23-border);
+}
+
+.pv23-slide-process-rail__gate {
+  position: absolute;
+  width: 2px;
+  background: var(--pv23-gate);
+  z-index: 2;
+}
+
+.pv23-slide-process-rail__gate-label {
+  white-space: nowrap;
+}
+
+.pv23-slide-process-rail__divider {
+  height: 1px;
+  background: var(--pv23-border);
+}

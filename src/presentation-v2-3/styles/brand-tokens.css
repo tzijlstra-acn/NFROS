@@ -1,0 +1,60 @@
+/* V2.3 Brand Tokens -- extends V2.2 with updated type scale and V2.3 prefix */
+
+@import "./typography-tokens.css";
+
+:root {
+  /* Accenture colour system */
+  --pv23-brand-purple:          #A100FF;
+  --pv23-brand-purple-dark:     #7500C0;
+  --pv23-brand-purple-darkest:  #460073;
+  --pv23-brand-purple-light:    #C2A3FF;
+  --pv23-brand-purple-lightest: #E6DCFF;
+
+  /* Neutral canvas */
+  --pv23-canvas:         #F5F6F8;
+  --pv23-surface:        #FFFFFF;
+  --pv23-border:         #E4E7EC;
+  --pv23-border-strong:  #D0D5DD;
+  --pv23-neutral-dark:   #172033;
+  --pv23-neutral-mid:    #475467;
+
+  /* Semantic colours */
+  --pv23-human:     #7500C0;
+  --pv23-evidence:  #15803D;
+  --pv23-risk:      #B42318;
+  --pv23-info:      #2563EB;
+  --pv23-ai:        #A100FF;
+  --pv23-process:   #344054;
+  --pv23-gate:      #B54708;   /* human gate / amber */
+
+  /* Geometry */
+  --pv23-radius:        0px;   /* square by default */
+  --pv23-radius-sm:     0px;
+  --pv23-radius-product: 4px; /* product frame only */
+
+  /* Spacing */
+  --pv23-1:   4px;
+  --pv23-2:   8px;
+  --pv23-3:  12px;
+  --pv23-4:  16px;
+  --pv23-5:  20px;
+  --pv23-6:  24px;
+  --pv23-8:  32px;
+  --pv23-10: 40px;
+  --pv23-12: 48px;
+  --pv23-16: 64px;
+  --pv23-20: 80px;
+  --pv23-24: 96px;
+
+  /* Slide canvas */
+  --pv23-slide-w: 1920px;
+  --pv23-slide-h: 1080px;
+
+  /* Motion */
+  --pv23-motion-fast:     150ms;
+  --pv23-motion-standard: 250ms;
+  --pv23-motion-emphasis: 350ms;
+  --pv23-motion-complex:  480ms;
+  --pv23-motion-ease-enter: cubic-bezier(0.0, 0.0, 0.2, 1.0);
+  --pv23-motion-ease-exit:  cubic-bezier(0.4, 0.0, 1.0, 1.0);
+}

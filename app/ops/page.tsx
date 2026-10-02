@@ -201,6 +201,8 @@ export default async function OpsPage() {
   return (
     <div
       className="workday-v2"
+      data-presentation-region="ops-dashboard"
+      data-presentation-ready="true"
       style={{
         maxWidth: "720px",
         margin: "0 auto",

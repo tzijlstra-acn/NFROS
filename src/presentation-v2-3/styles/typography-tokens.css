@@ -1,0 +1,72 @@
+/* V2.3 Semantic Typography Scale
+   All sizes are for a 1920x1080 internal canvas.
+   Scale factors at common viewports:
+     1920x1080: 1.000  (100%)
+     1440x 900: 0.750  (75%)
+     1366x 768: 0.710  (71%)
+
+   Effective minimums at 1366x768:
+     core-title:    64px * 0.71 = 45px  (minimum 32px required) -- PASS
+     core-body:     26px * 0.71 = 18px  (minimum 15px required) -- PASS
+     core-label:    20px * 0.71 = 14px  (minimum 13px required) -- PASS
+     appendix-body: 22px * 0.71 = 16px  (minimum 13px required) -- PASS
+     footnote:      16px * 0.71 = 11px  (minimum 10px required) -- PASS
+*/
+
+:root {
+  /* Semantic typography scale */
+  --pv23-t-display:      88px;
+  --pv23-t-display-lh:   0.98;
+
+  --pv23-t-core-title:   64px;
+  --pv23-t-core-title-lh: 1.04;
+
+  --pv23-t-core-subtitle: 34px;
+  --pv23-t-core-subtitle-lh: 1.22;
+
+  --pv23-t-statement:    42px;
+  --pv23-t-statement-lh: 1.16;
+
+  --pv23-t-core-body:    26px;
+  --pv23-t-core-body-lh: 1.36;
+
+  --pv23-t-core-label:   20px;
+  --pv23-t-core-label-lh: 1.25;
+
+  --pv23-t-core-meta:    18px;
+  --pv23-t-core-meta-lh: 1.25;
+
+  --pv23-t-appendix-title:  48px;
+  --pv23-t-appendix-title-lh: 1.08;
+
+  --pv23-t-appendix-sub:    28px;
+  --pv23-t-appendix-sub-lh: 1.25;
+
+  --pv23-t-appendix-body:   22px;
+  --pv23-t-appendix-body-lh: 1.35;
+
+  --pv23-t-appendix-table:  18px;
+  --pv23-t-appendix-table-lh: 1.3;
+
+  --pv23-t-footnote:     16px;
+  --pv23-t-footnote-lh:  1.3;
+
+  --pv23-t-ref-control:  16px;
+  --pv23-t-ref-control-lh: 1.2;
+
+  /* Font families */
+  --pv23-font-heading: Arial, sans-serif;   /* overridden when Graphik is available */
+  --pv23-font-body:    Arial, sans-serif;
+  --pv23-font-mono:    "IBM Plex Mono", monospace;
+
+  /* Font weights */
+  --pv23-fw-bold:      700;
+  --pv23-fw-semibold:  600;
+  --pv23-fw-regular:   400;
+
+  /* Colours for text */
+  --pv23-text:           #172033;
+  --pv23-text-secondary: #475467;
+  --pv23-text-purple:    #A100FF;
+  --pv23-text-inverse:   #FFFFFF;
+}

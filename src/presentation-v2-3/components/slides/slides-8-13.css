@@ -1,0 +1,622 @@
+/*
+ * Slide-specific styles for Slides 8-13 (V2.3 core deck).
+ *
+ * All colours use --pv23-* variables.
+ * No hardcoded font-size pixel values.
+ * Square geometry: border-radius: 0 everywhere.
+ */
+
+/* ==========================================================================
+   AuthorityBoundarySlide (Slide 8)
+   ========================================================================== */
+
+.ab-slide {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+  padding: var(--pv23-12) var(--pv23-16);
+  gap: var(--pv23-8);
+}
+
+.ab-tracks {
+  display: flex;
+  flex-direction: row;
+  align-items: stretch;
+  gap: 0;
+  width: 100%;
+  max-width: 1400px;
+}
+
+.ab-track {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: var(--pv23-6);
+  padding: var(--pv23-8);
+}
+
+.ab-track--left {
+  border-right: 1px solid var(--pv23-border);
+}
+
+.ab-track-label {
+  margin-bottom: var(--pv23-4);
+}
+
+.ab-rail {
+  position: relative;
+  height: 2px;
+  background: var(--pv23-border);
+  margin: var(--pv23-8) 0;
+  display: flex;
+  align-items: center;
+  gap: var(--pv23-6);
+  height: auto;
+}
+
+.ab-rail-line {
+  position: absolute;
+  top: 50%;
+  left: 0;
+  right: 0;
+  height: 1px;
+  background: var(--pv23-border);
+  transform: translateY(-50%);
+}
+
+.ab-rail-items {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: var(--pv23-4);
+  width: 100%;
+}
+
+.ab-work-item {
+  display: flex;
+  align-items: center;
+  gap: var(--pv23-4);
+  width: 100%;
+}
+
+.ab-item-card {
+  width: 40px;
+  height: 28px;
+  border: 1px solid var(--pv23-border);
+  background: var(--pv23-surface);
+  border-radius: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  font-size: var(--pv23-t-footnote);
+  line-height: var(--pv23-t-footnote-lh);
+}
+
+.ab-item-card--auto {
+  border-color: var(--pv23-evidence);
+}
+
+.ab-item-card--stop {
+  border-color: var(--pv23-gate);
+}
+
+.ab-gate-line {
+  width: 2px;
+  height: 32px;
+  background: var(--pv23-gate);
+  flex-shrink: 0;
+}
+
+.ab-item-label {
+  flex: 1;
+  min-width: 0;
+}
+
+.ab-status-icon {
+  flex-shrink: 0;
+  width: 16px;
+  height: 16px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: var(--pv23-t-footnote);
+  line-height: 1;
+}
+
+.ab-status-icon--auto {
+  color: var(--pv23-evidence);
+}
+
+.ab-status-icon--stop {
+  color: var(--pv23-gate);
+}
+
+.ab-statement {
+  text-align: center;
+  padding-top: var(--pv23-4);
+}
+
+/* ==========================================================================
+   OutcomeShiftSlide (Slide 9)
+   ========================================================================== */
+
+.os-slide {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  height: 100%;
+  padding: var(--pv23-12) var(--pv23-16);
+  gap: var(--pv23-6);
+}
+
+.os-header {
+  margin-bottom: var(--pv23-4);
+}
+
+.os-rows {
+  display: flex;
+  flex-direction: column;
+  gap: var(--pv23-5);
+}
+
+.os-row {
+  display: flex;
+  flex-direction: row;
+  align-items: stretch;
+  gap: 0;
+  min-height: 80px;
+}
+
+.os-band {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  padding: var(--pv23-4) var(--pv23-6);
+  border-radius: 0;
+}
+
+.os-band--before {
+  width: 45%;
+  border: 1px solid var(--pv23-border);
+  border-left: 3px dashed var(--pv23-border-strong);
+  background: var(--pv23-canvas);
+}
+
+.os-band--arrow {
+  width: 10%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--pv23-text-secondary);
+  font-family: var(--pv23-font-mono);
+  font-size: var(--pv23-t-core-label);
+  line-height: 1;
+  flex-shrink: 0;
+}
+
+.os-band--after {
+  width: 45%;
+  border: 1px solid var(--pv23-brand-purple-light);
+  background: var(--pv23-brand-purple-lightest);
+}
+
+/* ==========================================================================
+   EvidenceControlSlide (Slide 10)
+   ========================================================================== */
+
+.ec-slide {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  height: 100%;
+  padding: var(--pv23-10) var(--pv23-16);
+  gap: var(--pv23-8);
+}
+
+.ec-header {
+  flex-shrink: 0;
+}
+
+.ec-thread-area {
+  flex: 1;
+  min-height: 0;
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+}
+
+.ec-thread-track {
+  position: relative;
+  height: 360px;
+  display: flex;
+  align-items: center;
+}
+
+.ec-thread-line {
+  position: absolute;
+  top: 50%;
+  left: 10%;
+  width: 80%;
+  height: 2px;
+  background: var(--pv23-brand-purple-light);
+  transform: translateY(-50%);
+}
+
+.ec-nodes {
+  position: absolute;
+  top: 0;
+  left: 10%;
+  width: 80%;
+  height: 100%;
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+}
+
+.ec-node-col {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--pv23-3);
+  position: relative;
+}
+
+.ec-node {
+  width: 32px;
+  height: 32px;
+  border: 2px solid var(--pv23-brand-purple-light);
+  background: var(--pv23-surface);
+  border-radius: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  margin-top: var(--pv23-8);
+  position: relative;
+  z-index: 1;
+}
+
+.ec-node--ai {
+  background: var(--pv23-brand-purple);
+  border-color: var(--pv23-brand-purple);
+}
+
+.ec-node--gate {
+  border-color: var(--pv23-gate);
+  border-width: 3px;
+}
+
+.ec-node--receipt {
+  background: var(--pv23-brand-purple);
+  border-color: var(--pv23-brand-purple);
+}
+
+.ec-node--audit {
+  background: var(--pv23-neutral-dark);
+  border-color: var(--pv23-neutral-dark);
+}
+
+.ec-node-label {
+  text-align: center;
+  max-width: 100px;
+}
+
+.ec-proof-frame {
+  margin-top: var(--pv23-4);
+  border: 1px solid var(--pv23-border);
+}
+
+/* ==========================================================================
+   ServiceShelfSlide (Slide 11)
+   ========================================================================== */
+
+.ss-slide {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  height: 100%;
+  padding: var(--pv23-10) var(--pv23-16);
+  gap: var(--pv23-6);
+}
+
+.ss-header {
+  flex-shrink: 0;
+}
+
+.ss-shelf {
+  display: flex;
+  flex-direction: column;
+  gap: var(--pv23-3);
+  flex: 1;
+  min-height: 0;
+  justify-content: center;
+}
+
+.ss-managed-band {
+  background: var(--pv23-brand-purple-lightest);
+  border: 1px solid var(--pv23-brand-purple-light);
+  padding: var(--pv23-4) var(--pv23-8);
+  display: flex;
+  align-items: center;
+  gap: var(--pv23-4);
+}
+
+.ss-role-apps-row {
+  display: flex;
+  flex-direction: row;
+  gap: var(--pv23-4);
+  padding: var(--pv23-3) 0;
+  align-items: stretch;
+}
+
+.ss-role-app-slot {
+  width: 80px;
+  min-height: 60px;
+  border: 1px solid var(--pv23-border);
+  background: var(--pv23-surface);
+  border-radius: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: var(--pv23-2);
+  gap: var(--pv23-1);
+  text-align: center;
+}
+
+.ss-role-app-slot--empty {
+  border: 1px dashed var(--pv23-border-strong);
+  background: var(--pv23-canvas);
+}
+
+.ss-role-app-slot--new {
+  border-color: var(--pv23-brand-purple);
+  background: var(--pv23-brand-purple-lightest);
+}
+
+.ss-function-packs-row {
+  display: flex;
+  flex-direction: row;
+  gap: var(--pv23-4);
+  padding: var(--pv23-3) 0;
+  align-items: stretch;
+}
+
+.ss-function-pack-slot {
+  flex: 1;
+  min-height: 60px;
+  border: 1px solid var(--pv23-border);
+  background: var(--pv23-surface);
+  border-radius: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  justify-content: center;
+  padding: var(--pv23-3) var(--pv23-4);
+  gap: var(--pv23-1);
+}
+
+.ss-platform-bar {
+  background: var(--pv23-neutral-dark);
+  height: 48px;
+  display: flex;
+  align-items: center;
+  padding: 0 var(--pv23-8);
+  gap: var(--pv23-4);
+}
+
+.ss-connectors-row {
+  display: flex;
+  flex-direction: row;
+  gap: var(--pv23-6);
+  padding: var(--pv23-2) 0;
+  align-items: center;
+}
+
+.ss-connector {
+  display: flex;
+  align-items: center;
+  gap: var(--pv23-2);
+  padding: var(--pv23-1) var(--pv23-3);
+  border: 1px solid var(--pv23-border);
+  background: var(--pv23-canvas);
+}
+
+.ss-statement {
+  flex-shrink: 0;
+}
+
+/* ==========================================================================
+   RolloutPathSlide (Slide 12)
+   ========================================================================== */
+
+.rp-slide {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  height: 100%;
+  padding: var(--pv23-10) var(--pv23-16);
+  gap: var(--pv23-6);
+}
+
+.rp-header {
+  flex-shrink: 0;
+}
+
+.rp-control-line-wrap {
+  position: relative;
+  height: 28px;
+  display: flex;
+  align-items: center;
+  flex-shrink: 0;
+}
+
+.rp-control-line {
+  position: absolute;
+  left: 0;
+  right: 0;
+  height: 2px;
+  background: var(--pv23-gate);
+}
+
+.rp-control-label {
+  position: absolute;
+  right: 0;
+  top: -22px;
+  white-space: nowrap;
+}
+
+.rp-steps {
+  display: flex;
+  flex-direction: column;
+  gap: var(--pv23-8);
+  flex: 1;
+  min-height: 0;
+  justify-content: center;
+}
+
+.rp-step {
+  display: flex;
+  flex-direction: row;
+  align-items: flex-start;
+  gap: var(--pv23-6);
+}
+
+.rp-step-badge {
+  width: 28px;
+  height: 28px;
+  background: var(--pv23-brand-purple);
+  border-radius: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.rp-step-content {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--pv23-3);
+}
+
+.rp-step-bar-wrap {
+  position: relative;
+  height: 8px;
+  background: var(--pv23-canvas);
+  border: 1px solid var(--pv23-border);
+  width: 100%;
+}
+
+.rp-step-bar-fill {
+  position: absolute;
+  left: 0;
+  top: 0;
+  height: 100%;
+  background: var(--pv23-brand-purple);
+}
+
+/* ==========================================================================
+   DesignPartnerCanvasSlide (Slide 13)
+   ========================================================================== */
+
+.dp-slide {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  height: 100%;
+  padding: var(--pv23-10) var(--pv23-16);
+  gap: var(--pv23-6);
+}
+
+.dp-header {
+  flex-shrink: 0;
+}
+
+.dp-canvas {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+}
+
+.dp-inputs {
+  display: flex;
+  flex-direction: column;
+  gap: var(--pv23-6);
+  align-items: flex-end;
+}
+
+.dp-input-node {
+  display: flex;
+  align-items: center;
+  gap: var(--pv23-4);
+}
+
+.dp-input-box {
+  width: 220px;
+  height: 48px;
+  border: 1px solid var(--pv23-border);
+  background: var(--pv23-surface);
+  border-radius: 0;
+  display: flex;
+  align-items: center;
+  padding: 0 var(--pv23-4);
+}
+
+.dp-connector-line {
+  width: 80px;
+  height: 1px;
+  background: var(--pv23-brand-purple-light);
+  flex-shrink: 0;
+}
+
+.dp-center-node {
+  width: 160px;
+  height: 120px;
+  border: 2px solid var(--pv23-brand-purple);
+  background: var(--pv23-brand-purple-lightest);
+  border-radius: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  padding: var(--pv23-4);
+  flex-shrink: 0;
+}
+
+.dp-output-line {
+  width: 80px;
+  height: 2px;
+  background: var(--pv23-brand-purple);
+  flex-shrink: 0;
+  position: relative;
+}
+
+.dp-output-node {
+  width: 240px;
+  min-height: 80px;
+  border: 2px solid var(--pv23-brand-purple-dark);
+  background: var(--pv23-surface);
+  border-radius: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  padding: var(--pv23-4) var(--pv23-6);
+}
+
+.dp-footer {
+  flex-shrink: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--pv23-2);
+}

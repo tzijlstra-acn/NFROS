@@ -4,6 +4,18 @@ All notable changes to NFR WorkOS are recorded here.
 
 Format based on Keep a Changelog (keepachangelog.com).
 
+## [2.3.0] - V2.3 Presentation: Visual Excellence
+
+Route: /story now opens V2.3 (was V2.2); V2.2 accessible at ?deck=v2.2
+Export: data-presentation-slides attribute added (fixes broken export)
+Export URLs: URL API used throughout (no more string concatenation)
+Typography: semantic type components (PresentationTitle, PresentationBody, etc.), enlarged scale
+Visual: 13 dedicated slide renderers (no more generic fallback)
+Assets: V2.3 asset registry (one source of truth), placeholder assets committed
+Capture: strict fail-fast behavior (auth failure stops run, region failure stops run)
+
+---
+
 ## [2.2.0] - V2.2 Presentation: Accenture Brand Aligned
 
 ### Added
