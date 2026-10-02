@@ -11,7 +11,7 @@ import type { CoreSlide24 } from "./types";
 
 export const CORE_SLIDES_V24: CoreSlide24[] = [
   // ---------------------------------------------------------------------------
-  // Slide 1 -- Situation: executive thesis
+  // Slide 1:Situation: executive thesis
   // ---------------------------------------------------------------------------
   {
     id: "slide-01",
@@ -40,7 +40,7 @@ export const CORE_SLIDES_V24: CoreSlide24[] = [
   },
 
   // ---------------------------------------------------------------------------
-  // Slide 2 -- Situation: agenda
+  // Slide 2:Situation: agenda
   // ---------------------------------------------------------------------------
   {
     id: "slide-02",
@@ -70,7 +70,7 @@ export const CORE_SLIDES_V24: CoreSlide24[] = [
   },
 
   // ---------------------------------------------------------------------------
-  // Slide 3 -- Complication: fragmentation
+  // Slide 3:Complication: fragmentation
   // ---------------------------------------------------------------------------
   {
     id: "slide-03",
@@ -108,7 +108,7 @@ export const CORE_SLIDES_V24: CoreSlide24[] = [
   },
 
   // ---------------------------------------------------------------------------
-  // Slide 4 -- Complication: consequence
+  // Slide 4:Complication: consequence
   // ---------------------------------------------------------------------------
   {
     id: "slide-04",
@@ -155,7 +155,7 @@ export const CORE_SLIDES_V24: CoreSlide24[] = [
   },
 
   // ---------------------------------------------------------------------------
-  // Slide 5 -- Answer: the engagement layer
+  // Slide 5:Answer: the engagement layer
   // ---------------------------------------------------------------------------
   {
     id: "slide-05",
@@ -194,7 +194,7 @@ export const CORE_SLIDES_V24: CoreSlide24[] = [
   },
 
   // ---------------------------------------------------------------------------
-  // Slide 6 -- Proof: daily experience
+  // Slide 6:Proof: daily experience
   // ---------------------------------------------------------------------------
   {
     id: "slide-06",
@@ -238,7 +238,7 @@ export const CORE_SLIDES_V24: CoreSlide24[] = [
   },
 
   // ---------------------------------------------------------------------------
-  // Slide 7 -- Proof: role architecture
+  // Slide 7:Proof: role architecture
   // ---------------------------------------------------------------------------
   {
     id: "slide-07",
@@ -285,7 +285,7 @@ export const CORE_SLIDES_V24: CoreSlide24[] = [
   },
 
   // ---------------------------------------------------------------------------
-  // Slide 8 -- Proof: Role Apps
+  // Slide 8:Proof: Role Apps
   // ---------------------------------------------------------------------------
   {
     id: "slide-08",
@@ -354,7 +354,7 @@ export const CORE_SLIDES_V24: CoreSlide24[] = [
   },
 
   // ---------------------------------------------------------------------------
-  // Slide 9 -- Proof: authority boundary
+  // Slide 9:Proof: authority boundary
   // ---------------------------------------------------------------------------
   {
     id: "slide-09",
@@ -411,7 +411,7 @@ export const CORE_SLIDES_V24: CoreSlide24[] = [
   },
 
   // ---------------------------------------------------------------------------
-  // Slide 10 -- Value: value logic
+  // Slide 10:Value: value logic
   // ---------------------------------------------------------------------------
   {
     id: "slide-10",
@@ -470,7 +470,7 @@ export const CORE_SLIDES_V24: CoreSlide24[] = [
   },
 
   // ---------------------------------------------------------------------------
-  // Slide 11 -- Control: trust by design
+  // Slide 11:Control: trust by design
   // ---------------------------------------------------------------------------
   {
     id: "slide-11",
@@ -520,7 +520,7 @@ export const CORE_SLIDES_V24: CoreSlide24[] = [
   },
 
   // ---------------------------------------------------------------------------
-  // Slide 12 -- Scale: service and factory
+  // Slide 12:Scale: service and factory
   // ---------------------------------------------------------------------------
   {
     id: "slide-12",
@@ -570,7 +570,7 @@ export const CORE_SLIDES_V24: CoreSlide24[] = [
   },
 
   // ---------------------------------------------------------------------------
-  // Slide 13 -- Action: design-partner path and ask
+  // Slide 13:Action: design-partner path and ask
   // ---------------------------------------------------------------------------
   {
     id: "slide-13",

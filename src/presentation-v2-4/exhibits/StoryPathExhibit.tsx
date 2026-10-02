@@ -1,6 +1,13 @@
 "use client";
 
 import { motion, useReducedMotion } from "motion/react";
+import {
+  IconAlertTriangle,
+  IconLayoutDashboard,
+  IconActivity,
+  IconShieldCheck,
+  IconRocket,
+} from "@tabler/icons-react";
 import type { StoryPathData } from "../data/types";
 
 type Props = {
@@ -10,25 +17,34 @@ type Props = {
 
 const VW = 1920;
 const VH = 1080;
-const RAIL_Y = 560;
-const NODE_LEFT = 240;
-const NODE_RIGHT = 1680;
-const NODE_SIZE = 80;
 
-function nodeX(i: number, count: number): number {
-  return NODE_LEFT + i * ((NODE_RIGHT - NODE_LEFT) / Math.max(count - 1, 1));
-}
+const CHAPTER_ICONS = [
+  IconAlertTriangle,
+  IconLayoutDashboard,
+  IconActivity,
+  IconShieldCheck,
+  IconRocket,
+];
 
-const QUESTION_TOP_PCT = ((RAIL_Y - NODE_SIZE / 2 - 100) / VH) * 100;
-const SECTION_TOP_PCT = ((RAIL_Y + NODE_SIZE / 2 + 32) / VH) * 100;
+// Vertical agenda layout
+// Left: large "AGENDA" label + vertical connector line
+// Right: 5 rows, stacked evenly
+
+const ROW_COUNT = 5;
+const ROW_AREA_TOP = 80;
+const ROW_AREA_BOTTOM = 920;
+const ROW_H = (ROW_AREA_BOTTOM - ROW_AREA_TOP) / ROW_COUNT;
+
+// Column positions (px in 1920-wide canvas)
+const BADGE_CX = 180;
+const CONTENT_LEFT = 280;
+const CONTENT_RIGHT = 1760;
 
 export function StoryPathExhibit({ data, exportMode = false }: Props) {
   const prefersReduced = useReducedMotion();
   const skip = exportMode || !!prefersReduced;
 
   const chapters = data.chapters;
-  const count = chapters.length;
-  const railLen = NODE_RIGHT - NODE_LEFT;
 
   return (
     <div
@@ -40,156 +56,165 @@ export function StoryPathExhibit({ data, exportMode = false }: Props) {
         fontFamily: "var(--pv24-font-family)",
       }}
     >
-      {/* SVG: rail line and node squares */}
+      {/* SVG: vertical connector line and number badges */}
       <svg
         viewBox={`0 0 ${VW} ${VH}`}
         width="100%"
         height="100%"
         style={{ position: "absolute", inset: 0 }}
-        role="presentation"
         aria-hidden="true"
       >
-        {/* Horizontal rail */}
+        {/* AGENDA label (left side, vertical) */}
+        <text
+          x={60}
+          y={VH / 2}
+          textAnchor="middle"
+          fontFamily="Arial, sans-serif"
+          fontSize={13}
+          fontWeight={700}
+          letterSpacing={4}
+          fill="var(--pv24-accent)"
+          transform={`rotate(-90, 60, ${VH / 2})`}
+        >
+          AGENDA
+        </text>
+
+        {/* Vertical connecting line */}
         {skip ? (
           <line
-            x1={NODE_LEFT}
-            y1={RAIL_Y}
-            x2={NODE_RIGHT}
-            y2={RAIL_Y}
-            stroke="var(--pv24-border-strong)"
-            strokeWidth={3}
+            x1={BADGE_CX}
+            y1={ROW_AREA_TOP + ROW_H * 0.5}
+            x2={BADGE_CX}
+            y2={ROW_AREA_TOP + ROW_H * (ROW_COUNT - 0.5)}
+            stroke="var(--pv24-border)"
+            strokeWidth={2}
           />
         ) : (
           <motion.line
-            x1={NODE_LEFT}
-            y1={RAIL_Y}
-            x2={NODE_RIGHT}
-            y2={RAIL_Y}
-            stroke="var(--pv24-border-strong)"
-            strokeWidth={3}
-            strokeDasharray={railLen}
-            strokeDashoffset={railLen}
+            x1={BADGE_CX}
+            y1={ROW_AREA_TOP + ROW_H * 0.5}
+            x2={BADGE_CX}
+            y2={ROW_AREA_TOP + ROW_H * (ROW_COUNT - 0.5)}
+            stroke="var(--pv24-border)"
+            strokeWidth={2}
+            strokeDasharray={ROW_H * (ROW_COUNT - 1)}
+            strokeDashoffset={ROW_H * (ROW_COUNT - 1)}
             animate={{ strokeDashoffset: 0 }}
-            transition={{ duration: 0.7, ease: [0.4, 0, 0.2, 1], delay: 0.15 }}
+            transition={{ duration: 0.5, delay: 0.1 }}
           />
         )}
 
-        {/* Chapter nodes */}
+        {/* Number badge circles */}
         {chapters.map((ch, i) => {
-          const cx = nodeX(i, count);
-          const half = NODE_SIZE / 2;
+          const cy = ROW_AREA_TOP + ROW_H * (i + 0.5);
           const isActive = ch.number === data.activeChapterNumber;
-          const fill = isActive ? "var(--pv24-brand-purple)" : "var(--pv24-surface)";
-          const textFill = isActive ? "#ffffff" : "var(--pv24-text)";
-          const stroke = isActive ? "var(--pv24-brand-purple)" : "var(--pv24-border-strong)";
-          const delay = 0.55 + i * 0.1;
+          const delay = 0.3 + i * 0.1;
 
-          if (skip) {
-            return (
-              <g key={ch.number}>
-                <rect
-                  x={cx - half}
-                  y={RAIL_Y - half}
-                  width={NODE_SIZE}
-                  height={NODE_SIZE}
-                  fill={fill}
-                  stroke={stroke}
-                  strokeWidth={2}
-                />
-                <text
-                  x={cx}
-                  y={RAIL_Y + 10}
-                  textAnchor="middle"
-                  fontFamily="Arial, sans-serif"
-                  fontSize={28}
-                  fontWeight={700}
-                  fill={textFill}
-                >
-                  {ch.number}
-                </text>
-              </g>
-            );
-          }
-
-          return (
-            <motion.g
-              key={ch.number}
-              initial={{ opacity: 0, y: 12 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.3, ease: [0, 0, 0.2, 1], delay }}
-            >
-              <rect
-                x={cx - half}
-                y={RAIL_Y - half}
-                width={NODE_SIZE}
-                height={NODE_SIZE}
-                fill={fill}
-                stroke={stroke}
+          const badge = (
+            <g key={ch.number}>
+              <circle
+                cx={BADGE_CX}
+                cy={cy}
+                r={30}
+                fill={isActive ? "var(--pv24-brand-purple)" : "var(--pv24-surface)"}
+                stroke={isActive ? "var(--pv24-brand-purple)" : "var(--pv24-border-strong)"}
                 strokeWidth={2}
               />
               <text
-                x={cx}
-                y={RAIL_Y + 10}
+                x={BADGE_CX}
+                y={cy + 9}
                 textAnchor="middle"
                 fontFamily="Arial, sans-serif"
-                fontSize={28}
+                fontSize={20}
                 fontWeight={700}
-                fill={textFill}
+                fill={isActive ? "#fff" : "var(--pv24-text-secondary)"}
               >
                 {ch.number}
               </text>
+            </g>
+          );
+
+          if (skip) return badge;
+          return (
+            <motion.g
+              key={ch.number}
+              initial={{ opacity: 0, scale: 0.6 }}
+              animate={{ opacity: 1, scale: 1 }}
+              transition={{ duration: 0.3, delay }}
+            >
+              {badge.props.children}
             </motion.g>
           );
         })}
       </svg>
 
-      {/* HTML text labels — positioned absolutely */}
+      {/* HTML chapter rows */}
       {chapters.map((ch, i) => {
-        const cx = nodeX(i, count);
-        const leftPct = `${(cx / VW) * 100}%`;
-        const delay = 0.65 + i * 0.1;
+        const topPct = ((ROW_AREA_TOP + ROW_H * i) / VH) * 100;
+        const heightPct = (ROW_H / VH) * 100;
+        const leftPct = (CONTENT_LEFT / VW) * 100;
+        const widthPct = ((CONTENT_RIGHT - CONTENT_LEFT) / VW) * 100;
+        const isActive = ch.number === data.activeChapterNumber;
+        const Icon = CHAPTER_ICONS[i] ?? IconActivity;
+        const delay = 0.35 + i * 0.1;
 
-        const questionEl = (
+        const row = (
           <div
             style={{
-              position: "absolute",
-              left: leftPct,
-              top: `${QUESTION_TOP_PCT}%`,
-              transform: "translateX(-50%)",
-              width: 300,
-              textAlign: "center",
-              color: "var(--pv24-text-secondary)",
-              fontSize: "var(--pv24-annotation-size)",
-              fontStyle: "italic",
+              display: "flex",
+              alignItems: "center",
+              height: "100%",
+              gap: 28,
+              paddingLeft: 28,
+              paddingRight: 48,
+              borderLeft: isActive ? "4px solid var(--pv24-accent)" : "4px solid transparent",
+              background: isActive ? "var(--pv24-surface)" : "transparent",
+              boxSizing: "border-box",
             }}
           >
-            {ch.audienceQuestion}
-          </div>
-        );
-
-        const sectionEl = (
-          <div
-            style={{
-              position: "absolute",
-              left: leftPct,
-              top: `${SECTION_TOP_PCT}%`,
-              transform: "translateX(-50%)",
-              width: 300,
-              textAlign: "center",
-              color: "var(--pv24-text)",
-              fontSize: "var(--pv24-exhibit-label-size)",
-              fontWeight: 600,
-            }}
-          >
-            {ch.sectionLabel}
+            <Icon
+              size={36}
+              color={isActive ? "var(--pv24-accent)" : "var(--pv24-border-strong)"}
+              stroke={1.5}
+            />
+            <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
+              <span
+                style={{
+                  fontSize: 28,
+                  fontWeight: isActive ? 700 : 600,
+                  color: isActive ? "var(--pv24-text)" : "var(--pv24-text-secondary)",
+                  lineHeight: 1.1,
+                }}
+              >
+                {ch.sectionLabel}
+              </span>
+              <span
+                style={{
+                  fontSize: 18,
+                  fontStyle: "italic",
+                  color: "var(--pv24-text-secondary)",
+                  lineHeight: 1.3,
+                }}
+              >
+                {ch.audienceQuestion}
+              </span>
+            </div>
           </div>
         );
 
         if (skip) {
           return (
-            <div key={ch.number}>
-              {questionEl}
-              {sectionEl}
+            <div
+              key={ch.number}
+              style={{
+                position: "absolute",
+                left: `${leftPct}%`,
+                top: `${topPct}%`,
+                width: `${widthPct}%`,
+                height: `${heightPct}%`,
+              }}
+            >
+              {row}
             </div>
           );
         }
@@ -197,12 +222,18 @@ export function StoryPathExhibit({ data, exportMode = false }: Props) {
         return (
           <motion.div
             key={ch.number}
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
+            style={{
+              position: "absolute",
+              left: `${leftPct}%`,
+              top: `${topPct}%`,
+              width: `${widthPct}%`,
+              height: `${heightPct}%`,
+            }}
+            initial={{ opacity: 0, x: 20 }}
+            animate={{ opacity: 1, x: 0 }}
             transition={{ duration: 0.35, delay }}
           >
-            {questionEl}
-            {sectionEl}
+            {row}
           </motion.div>
         );
       })}

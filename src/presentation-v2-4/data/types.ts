@@ -205,7 +205,7 @@ export type CoreExhibit =
   | { type: "design-partner-path"; data: DesignPartnerPathData };
 
 // ---------------------------------------------------------------------------
-// Core slide contract — subtitle is mandatory
+// Core slide contract: subtitle is mandatory
 // ---------------------------------------------------------------------------
 
 export type CoreSlide24 = {
@@ -240,7 +240,7 @@ export type AppendixVisual =
   | { type: "text-columns"; columns: Array<{ heading: string; items: string[] }> };
 
 // ---------------------------------------------------------------------------
-// Appendix slide contract — subtitle is mandatory
+// Appendix slide contract: subtitle is mandatory
 // ---------------------------------------------------------------------------
 
 export type AppendixSlide24 = {

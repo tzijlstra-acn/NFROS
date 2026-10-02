@@ -52,6 +52,15 @@ export function FragmentationSankeyExhibit({ data, exportMode = false }: Props) 
         style={{ position: "absolute", inset: 0 }}
         aria-hidden="true"
       >
+        {/* Column headers */}
+        <text x={SRC_X + SRC_NODE_W / 2} y={130} textAnchor="middle" fontFamily="Arial, sans-serif" fontSize={18} fontWeight={700} fill="var(--pv24-text-secondary)" letterSpacing={1}>FRAGMENTED INFORMATION</text>
+        <text x={ACT_X + ACT_NODE_W / 2} y={130} textAnchor="middle" fontFamily="Arial, sans-serif" fontSize={18} fontWeight={700} fill="var(--pv24-text-secondary)" letterSpacing={1}>INFORMATION PROCESSING</text>
+        <text x={OUT_X + OUT_NODE_W / 2} y={130} textAnchor="middle" fontFamily="Arial, sans-serif" fontSize={18} fontWeight={700} fill="var(--pv24-brand-purple)" letterSpacing={1}>DECISION</text>
+
+        {/* Column dividers */}
+        <line x1={660} y1={90} x2={660} y2={990} stroke="var(--pv24-border)" strokeWidth={1} strokeDasharray="6 4" opacity={0.5} />
+        <line x1={1380} y1={90} x2={1380} y2={990} stroke="var(--pv24-border)" strokeWidth={1} strokeDasharray="6 4" opacity={0.5} />
+
         {/* Flow paths: each source fans to each activity */}
         {sources.map((_, si) => {
           const sy = srcY(si, sources.length);
