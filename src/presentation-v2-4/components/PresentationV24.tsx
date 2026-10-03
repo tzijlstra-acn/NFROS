@@ -11,19 +11,27 @@ interface PresentationV24Props {
 }
 
 export function PresentationV24({
-  initialCoreSlide = 0,
+  initialCoreSlide = 1,
   exportMode = false,
 }: PresentationV24Props) {
+  // initialCoreSlide is 1-based, matching the other decks and the ?core=N URL
   const [slideIndex, setSlideIndex] = useState<number>(
-    Math.max(0, Math.min(initialCoreSlide, CORE_SLIDES_V24.length - 1))
+    Math.max(0, Math.min(initialCoreSlide - 1, CORE_SLIDES_V24.length - 1))
   );
   const [scale, setScale] = useState<number>(1);
   const [showAppendixBack, setShowAppendixBack] = useState<boolean>(false);
   const [paused, setPaused] = useState<boolean>(false);
   const [navOpen, setNavOpen] = useState<boolean>(false);
+  // Slides read the reduced-motion preference, which the server cannot know. Rendering them
+  // only after mount (export mode skips motion on both sides) avoids a hydration mismatch.
+  const [mounted, setMounted] = useState<boolean>(false);
   const outerRef = useRef<HTMLDivElement>(null);
 
   const totalSlides = CORE_SLIDES_V24.length;
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
   // Scale the 1920x1080 slide canvas to fit the viewport
   useEffect(() => {
@@ -243,13 +251,15 @@ export function PresentationV24({
           left: `calc(50vw - ${960 * scale}px)`,
         }}
       >
-        <CoreSlide24Dispatcher
-          slide={currentSlide}
-          exportMode={exportMode}
-          slideIndex={slideIndex + 1}
-          totalSlides={totalSlides}
-          onGoToAppendix={handleGoToAppendix}
-        />
+        {(mounted || exportMode) && (
+          <CoreSlide24Dispatcher
+            slide={currentSlide}
+            exportMode={exportMode}
+            slideIndex={slideIndex + 1}
+            totalSlides={totalSlides}
+            onGoToAppendix={handleGoToAppendix}
+          />
+        )}
       </div>
     </div>
   );

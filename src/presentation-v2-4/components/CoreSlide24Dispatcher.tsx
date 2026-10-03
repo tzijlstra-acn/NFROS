@@ -43,7 +43,7 @@ const RATIO_169_CROP: Partial<Record<CoreExhibit["type"], readonly [number, numb
   "story-path": [60, 940],
   "fragmentation-sankey": [96, 1056],
   "friction-causal-chain": [56, 800],
-  "engagement-layer": [96, 940],
+  "engagement-layer": [72, 944],
   "role-architecture": [236, 1006],
 };
 

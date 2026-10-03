@@ -74,7 +74,7 @@ function Chip({
         borderRadius: 20,
         background: bg,
         color,
-        fontSize: 13,
+        fontSize: 16,
         fontWeight: 500,
         letterSpacing: "0.01em",
         whiteSpace: "nowrap",
@@ -123,7 +123,7 @@ function ArchLayer({
       {/* Header row */}
       <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
         <Icon size={20} stroke={1.6} color={cfg.color} />
-        <span style={{ fontWeight: 700, fontSize: 17, color: cfg.color }}>
+        <span style={{ fontWeight: 700, fontSize: 19, color: cfg.color }}>
           {cfg.label}
         </span>
       </div>
@@ -139,7 +139,7 @@ function ArchLayer({
 
       {/* Inline text (for layers without chips) */}
       {cfg.inlineText != null && (
-        <div style={{ fontSize: 14, opacity: 0.75, color: cfg.color }}>
+        <div style={{ fontSize: 16, color: cfg.color }}>
           {cfg.inlineText}
         </div>
       )}
@@ -245,10 +245,10 @@ function FactoryStep({
 
       {/* Text */}
       <div style={{ paddingTop: 6 }}>
-        <div style={{ fontWeight: 700, fontSize: 17, color: "var(--pv24-text)" }}>
+        <div style={{ fontWeight: 700, fontSize: 19, color: "var(--pv24-text)" }}>
           {step.label}
         </div>
-        <div style={{ fontSize: 14, color: "var(--pv24-text-secondary)", marginTop: 6, lineHeight: 1.4 }}>
+        <div style={{ fontSize: 16, color: "var(--pv24-text-secondary)", marginTop: 6, lineHeight: 1.4 }}>
           {step.detail}
         </div>
       </div>
@@ -289,10 +289,10 @@ function InBuildCard({ skip }: { skip: boolean }) {
         transition={skip ? undefined : { duration: 1.5, repeat: Infinity, ease: "easeInOut" }}
       />
       <div>
-        <div style={{ fontWeight: 700, fontSize: 13, letterSpacing: "0.01em" }}>
+        <div style={{ fontWeight: 700, fontSize: 16, letterSpacing: "0.01em" }}>
           TPRM Reviewer v1
         </div>
-        <div style={{ fontSize: 11, opacity: 0.75, marginTop: 2 }}>In review</div>
+        <div style={{ fontSize: 15, opacity: 0.9, marginTop: 2 }}>In review</div>
       </div>
       <IconCheck size={16} stroke={2.5} color="#34D399" />
     </motion.div>
@@ -420,9 +420,9 @@ export function ServiceFactoryExhibit({ data, exportMode }: ServiceFactoryExhibi
           position: "absolute",
           right: 72,
           bottom: 18,
-          fontSize: 11,
+          fontSize: 15,
+          fontStyle: "italic",
           color: "var(--pv24-text-secondary)",
-          opacity: 0.55,
           fontFamily: "var(--pv24-font-family)",
         }}
       >

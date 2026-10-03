@@ -51,8 +51,8 @@ const DEC_H = 100;
 // Judgment zone (right panel, HTML)
 const JZ_LEFT_PX = 1380;
 const JZ_RIGHT_PX = 1840;
-const JZ_TOP_PX = 300;
-const JZ_BOTTOM_PX = 780;
+const JZ_TOP_PX = 385;
+const JZ_BOTTOM_PX = 695;
 
 const SIG_COUNT = 6;
 
@@ -127,7 +127,7 @@ export function CapacityConvergenceExhibit({ data, exportMode = false }: Props) 
         </defs>
 
         {/* Judgment zone right-pointing arrow */}
-        <polygon points={`${JZ_LEFT_PX - 8},${jzCY - 10} ${JZ_LEFT_PX + 4},${jzCY} ${JZ_LEFT_PX - 8},${jzCY + 10}`} fill="var(--pv24-brand-purple)" />
+        <polygon points={`${JZ_LEFT_PX - 13},${jzCY - 10} ${JZ_LEFT_PX - 1},${jzCY} ${JZ_LEFT_PX - 13},${jzCY + 10}`} fill="var(--pv24-brand-purple)" />
 
         {/* Bottleneck node (circle) */}
         {skip ? (

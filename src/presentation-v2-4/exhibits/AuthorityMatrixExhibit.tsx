@@ -27,7 +27,7 @@ const AXIS_BOTTOM = 712;
 const AXIS_RIGHT = 1850;
 
 const CARD_W = 520;
-const CARD_H = 318;
+const CARD_H = 326;
 const AUTHORITY_LINE_X = 1280;
 
 type ZoneStyle = {
@@ -159,9 +159,9 @@ function ZoneCard({
         <div style={{ flex: 1, fontSize: 21, fontWeight: 700, lineHeight: 1.15 }}>{zone.label}</div>
         <div
           style={{
-            fontSize: 12,
+            fontSize: 15,
             fontWeight: 700,
-            letterSpacing: "0.08em",
+            letterSpacing: "0.06em",
             textTransform: "uppercase",
             padding: "4px 10px",
             border: "1.5px solid currentColor",
@@ -189,8 +189,8 @@ function ZoneCard({
           >
             <IconCircleCheck size={20} color={style.tick} stroke={1.8} style={{ flexShrink: 0 }} />
             <div style={{ minWidth: 0 }}>
-              <div style={{ fontSize: 16, fontWeight: 600, color: "var(--pv24-text)", lineHeight: 1.25 }}>{example}</div>
-              <div style={{ fontSize: 13, color: "var(--pv24-text-secondary)", lineHeight: 1.25 }}>
+              <div style={{ fontSize: 17, fontWeight: 600, color: "var(--pv24-text)", lineHeight: 1.25 }}>{example}</div>
+              <div style={{ fontSize: 15, color: "var(--pv24-text-secondary)", lineHeight: 1.25 }}>
                 {style.statuses[i] ?? ""}
               </div>
             </div>
@@ -203,7 +203,7 @@ function ZoneCard({
           padding: "8px 18px",
           borderTop: "1px solid var(--pv24-border)",
           background: "var(--pv24-canvas)",
-          fontSize: 13,
+          fontSize: 15,
           color: "var(--pv24-text-secondary)",
           display: "flex",
           alignItems: "center",
@@ -268,14 +268,14 @@ export function AuthorityMatrixExhibit({ data, exportMode = false }: AuthorityMa
           >
             {data.yLabel}
           </text>
-          <text x={AXIS_X - 14} y={AXIS_TOP + 40} textAnchor="end" fontSize={14} fill="var(--pv24-text-secondary)" fontFamily="var(--pv24-font-family)">Higher</text>
-          <text x={AXIS_X - 14} y={AXIS_BOTTOM - 6} textAnchor="end" fontSize={14} fill="var(--pv24-text-secondary)" fontFamily="var(--pv24-font-family)">Lower</text>
+          <text x={AXIS_X - 14} y={AXIS_TOP + 40} textAnchor="end" fontSize={16} fill="var(--pv24-text-secondary)" fontFamily="var(--pv24-font-family)">Higher</text>
+          <text x={AXIS_X - 14} y={AXIS_BOTTOM - 6} textAnchor="end" fontSize={16} fill="var(--pv24-text-secondary)" fontFamily="var(--pv24-font-family)">Lower</text>
 
           <text x={(AXIS_X + AXIS_RIGHT) / 2} y={AXIS_BOTTOM + 40} textAnchor="middle" fontSize={18} fontWeight={700} fill="var(--pv24-text)" fontFamily="var(--pv24-font-family)">
             {data.xLabel}
           </text>
-          <text x={AXIS_X + 10} y={AXIS_BOTTOM + 28} fontSize={14} fill="var(--pv24-text-secondary)" fontFamily="var(--pv24-font-family)">Lower</text>
-          <text x={AXIS_RIGHT - 16} y={AXIS_BOTTOM + 28} textAnchor="end" fontSize={14} fill="var(--pv24-text-secondary)" fontFamily="var(--pv24-font-family)">Higher</text>
+          <text x={AXIS_X + 10} y={AXIS_BOTTOM + 28} fontSize={16} fill="var(--pv24-text-secondary)" fontFamily="var(--pv24-font-family)">Lower</text>
+          <text x={AXIS_RIGHT - 16} y={AXIS_BOTTOM + 28} textAnchor="end" fontSize={16} fill="var(--pv24-text-secondary)" fontFamily="var(--pv24-font-family)">Higher</text>
         </motion.g>
 
         {/* Authority line: left of it a named professional approves */}
@@ -307,13 +307,13 @@ export function AuthorityMatrixExhibit({ data, exportMode = false }: AuthorityMa
           gap: 10,
         }}
       >
-        <div style={{ fontSize: 13, fontWeight: 700, letterSpacing: "0.12em", textTransform: "uppercase", color: "var(--pv24-accent)" }}>
+        <div style={{ fontSize: 15, fontWeight: 700, letterSpacing: "0.1em", textTransform: "uppercase", color: "var(--pv24-accent)" }}>
           {data.matrixNote}: the authority line
         </div>
         <div style={{ fontSize: 24, fontWeight: 700, color: "var(--pv24-text)", lineHeight: 1.25 }}>
           Left of the line, a named professional decides. Right of the line, AI acts inside policy.
         </div>
-        <div style={{ fontSize: 13, color: "var(--pv24-text-secondary)", fontStyle: "italic" }}>
+        <div style={{ fontSize: 15, color: "var(--pv24-text-secondary)", fontStyle: "italic" }}>
           Illustrative: synthetic institution and data
         </div>
       </motion.div>
@@ -337,7 +337,7 @@ export function AuthorityMatrixExhibit({ data, exportMode = false }: AuthorityMa
           boxSizing: "border-box",
         }}
       >
-        <div style={{ fontSize: 13, fontWeight: 700, letterSpacing: "0.12em", textTransform: "uppercase", color: "var(--pv24-brand-purple-dark)" }}>
+        <div style={{ fontSize: 15, fontWeight: 700, letterSpacing: "0.1em", textTransform: "uppercase", color: "var(--pv24-brand-purple-dark)" }}>
           Accountability does not move
         </div>
         {CONTROL_FACTS.map((fact) => {

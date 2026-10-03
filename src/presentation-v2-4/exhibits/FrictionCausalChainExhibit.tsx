@@ -52,34 +52,35 @@ export function FrictionCausalChainExhibit({ data, exportMode = false }: Props) 
           return (
             <g key={i}>
               <rect x={phase.x1 + 4} y={70} width={phase.x2 - phase.x1 - 8} height={34} fill={i === 0 ? "var(--pv24-muted-bg)" : i === 1 ? "var(--pv24-accent-lightest)" : "var(--pv24-brand-purple-lightest)"} />
-              <text x={cx} y={92} textAnchor="middle" fontFamily="Arial, sans-serif" fontSize={13} fontWeight={700} letterSpacing={2} fill={i === 2 ? "var(--pv24-brand-purple)" : "var(--pv24-text-secondary)"}>
+              <text x={cx} y={93} textAnchor="middle" fontFamily="Arial, sans-serif" fontSize={16} fontWeight={700} letterSpacing={2} fill={i === 2 ? "var(--pv24-brand-purple-dark)" : "var(--pv24-text-secondary)"}>
                 {phase.label.toUpperCase()}
               </text>
-              {/* Vertical divider between phases */}
-              {i > 0 && <line x1={phase.x1} y1={60} x2={phase.x1} y2={980} stroke="var(--pv24-border)" strokeWidth={1} strokeDasharray="4 4" opacity={0.6} />}
+              {/* Vertical divider between phases, kept inside the visible band */}
+              {i > 0 && <line x1={phase.x1} y1={66} x2={phase.x1} y2={770} stroke="var(--pv24-border)" strokeWidth={1} strokeDasharray="4 4" opacity={0.6} />}
             </g>
           );
         })}
 
-        {/* Stage step numbers (large, floating: no box) */}
+        {/* Stage step numbers: solid badges coloured by phase */}
         {chainNodes.map((_, i) => {
           const cx = STAGE_CX[i] ?? 260;
-          const num = i + 1;
-          const el = (
-            <text key={i} x={cx} y={STAGE_TOP + 56} textAnchor="middle"
-              fontFamily="Arial, sans-serif" fontSize={72} fontWeight={700}
-              fill={i < 2 ? "var(--pv24-border)" : i === 2 ? "var(--pv24-accent)" : "var(--pv24-brand-purple)"} opacity={0.35}>
-              {num}
-            </text>
+          const cy = STAGE_TOP + 40;
+          const fill = i < 2 ? "var(--pv24-text-secondary)" : i === 2 ? "var(--pv24-accent)" : "var(--pv24-brand-purple-dark)";
+          const badge = (
+            <>
+              <circle cx={cx} cy={cy} r={36} fill={fill} />
+              <text x={cx} y={cy + 13} textAnchor="middle" fontFamily="Arial, sans-serif" fontSize={36} fontWeight={700} fill="#FFFFFF">
+                {i + 1}
+              </text>
+            </>
           );
-          if (skip) return el;
+          if (skip) return <g key={i}>{badge}</g>;
           return (
-            <motion.text key={i} x={cx} y={STAGE_TOP + 56} textAnchor="middle"
-              fontFamily="Arial, sans-serif" fontSize={72} fontWeight={700}
-              fill={i < 2 ? "var(--pv24-border)" : i === 2 ? "var(--pv24-accent)" : "var(--pv24-brand-purple)"} opacity={0.35}
-              initial={{ opacity: 0 }} animate={{ opacity: 0.35 }} transition={{ delay: 0.1 + i * 0.12, duration: 0.4 }}>
-              {num}
-            </motion.text>
+            <motion.g key={i} initial={{ opacity: 0, scale: 0.6 }} animate={{ opacity: 1, scale: 1 }}
+              style={{ transformOrigin: `${cx}px ${cy}px` }}
+              transition={{ delay: 0.1 + i * 0.12, duration: 0.35 }}>
+              {badge}
+            </motion.g>
           );
         })}
 
@@ -124,14 +125,14 @@ export function FrictionCausalChainExhibit({ data, exportMode = false }: Props) 
             return (
               <g key={i}>
                 <text x={cx} y={KPI_Y} textAnchor="middle" fontFamily="Arial, sans-serif" fontSize={36} fontWeight={700} fill="var(--pv24-text)">{kpi}</text>
-                <text x={cx} y={KPI_Y + 32} textAnchor="middle" fontFamily="Arial, sans-serif" fontSize={14} fill="var(--pv24-text-secondary)">{desc}</text>
+                <text x={cx} y={KPI_Y + 34} textAnchor="middle" fontFamily="Arial, sans-serif" fontSize={17} fill="var(--pv24-text-secondary)">{desc}</text>
               </g>
             );
           }
           return (
             <motion.g key={i} initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.8 + i * 0.12, duration: 0.4 }}>
               <text x={cx} y={KPI_Y} textAnchor="middle" fontFamily="Arial, sans-serif" fontSize={36} fontWeight={700} fill="var(--pv24-text)">{kpi}</text>
-              <text x={cx} y={KPI_Y + 32} textAnchor="middle" fontFamily="Arial, sans-serif" fontSize={14} fill="var(--pv24-text-secondary)">{desc}</text>
+              <text x={cx} y={KPI_Y + 34} textAnchor="middle" fontFamily="Arial, sans-serif" fontSize={17} fill="var(--pv24-text-secondary)">{desc}</text>
             </motion.g>
           );
         })}
@@ -160,7 +161,7 @@ export function FrictionCausalChainExhibit({ data, exportMode = false }: Props) 
             <>
               <path d={d} fill="none" stroke="var(--pv24-accent)" strokeWidth={1.5} strokeDasharray="6 4" />
               <polygon points={`${x0 - 6},${ARROW_Y + 10} ${x0 + 6},${ARROW_Y + 20} ${x0 - 6},${ARROW_Y + 30}`} fill="var(--pv24-accent)" />
-              <text x={(x1 + x0) / 2 + 16} y={ARC_LABEL_Y} textAnchor="middle" fontFamily="Arial, sans-serif" fontSize={17} fontStyle="italic" fill="var(--pv24-accent)">{feedbackLabel}</text>
+              <text x={(x1 + x0) / 2 + 40} y={ARC_LABEL_Y} textAnchor="start" fontFamily="Arial, sans-serif" fontSize={17} fontStyle="italic" fill="var(--pv24-accent)">{feedbackLabel}</text>
             </>
           );
           if (skip) return <g>{arc}</g>;
@@ -172,7 +173,7 @@ export function FrictionCausalChainExhibit({ data, exportMode = false }: Props) 
         })()}
 
         {/* Illustrative disclaimer */}
-        <text x={VW - 24} y={790} textAnchor="end" fontFamily="Arial, sans-serif" fontSize={12} fill="var(--pv24-text-secondary)" opacity={0.6}>Illustrative indicative figures</text>
+        <text x={1840} y={786} textAnchor="end" fontFamily="Arial, sans-serif" fontSize={16} fontStyle="italic" fill="var(--pv24-text-secondary)">Illustrative indicative figures</text>
       </svg>
 
       {/* Stage labels (HTML for line-wrap) */}
@@ -234,7 +235,7 @@ export function FrictionCausalChainExhibit({ data, exportMode = false }: Props) 
 
       {/* Cycle repeats icon at feedback */}
       {!skip && (
-        <motion.div style={{ position: "absolute", left: `${((((STAGE_CX[0] ?? 260) + (STAGE_CX[STAGE_COUNT - 1] ?? 1580)) / 2 - 76) / VW) * 100}%`, top: `${((ARC_LABEL_Y - 20) / VH) * 100}%` }}
+        <motion.div style={{ position: "absolute", left: `${((((STAGE_CX[0] ?? 260) + (STAGE_CX[STAGE_COUNT - 1] ?? 1580)) / 2 + 8) / VW) * 100}%`, top: `${((ARC_LABEL_Y - 20) / VH) * 100}%` }}
           initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 1.6 }}>
           <IconRefresh size={24} color="var(--pv24-accent)" stroke={1.5} />
         </motion.div>

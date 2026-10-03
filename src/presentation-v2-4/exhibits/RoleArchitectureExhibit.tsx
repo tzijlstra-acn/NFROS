@@ -39,13 +39,16 @@ const GHOST_H = 96;
 // Distance from canvas centre to pod near edge
 const POD_EDGE_DIST = 450;
 
+// Pods sit above the hub's horizontal so their connectors clear the capability ring
+const POD_LIFT = 70;
+
 // Left pod: right edge at CX - POD_EDGE_DIST = 510
 const L_LEFT = CX - POD_EDGE_DIST - POD_W; // 150
-const L_TOP = CY - POD_H / 2;              // 406
+const L_TOP = CY - POD_H / 2 - POD_LIFT;   // 336
 
 // Right pod: left edge at CX + POD_EDGE_DIST = 1410
 const R_LEFT = CX + POD_EDGE_DIST;         // 1410
-const R_TOP = CY - POD_H / 2;             // 406
+const R_TOP = CY - POD_H / 2 - POD_LIFT;   // 336
 
 // Ghost pod: centred below hub
 const G_LEFT = CX - GHOST_W / 2;          // 804
@@ -135,7 +138,7 @@ interface CapNodeProps {
 
 function CapNode({ label, x, y, delay, skip }: CapNodeProps) {
   const words = label.split(" ");
-  const lineH = 16;
+  const lineH = 18;
   const baseY = y - ((words.length - 1) * lineH) / 2;
 
   return (
@@ -160,7 +163,7 @@ function CapNode({ label, x, y, delay, skip }: CapNodeProps) {
           y={baseY + wi * lineH}
           textAnchor="middle"
           dominantBaseline="middle"
-          fontSize={13}
+          fontSize={15}
           fontWeight={600}
           style={{ fill: "var(--pv24-text)", fontFamily: "var(--pv24-font-family)" }}
         >
@@ -250,7 +253,7 @@ function RolePod({
           <div
             style={{
               fontWeight: 700,
-              fontSize: "var(--pv24-heading-size, 15px)",
+              fontSize: 20,
               color: "var(--pv24-text)",
               lineHeight: 1.2,
             }}
@@ -259,7 +262,7 @@ function RolePod({
           </div>
           <div
             style={{
-              fontSize: "var(--pv24-caption-size, 11px)",
+              fontSize: 15,
               color: "var(--pv24-text-secondary)",
               marginTop: 3,
               lineHeight: 1.3,
@@ -276,7 +279,7 @@ function RolePod({
       {/* Section label */}
       <div
         style={{
-          fontSize: "var(--pv24-caption-size, 11px)",
+          fontSize: 14,
           fontWeight: 700,
           color: "var(--pv24-accent)",
           textTransform: "uppercase",
@@ -308,7 +311,7 @@ function RolePod({
             />
             <span
               style={{
-                fontSize: "var(--pv24-body-size, 13px)",
+                fontSize: 17,
                 color: "var(--pv24-text)",
                 lineHeight: 1.3,
               }}
@@ -347,7 +350,7 @@ function GhostPod({ left, top, width, height, delay, skip }: GhostPodProps) {
         width: pct(width, VW),
         height: pct(height, VH),
         background: "transparent",
-        border: "1.5px dashed var(--pv24-border)",
+        border: "1.5px dashed var(--pv24-border-strong)",
         borderRadius: 6,
         display: "flex",
         alignItems: "center",
@@ -363,7 +366,7 @@ function GhostPod({ left, top, width, height, delay, skip }: GhostPodProps) {
       />
       <span
         style={{
-          fontSize: "var(--pv24-body-size, 13px)",
+          fontSize: 17,
           color: "var(--pv24-text-secondary)",
           fontStyle: "italic",
         }}
@@ -389,8 +392,8 @@ export function RoleArchitectureExhibit({
   const capPositions = items.map((_, i) => capPos(i, n));
 
   // Dashed line endpoints: pod near-side midpoints
-  const lLineEnd = { x: CX - POD_EDGE_DIST, y: CY };          // (510, 540)
-  const rLineEnd = { x: CX + POD_EDGE_DIST, y: CY };          // (1410, 540)
+  const lLineEnd = { x: CX - POD_EDGE_DIST, y: CY - POD_LIFT }; // (510, 470)
+  const rLineEnd = { x: CX + POD_EDGE_DIST, y: CY - POD_LIFT }; // (1410, 470)
   const gLineEnd = { x: CX, y: G_TOP };                        // (960, 900)
 
   return (
@@ -492,7 +495,7 @@ export function RoleArchitectureExhibit({
           y={CY + 36}
           textAnchor="middle"
           dominantBaseline="middle"
-          fontSize={13}
+          fontSize={15}
           fontWeight={400}
           letterSpacing={3}
           initial={skip ? false : { opacity: 0 }}

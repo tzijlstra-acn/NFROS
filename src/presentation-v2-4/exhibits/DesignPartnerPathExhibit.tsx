@@ -148,7 +148,7 @@ const TIMELINE_MONTHS = [
 // Phase bars aligned with cards (relative x inside container)
 const TIMELINE_SPANS = [
   { x: 0, w: 500, color: "var(--pv24-accent)" },
-  { x: 600, w: 500, color: "#9DA1AE" },
+  { x: 600, w: 500, color: "#7A7F8C" },
   { x: 1200, w: 500, color: "var(--pv24-accent-dark)" },
 ];
 
@@ -217,7 +217,7 @@ function PhaseCard({
           <span
             style={{
               fontFamily: "var(--pv24-font-mono)",
-              fontSize: 82,
+              fontSize: 74,
               fontWeight: 700,
               lineHeight: 1,
               color: badgeColor,
@@ -234,7 +234,7 @@ function PhaseCard({
             style={{
               display: "block",
               fontFamily: "var(--pv24-font-mono)",
-              fontSize: 12,
+              fontSize: 14,
               fontWeight: 700,
               letterSpacing: "0.2em",
               textTransform: "uppercase",
@@ -284,7 +284,7 @@ function PhaseCard({
               />
               <span
                 style={{
-                  fontSize: 14,
+                  fontSize: 15,
                   fontWeight: 600,
                   color: "var(--pv24-text)",
                   lineHeight: 1.35,
@@ -306,8 +306,8 @@ function PhaseCard({
               >
                 <span
                   style={{
-                    color: borderColor,
-                    fontSize: 10,
+                    color: "var(--pv24-text-secondary)",
+                    fontSize: 14,
                     marginTop: 2,
                     flexShrink: 0,
                     lineHeight: 1,
@@ -317,7 +317,7 @@ function PhaseCard({
                 </span>
                 <span
                   style={{
-                    fontSize: 12,
+                    fontSize: 14,
                     color: "var(--pv24-text-secondary)",
                     lineHeight: 1.3,
                   }}
@@ -346,7 +346,7 @@ function PhaseCard({
         <span
           style={{
             fontFamily: "var(--pv24-font-mono)",
-            fontSize: 10,
+            fontSize: 13,
             fontWeight: 700,
             letterSpacing: "0.14em",
             textTransform: "uppercase",
@@ -359,7 +359,7 @@ function PhaseCard({
         <span
           style={{
             fontFamily: "var(--pv24-font-mono)",
-            fontSize: 11,
+            fontSize: 14,
             color: "var(--pv24-text-secondary)",
             lineHeight: 1.3,
             fontStyle: "italic",
@@ -501,7 +501,7 @@ function TimelineBar({ skip, delay }: { skip: boolean; delay: number }) {
           <div
             style={{
               fontFamily: "var(--pv24-font-mono)",
-              fontSize: 12,
+              fontSize: 14,
               fontWeight: 600,
               color: "var(--pv24-text-secondary)",
               marginTop: 5,
@@ -533,7 +533,7 @@ function TimelineBar({ skip, delay }: { skip: boolean; delay: number }) {
               letterSpacing: "0.18em",
               textTransform: "uppercase",
               color: span.color,
-              opacity: 0.85,
+              opacity: 1,
             }}
           >
             {cfg.verb}
@@ -617,7 +617,7 @@ export function DesignPartnerPathExhibit({ data, exportMode }: DesignPartnerPath
         <span
           style={{
             fontFamily: "var(--pv24-font-mono)",
-            fontSize: 11,
+            fontSize: 14,
             fontWeight: 700,
             letterSpacing: "0.18em",
             textTransform: "uppercase",

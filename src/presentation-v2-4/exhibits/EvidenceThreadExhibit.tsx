@@ -163,9 +163,18 @@ export function EvidenceThreadExhibit({ data, exportMode }: EvidenceThreadExhibi
 
             {/* Node: outlined while working, filled with a tick once linked */}
             <motion.div
-              initial={skip ? false : { scale: 0, opacity: 0 }}
-              animate={{ scale: 1, opacity: 1 }}
-              transition={skip ? undefined : { duration: 0.3, delay: base, ease: "backOut" }}
+              initial={skip ? false : { scale: 0, opacity: 0, backgroundColor: "#FFFFFF", color: "#A100FF" }}
+              animate={{ scale: 1, opacity: 1, backgroundColor: "#A100FF", color: "#FFFFFF" }}
+              transition={
+                skip
+                  ? undefined
+                  : {
+                      scale: { duration: 0.3, delay: base, ease: "backOut" },
+                      opacity: { duration: 0.3, delay: base },
+                      backgroundColor: { duration: 0.25, delay: base + 0.62 },
+                      color: { duration: 0.25, delay: base + 0.62 },
+                    }
+              }
               style={{
                 position: "absolute",
                 left: cx - NODE_R,
@@ -173,7 +182,6 @@ export function EvidenceThreadExhibit({ data, exportMode }: EvidenceThreadExhibi
                 width: NODE_R * 2,
                 height: NODE_R * 2,
                 borderRadius: "50%",
-                background: "var(--pv24-surface)",
                 border: "3px solid var(--pv24-accent)",
                 boxSizing: "border-box",
                 display: "flex",
@@ -181,29 +189,30 @@ export function EvidenceThreadExhibit({ data, exportMode }: EvidenceThreadExhibi
                 justifyContent: "center",
                 fontSize: 20,
                 fontWeight: 700,
-                color: "var(--pv24-accent)",
               }}
             >
               {i + 1}
             </motion.div>
             <motion.div
-              initial={skip ? false : { scale: 0.4, opacity: 0 }}
+              initial={skip ? false : { scale: 0, opacity: 0 }}
               animate={{ scale: 1, opacity: 1 }}
-              transition={skip ? undefined : { duration: 0.25, delay: base + 0.62 }}
+              transition={skip ? undefined : { duration: 0.25, delay: base + 0.75, ease: "backOut" }}
               style={{
                 position: "absolute",
-                left: cx - NODE_R,
-                top: THREAD_Y - NODE_R,
-                width: NODE_R * 2,
-                height: NODE_R * 2,
+                left: cx + NODE_R * 0.42,
+                top: THREAD_Y - NODE_R - 6,
+                width: 24,
+                height: 24,
                 borderRadius: "50%",
-                background: "var(--pv24-accent)",
+                background: "var(--pv24-surface)",
+                border: "2px solid var(--pv24-accent)",
+                boxSizing: "border-box",
                 display: "flex",
                 alignItems: "center",
                 justifyContent: "center",
               }}
             >
-              <IconCheck size={28} color="#FFFFFF" stroke={2.5} />
+              <IconCheck size={14} color="var(--pv24-accent)" stroke={3} />
             </motion.div>
 
             {/* Evidence card: loads, then shows what was done */}
@@ -231,9 +240,9 @@ export function EvidenceThreadExhibit({ data, exportMode }: EvidenceThreadExhibi
                 <Icon size={22} color="var(--pv24-accent)" stroke={1.7} />
                 <span
                   style={{
-                    fontSize: 13,
+                    fontSize: 14,
                     fontWeight: 700,
-                    letterSpacing: "0.08em",
+                    letterSpacing: "0.06em",
                     textTransform: "uppercase",
                     color: "var(--pv24-accent-dark)",
                   }}
@@ -288,7 +297,7 @@ export function EvidenceThreadExhibit({ data, exportMode }: EvidenceThreadExhibi
                 {annotation !== undefined && (
                   <span
                     style={{
-                      fontSize: 12,
+                      fontSize: 14,
                       fontWeight: 600,
                       padding: "3px 8px",
                       background: "var(--pv24-accent-lightest)",
@@ -301,7 +310,7 @@ export function EvidenceThreadExhibit({ data, exportMode }: EvidenceThreadExhibi
                 {step.hasProductProof === true && (
                   <span
                     style={{
-                      fontSize: 12,
+                      fontSize: 14,
                       fontWeight: 600,
                       padding: "3px 8px",
                       border: "1px solid var(--pv24-border-strong)",
@@ -338,7 +347,7 @@ export function EvidenceThreadExhibit({ data, exportMode }: EvidenceThreadExhibi
           position: "absolute",
           left: LEFT,
           top: AUDIT_Y,
-          fontSize: 13,
+          fontSize: 14,
           fontWeight: 700,
           letterSpacing: "0.1em",
           textTransform: "uppercase",
@@ -388,7 +397,7 @@ export function EvidenceThreadExhibit({ data, exportMode }: EvidenceThreadExhibi
           position: "absolute",
           right: 60,
           top: 728,
-          fontSize: 13,
+          fontSize: 14,
           fontStyle: "italic",
           color: "var(--pv24-text-secondary)",
         }}

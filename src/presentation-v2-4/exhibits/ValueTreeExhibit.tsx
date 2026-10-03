@@ -48,29 +48,29 @@ type Handover = {
 
 const HANDOVERS: Handover[] = [
   {
-    from: { x: 580, y: 120 },
-    to: { x: 1336, y: 120 },
+    from: { x: 570, y: 120 },
+    to: { x: 1350, y: 120 },
     head: "right",
     label: "Freed time goes into better evidence",
     labelStyle: { left: 660, top: 72, width: 600, textAlign: "center" },
   },
   {
-    from: { x: 1580, y: 298 },
-    to: { x: 1580, y: 472 },
+    from: { x: 1580, y: 288 },
+    to: { x: 1580, y: 486 },
     head: "down",
     label: "Complete evidence makes approval defensible",
     labelStyle: { left: 1180, top: 352, width: 380, textAlign: "right" },
   },
   {
-    from: { x: 1340, y: 640 },
-    to: { x: 584, y: 640 },
+    from: { x: 1350, y: 640 },
+    to: { x: 570, y: 640 },
     head: "left",
     label: "Recorded decisions carry forward",
     labelStyle: { left: 660, top: 592, width: 600, textAlign: "center" },
   },
   {
-    from: { x: 340, y: 476 },
-    to: { x: 340, y: 302 },
+    from: { x: 340, y: 486 },
+    to: { x: 340, y: 288 },
     head: "up",
     label: "Nothing restarts, so saved time compounds",
     labelStyle: { left: 360, top: 352, width: 380, textAlign: "left" },
@@ -184,7 +184,7 @@ function BranchCard({ branch, corner, skip, delay, pulseDelay }: { branch: Value
           gap: 14,
         }}
       >
-        <span style={{ fontSize: 52, fontWeight: 700, color: "var(--pv24-accent)", lineHeight: 1, whiteSpace: "nowrap" }}>
+        <span style={{ fontSize: 52, fontWeight: 700, color: "var(--pv24-accent)", lineHeight: 1.15, whiteSpace: "nowrap" }}>
           <CountUp to={corner.kpiValue} prefix={corner.kpiPrefix} suffix={corner.kpiSuffix} skip={skip} delay={delay + 0.3} />
         </span>
         <span style={{ fontSize: 16, color: "var(--pv24-text)", lineHeight: 1.3 }}>{corner.kpiLabel}</span>
@@ -359,7 +359,7 @@ export function ValueTreeExhibit({ data, exportMode }: ValueTreeExhibitProps) {
         }}
       >
         <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
-          <span style={{ fontSize: 13, fontWeight: 700, letterSpacing: "0.1em", textTransform: "uppercase", color: "var(--pv24-text-secondary)" }}>
+          <span style={{ fontSize: 15, fontWeight: 700, letterSpacing: "0.1em", textTransform: "uppercase", color: "var(--pv24-text-secondary)" }}>
             Measured
           </span>
           {data.measurementRail.map((stage, i) => (
@@ -380,7 +380,7 @@ export function ValueTreeExhibit({ data, exportMode }: ValueTreeExhibitProps) {
             </React.Fragment>
           ))}
         </div>
-        <div style={{ fontSize: 13, fontStyle: "italic", color: "var(--pv24-text-secondary)", textAlign: "center" }}>
+        <div style={{ fontSize: 15, fontStyle: "italic", color: "var(--pv24-text-secondary)", textAlign: "center" }}>
           {["Illustrative targets", data.chartNote, "Synthetic institution and data"].filter(Boolean).join(". ")}.
         </div>
       </motion.div>

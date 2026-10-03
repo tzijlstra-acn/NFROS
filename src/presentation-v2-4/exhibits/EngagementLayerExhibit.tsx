@@ -33,14 +33,14 @@ const BAND_CX = VW / 2; // 960
 // 5 cards, centers spread from x=200 to x=1720
 const SYS_CXS = [200, 580, 960, 1340, 1720] as const;
 const SYS_CARD_TOP = 765; // top edge: connection line starts here (spec: top center y=765)
-const SYS_CARD_W = 160;
+const SYS_CARD_W = 220;
 const SYS_CARD_H = 130;
 
 // Role experience cards (above the band)
 // 3 cards, centers spread from x=480 to x=1440
 const ROLE_CXS = [480, 960, 1440] as const;
 const ROLE_CARD_BOTTOM = 240; // bottom edge: connection line ends here (spec: bottom center y=240)
-const ROLE_CARD_W = 200;
+const ROLE_CARD_W = 240;
 const ROLE_CARD_H = 90;
 const ROLE_CARD_TOP = ROLE_CARD_BOTTOM - ROLE_CARD_H; // 150
 
@@ -107,7 +107,7 @@ export function EngagementLayerExhibit({ data, exportMode = false }: Props) {
           y={116}
           textAnchor="middle"
           fontFamily={FONT}
-          fontSize={13}
+          fontSize={17}
           fontWeight={400}
           fill={TEXT_SECONDARY}
           letterSpacing={2}
@@ -121,7 +121,7 @@ export function EngagementLayerExhibit({ data, exportMode = false }: Props) {
           y={924}
           textAnchor="middle"
           fontFamily={FONT}
-          fontSize={13}
+          fontSize={17}
           fontWeight={400}
           fill={TEXT_SECONDARY}
           letterSpacing={2}
@@ -201,7 +201,7 @@ export function EngagementLayerExhibit({ data, exportMode = false }: Props) {
                 y={CHIP_TOP + 29}
                 textAnchor="middle"
                 fontFamily={FONT}
-                fontSize={15}
+                fontSize={18}
                 fontWeight={500}
                 fill={PURPLE}
               >
@@ -244,7 +244,7 @@ export function EngagementLayerExhibit({ data, exportMode = false }: Props) {
                 y={SYS_CARD_TOP + SYS_CARD_H - 16}
                 textAnchor="middle"
                 fontFamily={FONT}
-                fontSize={14}
+                fontSize={18}
                 fontWeight={500}
                 fill={TEXT_SECONDARY}
               >
@@ -286,7 +286,7 @@ export function EngagementLayerExhibit({ data, exportMode = false }: Props) {
                 y={ROLE_CARD_BOTTOM - 14}
                 textAnchor="middle"
                 fontFamily={FONT}
-                fontSize={14}
+                fontSize={18}
                 fontWeight={600}
                 fill={TEXT_COLOR}
               >

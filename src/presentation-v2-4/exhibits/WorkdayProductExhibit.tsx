@@ -19,7 +19,7 @@ export interface WorkdayProductExhibitProps {
 const FRAME_X = 60;
 const FRAME_Y = 20;
 const FRAME_W = 1260;
-const FRAME_H = 720;
+const FRAME_H = 676;
 
 const ANNOT_X = 1360;
 const ANNOT_W = 500;
@@ -67,6 +67,7 @@ const ZONE_ITEMS = [
   {
     label: "DONE",
     color: "var(--pv24-border-strong)",
+    labelColor: "var(--pv24-text-secondary)",
     flex: 1.5,
     items: [
       {
@@ -79,7 +80,7 @@ const ZONE_ITEMS = [
   },
 ];
 
-const DAYLINE_Y = 760;
+const DAYLINE_Y = 724;
 
 export function WorkdayProductExhibit({ data: _data, exportMode = false }: WorkdayProductExhibitProps) {
   const prefersReduced = useReducedMotion();
@@ -136,8 +137,8 @@ export function WorkdayProductExhibit({ data: _data, exportMode = false }: Workd
               <div style={{
                 fontWeight: 700,
                 letterSpacing: "0.08em",
-                fontSize: 12,
-                color: zone.color,
+                fontSize: 15,
+                color: "labelColor" in zone ? zone.labelColor : zone.color,
                 textTransform: "uppercase",
                 flexShrink: 0,
               }}>
@@ -161,10 +162,10 @@ export function WorkdayProductExhibit({ data: _data, exportMode = false }: Workd
                         flexShrink: 0,
                       }}
                     >
-                      <Icon size={18} color={item.urgent ? "#E67E22" : "var(--pv24-text-secondary)"} stroke={1.5} style={{ flexShrink: 0, marginTop: 2 }} />
+                      <Icon size={21} color={item.urgent ? "#C0620F" : "var(--pv24-text-secondary)"} stroke={1.6} style={{ flexShrink: 0, marginTop: 1 }} />
                       <div>
-                        <div style={{ fontSize: 15, fontWeight: 600, color: "var(--pv24-text)", lineHeight: 1.3 }}>{item.title}</div>
-                        {item.meta && <div style={{ fontSize: 12, color: "var(--pv24-text-secondary)", marginTop: 4, lineHeight: 1.3 }}>{item.meta}</div>}
+                        <div style={{ fontSize: 17, fontWeight: 600, color: "var(--pv24-text)", lineHeight: 1.3 }}>{item.title}</div>
+                        {item.meta && <div style={{ fontSize: 15, color: "var(--pv24-text-secondary)", marginTop: 3, lineHeight: 1.3 }}>{item.meta}</div>}
                       </div>
                     </div>
                   );
@@ -195,7 +196,7 @@ export function WorkdayProductExhibit({ data: _data, exportMode = false }: Workd
         gap: 20,
         paddingTop: 16,
       }}>
-        <div style={{ fontSize: 13, fontWeight: 700, letterSpacing: 2, color: "var(--pv24-accent)", textTransform: "uppercase" }}>
+        <div style={{ fontSize: 15, fontWeight: 700, letterSpacing: 2, color: "var(--pv24-accent)", textTransform: "uppercase" }}>
           AI Partner activity
         </div>
         {[
@@ -213,8 +214,8 @@ export function WorkdayProductExhibit({ data: _data, exportMode = false }: Workd
               flexDirection: "column",
               gap: 6,
             }}>
-              <div style={{ fontSize: 13, color: "var(--pv24-text-secondary)" }}>{item.label}</div>
-              <div style={{ fontSize: 28, fontWeight: 700, color: i === 3 ? "var(--pv24-accent)" : "var(--pv24-text)" }}>{item.value}</div>
+              <div style={{ fontSize: 16, color: "var(--pv24-text-secondary)" }}>{item.label}</div>
+              <div style={{ fontSize: 30, fontWeight: 700, color: i === 3 ? "var(--pv24-accent)" : "var(--pv24-text)" }}>{item.value}</div>
             </div>
           );
           if (skip) return el;
@@ -226,7 +227,7 @@ export function WorkdayProductExhibit({ data: _data, exportMode = false }: Workd
             </motion.div>
           );
         })}
-        <div style={{ marginTop: "auto", fontSize: 12, color: "var(--pv24-text-secondary)", fontStyle: "italic", lineHeight: 1.5 }}>
+        <div style={{ marginTop: "auto", fontSize: 15, color: "var(--pv24-text-secondary)", fontStyle: "italic", lineHeight: 1.4 }}>
           Illustrative: synthetic institution and data
         </div>
       </div>
@@ -239,7 +240,7 @@ export function WorkdayProductExhibit({ data: _data, exportMode = false }: Workd
           return (
             <g key={t}>
               <line x1={x} y1={DAYLINE_Y - 6} x2={x} y2={DAYLINE_Y + 6} stroke="var(--pv24-accent)" strokeWidth={1.5} />
-              <text x={x} y={DAYLINE_Y + 22} textAnchor="middle" fontSize={11} fill="var(--pv24-text-secondary)" fontFamily="var(--pv24-font-family)">{t}</text>
+              <text x={x} y={DAYLINE_Y + 28} textAnchor={i === 0 ? "start" : i === arr.length - 1 ? "end" : "middle"} fontSize={16} fill="var(--pv24-text-secondary)" fontFamily="var(--pv24-font-family)">{t}</text>
             </g>
           );
         })}

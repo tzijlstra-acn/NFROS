@@ -43,9 +43,9 @@ function AiBadge() {
     <span
       style={{
         display: "inline-block",
-        fontSize: 12,
+        fontSize: 15,
         fontWeight: 700,
-        letterSpacing: "0.08em",
+        letterSpacing: "0.06em",
         color: "var(--pv24-accent-dark)",
         background: "var(--pv24-accent-lightest)",
         padding: "3px 10px",
@@ -62,9 +62,9 @@ function HumanBadge() {
     <span
       style={{
         display: "inline-block",
-        fontSize: 12,
+        fontSize: 15,
         fontWeight: 700,
-        letterSpacing: "0.08em",
+        letterSpacing: "0.06em",
         color: "#FFFFFF",
         background: HUMAN_COLOR,
         padding: "3px 10px",
@@ -77,7 +77,7 @@ function HumanBadge() {
 }
 
 const titleStyle: React.CSSProperties = {
-  fontSize: 17,
+  fontSize: 18,
   color: "var(--pv24-text)",
   fontWeight: 700,
   lineHeight: 1.25,
@@ -85,7 +85,7 @@ const titleStyle: React.CSSProperties = {
 };
 
 const bodyStyle: React.CSSProperties = {
-  fontSize: 15,
+  fontSize: 16,
   color: "var(--pv24-text-secondary)",
   margin: 0,
   lineHeight: 1.4,
@@ -114,10 +114,8 @@ function FormFieldRow({ label, value, highlight }: { label: string; value: strin
     <div style={{ marginBottom: 9 }}>
       <div
         style={{
-          fontSize: 12,
+          fontSize: 15,
           color: "var(--pv24-text-secondary)",
-          textTransform: "uppercase",
-          letterSpacing: "0.07em",
           marginBottom: 4,
         }}
       >
@@ -143,17 +141,17 @@ function FormFieldRow({ label, value, highlight }: { label: string; value: strin
   );
 }
 
-function RiskBar({ label, count, total, color }: { label: string; count: number; total: number; color: string }) {
+function RiskBar({ label, count, total, color, textColor }: { label: string; count: number; total: number; color: string; textColor?: string }) {
   const pct = Math.round((count / total) * 100);
   return (
     <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 12 }}>
       <div
         style={{
-          width: 70,
-          fontSize: 12,
+          width: 90,
+          fontSize: 15,
           fontWeight: 700,
-          color,
-          border: `1.5px solid ${color}`,
+          color: textColor ?? color,
+          border: `1.5px solid ${textColor ?? color}`,
           padding: "3px 0",
           textAlign: "center",
           flexShrink: 0,
@@ -219,7 +217,7 @@ function StageCardContent({ id }: { id: string }) {
           <p style={titleStyle}>23 active third-party contracts pulled</p>
           <BulletRow text="Vendor registry: 18 live contracts" color={AI_COLOR} />
           <BulletRow text="In-flight onboardings: 5 suppliers" color={AI_COLOR} />
-          <BulletRow text="3 expiring SLAs flagged" color="#E8A317" />
+          <BulletRow text="3 expiring SLAs flagged" color="#C47F00" />
         </div>
       );
     case "assess":
@@ -228,7 +226,7 @@ function StageCardContent({ id }: { id: string }) {
           <AiBadge />
           <p style={titleStyle}>Findings auto-categorised</p>
           <RiskBar label="HIGH" count={4} total={23} color="#D93F3F" />
-          <RiskBar label="MEDIUM" count={12} total={23} color="#E8A317" />
+          <RiskBar label="MEDIUM" count={12} total={23} color="#E8A317" textColor="#9A5B00" />
           <RiskBar label="LOW" count={7} total={23} color="#2E9E5B" />
         </div>
       );
@@ -497,7 +495,7 @@ export function RoleAppSwimlaneExhibit({ data, exportMode = false }: RoleAppSwim
       >
         <span
           style={{
-            fontSize: 13,
+            fontSize: 15,
             fontWeight: 700,
             color: "var(--pv24-text-secondary)",
             letterSpacing: "0.1em",
@@ -518,7 +516,7 @@ export function RoleAppSwimlaneExhibit({ data, exportMode = false }: RoleAppSwim
           position: "absolute",
           top: 738,
           right: 36,
-          fontSize: 13,
+          fontSize: 15,
           fontStyle: "italic",
           color: "var(--pv24-text-secondary)",
         }}

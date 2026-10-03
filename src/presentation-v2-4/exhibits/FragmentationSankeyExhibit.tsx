@@ -58,8 +58,8 @@ export function FragmentationSankeyExhibit({ data, exportMode = false }: Props) 
         <text x={OUT_X + OUT_NODE_W / 2} y={130} textAnchor="middle" fontFamily="Arial, sans-serif" fontSize={18} fontWeight={700} fill="var(--pv24-brand-purple)" letterSpacing={1}>DECISION</text>
 
         {/* Column dividers */}
-        <line x1={660} y1={90} x2={660} y2={990} stroke="var(--pv24-border)" strokeWidth={1} strokeDasharray="6 4" opacity={0.5} />
-        <line x1={1380} y1={90} x2={1380} y2={990} stroke="var(--pv24-border)" strokeWidth={1} strokeDasharray="6 4" opacity={0.5} />
+        <line x1={660} y1={110} x2={660} y2={1000} stroke="var(--pv24-border)" strokeWidth={1} strokeDasharray="6 4" opacity={0.5} />
+        <line x1={1380} y1={110} x2={1380} y2={1000} stroke="var(--pv24-border)" strokeWidth={1} strokeDasharray="6 4" opacity={0.5} />
 
         {/* Flow paths: each source fans to each activity */}
         {sources.map((_, si) => {
@@ -164,7 +164,7 @@ export function FragmentationSankeyExhibit({ data, exportMode = false }: Props) 
         )}
 
         {/* Evidence note */}
-        <text x={OUT_X + OUT_NODE_W} y={VH - 40} textAnchor="end" fontFamily="IBM Plex Mono, monospace" fontSize={14} fill="var(--pv24-text-secondary)">{evidenceNote}</text>
+        <text x={OUT_X + OUT_NODE_W} y={VH - 40} textAnchor="end" fontFamily="var(--pv24-font-family)" fontSize={19} fontStyle="italic" fill="var(--pv24-text-secondary)">{evidenceNote}</text>
       </svg>
     </div>
   );
