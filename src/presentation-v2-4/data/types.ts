@@ -37,18 +37,23 @@ export type EvidenceBasis = {
 // Exhibit data types (one per slide visual type)
 // ---------------------------------------------------------------------------
 
-export type CapacityConvergenceData = {
-  sources: string[];           // 6 signal labels
-  bottleneckLabel: string;     // e.g. "Work queue"
-  osStageName: string;         // e.g. "NFR Operating System"
-  decisionLabel: string;       // e.g. "One prepared decision"
-  judgmentLabel: string;       // e.g. "Human judgment"
+export type CoverData = {
+  kicker: string;              // e.g. "NFR Operating System"
+  preparedBy: string;
+  dateLabel: string;           // e.g. "September 2026"
+};
+
+export type ClosingData = {
+  prompts: string[];           // discussion prompts for the room
+  decision: string;            // the decision requested, restated
+  presenter: string;
 };
 
 export type StoryPathChapter = {
   number: number;
   audienceQuestion: string;
   sectionLabel: string;
+  topics: string[];            // the slides this chapter covers, in plain words
 };
 
 export type StoryPathData = {
@@ -190,7 +195,8 @@ export type DesignPartnerPathData = {
 // ---------------------------------------------------------------------------
 
 export type CoreExhibit =
-  | { type: "capacity-convergence"; data: CapacityConvergenceData }
+  | { type: "cover"; data: CoverData }
+  | { type: "closing"; data: ClosingData }
   | { type: "story-path"; data: StoryPathData }
   | { type: "fragmentation-sankey"; data: FragmentationSankeyData }
   | { type: "friction-causal-chain"; data: FrictionCausalChainData }
@@ -210,6 +216,8 @@ export type CoreExhibit =
 
 export type CoreSlide24 = {
   id: string;
+  // Cover and closing render full-bleed; structural slides are exempt from action-title rules
+  kind?: "content" | "cover" | "agenda" | "closing";
   section: string;
   title: string;
   subtitle: string;            // mandatory; TypeScript error when missing

@@ -92,7 +92,8 @@ function checkSlide(
   id: string,
   kind: "core" | "appendix",
   title: string | undefined,
-  subtitle: string | undefined
+  subtitle: string | undefined,
+  structural = false
 ): CheckResult {
   const result: CheckResult = {
     id,
@@ -114,7 +115,8 @@ function checkSlide(
     if (!materiallyDiffer(title, subtitle)) {
       result.errors.push("Title and subtitle do not differ materially");
     }
-    if (isTopicLabelOnly(title)) {
+    // Cover, agenda and closing slides use plain labels by design
+    if (!structural && isTopicLabelOnly(title)) {
       result.warnings.push("Title appears to be a topic label only (no clear verb or implication)");
     }
     if (title.length > 100) {
@@ -147,7 +149,8 @@ function run() {
   const results: CheckResult[] = [];
 
   for (const slide of CORE_SLIDES_V24) {
-    results.push(checkSlide(slide.id, "core", slide.title, slide.subtitle));
+    const structural = slide.kind === "cover" || slide.kind === "agenda" || slide.kind === "closing";
+    results.push(checkSlide(slide.id, "core", slide.title, slide.subtitle, structural));
   }
 
   for (const slide of APPENDIX_SLIDES_V24) {

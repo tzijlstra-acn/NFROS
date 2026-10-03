@@ -7,10 +7,10 @@
  * - Title and subtitle differ
  * - Title is within length (< 120 chars)
  * - Subtitle is within length (< 220 chars)
- * - No topic-only title (single word)
+ * - No topic-only title (single word), except structural slides (cover, agenda, closing)
  * - No em dash in title or subtitle
  * - No double-hyphen punctuation in title or subtitle
- * - Story order follows situation, complication, answer, proof, value, control, scale, action
+ * - Story order follows opening, complication, answer, proof, value, control, scale, action, close
  */
 
 import { describe, it, expect } from "vitest";
@@ -30,8 +30,8 @@ function noDoubleDashPunctuation(s: string) {
 
 // Expected story sections in order
 const EXPECTED_SECTIONS = [
-  "Situation",
-  "Situation",
+  "Opening",
+  "Opening",
   "Complication",
   "Complication",
   "Answer",
@@ -43,11 +43,22 @@ const EXPECTED_SECTIONS = [
   "Control",
   "Scale",
   "Action",
+  "Close",
 ];
 
+const STRUCTURAL_KINDS = new Set(["cover", "agenda", "closing"]);
+
 describe("CORE_SLIDES_V24", () => {
-  it("has exactly thirteen slides", () => {
-    expect(CORE_SLIDES_V24).toHaveLength(13);
+  it("has exactly fourteen slides", () => {
+    expect(CORE_SLIDES_V24).toHaveLength(14);
+  });
+
+  it("opens with a cover and an agenda and closes with questions", () => {
+    expect(CORE_SLIDES_V24[0]!.kind).toBe("cover");
+    expect(CORE_SLIDES_V24[1]!.kind).toBe("agenda");
+    expect(CORE_SLIDES_V24[CORE_SLIDES_V24.length - 1]!.kind).toBe("closing");
+    const structural = CORE_SLIDES_V24.filter((s) => s.kind !== undefined && STRUCTURAL_KINDS.has(s.kind));
+    expect(structural).toHaveLength(3);
   });
 
   it("every slide has a non-empty title", () => {
@@ -84,8 +95,9 @@ describe("CORE_SLIDES_V24", () => {
     }
   });
 
-  it("no title is a single word", () => {
+  it("no content title is a single word", () => {
     for (const slide of CORE_SLIDES_V24) {
+      if (slide.kind !== undefined && STRUCTURAL_KINDS.has(slide.kind)) continue;
       const wordCount = slide.title.trim().split(/\s+/).length;
       expect(wordCount, `slide ${slide.id} title appears to be a single-word topic label`).toBeGreaterThan(1);
     }
@@ -136,8 +148,8 @@ describe("CORE_SLIDES_V24", () => {
     }
   });
 
-  it("situation section precedes complication", () => {
-    const situationEnd = CORE_SLIDES_V24.filter((s) => s.section === "Situation").length;
+  it("opening section precedes complication", () => {
+    const situationEnd = CORE_SLIDES_V24.filter((s) => s.section === "Opening").length;
     const firstComplication = CORE_SLIDES_V24.findIndex((s) => s.section === "Complication");
     expect(firstComplication).toBeGreaterThanOrEqual(situationEnd);
   });
@@ -179,7 +191,7 @@ describe("CORE_SLIDES_V24", () => {
   });
 
   it("no two adjacent slides have the same section except for multi-slide sections", () => {
-    // Adjacent duplicates within sections are expected (Situation has 2, Complication has 2, Proof has 4)
+    // Adjacent duplicates within sections are expected (Opening has 2, Complication has 2, Proof has 4)
     // But we should not have the same section appear in non-consecutive positions
     const sections = CORE_SLIDES_V24.map((s) => s.section);
     const seen = new Set<string>();

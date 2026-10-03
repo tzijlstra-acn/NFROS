@@ -15,27 +15,25 @@ export const CORE_SLIDES_V24: CoreSlide24[] = [
   // ---------------------------------------------------------------------------
   {
     id: "slide-01",
-    section: "Situation",
+    kind: "cover",
+    section: "Opening",
     title: "AI can return NFR capacity to judgment",
     subtitle: "A role-based operating system connects daily work, complete processes and governed execution",
     exhibit: {
-      type: "capacity-convergence",
+      type: "cover",
       data: {
-        sources: ["Mail", "Meeting", "Evidence", "GRC task", "Risk signal", "Action"],
-        bottleneckLabel: "Work queue",
-        osStageName: "NFR Operating System",
-        decisionLabel: "One prepared decision",
-        judgmentLabel: "Human judgment",
+        kicker: "NFR Operating System",
+        preparedBy: "Thomas Zijlstra",
+        dateLabel: "September 2026",
       },
     },
     evidenceBasis: [
-      { type: "product", label: "NFR OS product state, synthetic data" },
-      { type: "illustrative", label: "Capacity model, illustrative target state" },
+      { type: "proposal", label: "Accenture NFR OS engagement scope" },
     ],
     appendixRefs: [],
     speakerNotes:
-      "Open with the thesis, not with a product demo. Risk professionals spend a material portion of their week on coordination work: finding evidence, chasing status, reconciling inputs across systems. The operating system exists to redirect that effort back to the judgment the role was hired to make. The exhibit on screen shows how six categories of incoming work pass through the operating system layer and resolve into one prepared decision, with the professional's judgment as the final and most visible step. This is the design principle the whole deck proves. Keep this slide brief and use the visual to anchor the conversation. The product will make the claim concrete.",
-    presentingTimeSeconds: 45,
+      "Open with the thesis, not with a product demo. Risk professionals spend a material portion of their week on coordination work: finding evidence, chasing status, reconciling inputs across systems. The operating system exists to redirect that effort back to the judgment the role was hired to make. The visual shows many fragmented signals converging into one operating layer, and one prepared decision handed to a person. This is the design principle the whole deck proves. Keep the cover brief and move to the agenda.",
+    presentingTimeSeconds: 30,
     footer: "Illustrative regulatory context, not legal advice",
   },
 
@@ -44,18 +42,19 @@ export const CORE_SLIDES_V24: CoreSlide24[] = [
   // ---------------------------------------------------------------------------
   {
     id: "slide-02",
-    section: "Situation",
-    title: "The discussion moves from case for change to path to scale",
-    subtitle: "We will cover the problem, the product, the proof, the controls and the decision required",
+    kind: "agenda",
+    section: "Opening",
+    title: "Agenda",
+    subtitle: "Five questions take us from the case for change to the path to scale",
     exhibit: {
       type: "story-path",
       data: {
         chapters: [
-          { number: 1, audienceQuestion: "Why does this matter?", sectionLabel: "Why change" },
-          { number: 2, audienceQuestion: "What is the proposition?", sectionLabel: "What NFROS is" },
-          { number: 3, audienceQuestion: "What changes for the professional?", sectionLabel: "How work changes" },
-          { number: 4, audienceQuestion: "Why can the bank trust it?", sectionLabel: "How it is controlled" },
-          { number: 5, audienceQuestion: "What should we do next?", sectionLabel: "How to start" },
+          { number: 1, audienceQuestion: "Why does this matter?", sectionLabel: "Why change", topics: ["Fragmented work", "The burden between systems"] },
+          { number: 2, audienceQuestion: "What is the proposition?", sectionLabel: "What NFROS is", topics: ["One operating layer", "The prepared workday"] },
+          { number: 3, audienceQuestion: "What changes for the professional?", sectionLabel: "How work changes", topics: ["A shared core per role", "Role Apps"] },
+          { number: 4, audienceQuestion: "Why can the bank trust it?", sectionLabel: "How it is controlled", topics: ["The authority line", "The value case", "The evidence thread"] },
+          { number: 5, audienceQuestion: "What should we do next?", sectionLabel: "How to start", topics: ["The service model", "A two-role start"] },
         ],
         activeChapterNumber: 1,
       },
@@ -102,7 +101,7 @@ export const CORE_SLIDES_V24: CoreSlide24[] = [
       },
     ],
     speakerNotes:
-      "Establish the problem before any product. Risk professionals in OR, TPRM, and control assurance face the same structural constraint: the work exists across systems that were never designed to connect. An Operational Risk Partner may open a GRC tool, pull a spreadsheet for committee prep, chase evidence by email, and update a status tracker manually for a single RCSA cycle. The exhibit shows how most flow passes through manual assembly before reaching the decision. Each system may be correct in isolation; the friction lives between them. Pause after the visual and ask whether this reflects what they see in their own teams.",
+      "Establish the problem before any product. Risk professionals in OR, TPRM, and control assurance face the same structural constraint: the work exists across systems that were never designed to connect. An Operational Risk Partner may open a GRC tool, pull a spreadsheet for committee prep, chase evidence by email, and update a status tracker manually for a single RCSA cycle. The animation shows work arriving from six systems, looping through finding, reconciling, coordinating and re-entering, with only a trickle reaching the decision; the bar underneath shows where the team's capacity goes. Each system may be correct in isolation; the friction lives between them. Pause after the visual and ask whether this reflects what they see in their own teams.",
     presentingTimeSeconds: 90,
     footer: "Illustrative workflow",
   },
@@ -189,7 +188,7 @@ export const CORE_SLIDES_V24: CoreSlide24[] = [
       },
     ],
     speakerNotes:
-      "NFROS is the engagement and execution layer around the platforms the bank already trusts. The systems of record stay. The operating system adds a structured layer on top: role-aware daily work, governed process execution through Role Apps, and a control fabric that links identity, authority, approval, audit, and evaluation into every step. The animated item traveling through the path shows how a single work item moves from source signal to external receipt without the professional leaving the environment or reconnecting manually to another system. Reinforce the non-replacement message: this is an engagement layer, not a replacement for GRC tooling.",
+      "NFROS is the engagement and execution layer around the platforms the bank already trusts. The systems of record stay. The operating system adds a structured layer on top: role-aware daily work, governed process execution through Role Apps, and a control fabric that links identity, authority, approval, audit, and evaluation into every step. The slide shows it as an operating system: it boots by connecting to the existing platforms, starting the control kernel and opening the role workspaces. Then one work item travels from source signal through prepared work, a human decision and approved execution to an external receipt, without the professional reconnecting manually to another system. Reinforce the non-replacement message: this is an engagement layer, not a replacement for GRC tooling.",
     presentingTimeSeconds: 90,
   },
 
@@ -233,7 +232,7 @@ export const CORE_SLIDES_V24: CoreSlide24[] = [
       },
     ],
     speakerNotes:
-      "Show the product. The professional opens a single URL. The work hub shows their portfolio in one view: which cycles are active, which are waiting for them, which have AI-prepared content ready for review. The system tells them where judgment is needed and keeps routine work out of the way. The day line below the product image shows three touchpoints across a working day. Each is short. The preparation happened before the professional arrived. Note that this image shows the current product state with synthetic data. Every judgment remains with the professional. The hub reduces the administrative overhead that surrounds it.",
+      "Show the product. The professional opens a single URL. The work hub shows their portfolio in one view: which cycles are active, which are waiting for them, which have AI-prepared content ready for review. The system tells them where judgment is needed and keeps routine work out of the way. Now holds the two items that need judgment this morning, Next is prepared for later, and Done keeps the audit trail. The day line marks where we are, what is already done and the 17:00 deadline. The preparation happened before the professional arrived. This is an illustrative view with synthetic data. Every judgment remains with the professional. The hub reduces the administrative overhead that surrounds it.",
     presentingTimeSeconds: 100,
   },
 
@@ -565,7 +564,7 @@ export const CORE_SLIDES_V24: CoreSlide24[] = [
       },
     ],
     speakerNotes:
-      "Reusable platform controls create the economics; Role Apps create the expansion path. The platform layer is fixed and shared: identity, infrastructure, AI model access, security. Function Packs enable each risk discipline: OR, TPRM, and Control Assurance. Role Apps are the growth mechanism: each new app adds a governed process without changing the platform or any previously deployed app. The App Factory shows how new apps are designed, built, validated, released, and improved in a continuous cycle. Show that the Role App catalogue reflects the actual current state: installed, Demo, and Planned are read from the product registry. Do not describe a fictional installed app.",
+      "Reusable platform controls create the economics; Role Apps create the expansion path. The platform layer is fixed and shared: identity, infrastructure, AI model access, security. Function Packs enable each risk discipline: OR, TPRM, and Control Assurance. Role Apps are the growth mechanism: each new app adds a governed process without changing the platform or any previously deployed app. The blocks show the economics: the first Role App builds four Function Packs, the second reuses three and builds one, the third reuses all four. Packs are built once and reused, so each new app needs less new build; the App Factory adds a pack only when no existing pack fits. The three apps on the slide are illustrative; do not describe them as installed.",
     presentingTimeSeconds: 100,
   },
 
@@ -644,5 +643,35 @@ export const CORE_SLIDES_V24: CoreSlide24[] = [
     speakerNotes:
       "The next decision is which two working journeys the bank should prove first. We are not asking for a programme commitment today. We are asking whether the audience is willing to run a gated design-partner engagement on a defined scope. Step one establishes the baseline: one business area, current work map, authority model, and the measures we will use to verify outcomes. The gate question is straightforward: is the process and data ready? Step two proves the two role operating systems: OR and TPRM, read-only first, then approval-gated execution, with measured outcomes throughout. Step three scales by Role App: add processes and functions based on what the pilot verified, increase autonomy only where proven. Each gate is a decision point, not an automatic progression. End by asking who in the room should be involved in scoping step one.",
     presentingTimeSeconds: 90,
+  },
+
+  // ---------------------------------------------------------------------------
+  // Slide 14: Close: questions and discussion
+  // ---------------------------------------------------------------------------
+  {
+    id: "slide-14",
+    kind: "closing",
+    section: "Close",
+    title: "Questions and discussion",
+    subtitle: "Three questions to shape the next step together",
+    exhibit: {
+      type: "closing",
+      data: {
+        prompts: [
+          "Which two roles should we start with?",
+          "What evidence would your risk committee need to see?",
+          "Where must a named person always stay in the loop?",
+        ],
+        decision: "Choose the first RCSA and TPRM journeys",
+        presenter: "Thomas Zijlstra",
+      },
+    },
+    evidenceBasis: [
+      { type: "proposal", label: "Accenture design-partner engagement structure" },
+    ],
+    appendixRefs: [],
+    speakerNotes:
+      "Open the floor. Use the three prompts if the room is quiet: they lead straight to the decision on the previous slide. Capture who should be involved in scoping the first two journeys and agree the follow-up date before closing.",
+    presentingTimeSeconds: 300,
   },
 ];

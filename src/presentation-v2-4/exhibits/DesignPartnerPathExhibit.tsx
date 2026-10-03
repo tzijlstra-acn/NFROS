@@ -92,7 +92,7 @@ const PHASE_CONFIGS: PhaseConfig[] = [
         main: "Baseline versus system-assisted comparison",
         subs: [
           { text: "Baseline captured in week 1, before go-live" },
-          { text: "Mid-pilot read at week 4, final report at week 6" },
+          { text: "Mid-pilot read in month 3, final report in month 4" },
         ],
       },
       {
@@ -113,7 +113,7 @@ const PHASE_CONFIGS: PhaseConfig[] = [
     badgeColor: "var(--pv24-accent-dark)",
     outcomes: [
       {
-        main: "Onboard 3 additional roles in Q2",
+        main: "Onboard 3 additional roles in months 5-6",
         subs: [
           { text: "Control Assurance, Incident Response, Regulatory Change" },
         ],
@@ -138,14 +138,17 @@ const PHASE_CONFIGS: PhaseConfig[] = [
 // Timeline month markers (relative x inside 1700-wide container)
 // ---------------------------------------------------------------------------
 
+// Relative months only: the start date is agreed with the client
 const TIMELINE_MONTHS = [
-  { label: "Jan", x: 0 },
-  { label: "Mar", x: 600 },
-  { label: "May", x: 1200 },
-  { label: "Jul", x: 1700 },
+  { label: "Start", x: 0 },
+  { label: "Month 2", x: 600 },
+  { label: "Month 4", x: 1200 },
+  { label: "Month 6", x: 1700 },
 ];
 
 // Phase bars aligned with cards (relative x inside container)
+const PHASE_MONTHS = ["Months 1-2", "Months 3-4", "Months 5-6"];
+
 const TIMELINE_SPANS = [
   { x: 0, w: 500, color: "var(--pv24-accent)" },
   { x: 600, w: 500, color: "#7A7F8C" },
@@ -507,6 +510,7 @@ function TimelineBar({ skip, delay }: { skip: boolean; delay: number }) {
               marginTop: 5,
               textAlign: "center",
               letterSpacing: "0.06em",
+              whiteSpace: "nowrap",
             }}
           >
             {month.label}
@@ -536,7 +540,7 @@ function TimelineBar({ skip, delay }: { skip: boolean; delay: number }) {
               opacity: 1,
             }}
           >
-            {cfg.verb}
+            {cfg.verb}: {PHASE_MONTHS[i] ?? ""}
           </div>
         );
       })}

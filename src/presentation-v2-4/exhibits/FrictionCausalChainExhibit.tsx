@@ -23,10 +23,15 @@ const STAGE_TOP = 160;
 const STAGE_LABEL_Y = 290;
 const ARROW_Y = 400;
 const FRICTION_Y = 360;
-const KPI_Y = 540;
-const IMPLICATION_Y = 700;
-// The feedback arc bottoms out near y=650; its label sits just under it
-const ARC_LABEL_Y = 684;
+// One card per stage holds its figure, descriptor and consequence
+const CARD_TOP = 466;
+const CARD_W = 316;
+const CARD_H = 176;
+const STAGE_COLORS = ["var(--pv24-text-secondary)", "var(--pv24-text-secondary)", "var(--pv24-accent)", "var(--pv24-brand-purple-dark)"];
+// The feedback loop runs beneath the cards; its label sits under the curve
+const ARC_START_Y = CARD_TOP + CARD_H + 10;
+const ARC_CTRL_Y = 772;
+const ARC_LABEL_Y = 752;
 
 // Phase labels above the stages (3 phases across 4 stages)
 // "Collection" → stages 1-2, "Interpretation" → stage 3, "Action" → stage 4
@@ -117,37 +122,25 @@ export function FrictionCausalChainExhibit({ data, exportMode = false }: Props) 
           );
         })}
 
-        {/* KPI number + description per stage */}
+        {/* Stage cards: figure, descriptor and consequence */}
         {STAGE_KPIS.map((kpi, i) => {
           const cx = STAGE_CX[i] ?? 260;
-          const desc = STAGE_KPIS_DESC[i] ?? "";
-          if (skip) {
-            return (
-              <g key={i}>
-                <text x={cx} y={KPI_Y} textAnchor="middle" fontFamily="Arial, sans-serif" fontSize={36} fontWeight={700} fill="var(--pv24-text)">{kpi}</text>
-                <text x={cx} y={KPI_Y + 34} textAnchor="middle" fontFamily="Arial, sans-serif" fontSize={17} fill="var(--pv24-text-secondary)">{desc}</text>
-              </g>
-            );
-          }
-          return (
-            <motion.g key={i} initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.8 + i * 0.12, duration: 0.4 }}>
-              <text x={cx} y={KPI_Y} textAnchor="middle" fontFamily="Arial, sans-serif" fontSize={36} fontWeight={700} fill="var(--pv24-text)">{kpi}</text>
-              <text x={cx} y={KPI_Y + 34} textAnchor="middle" fontFamily="Arial, sans-serif" fontSize={17} fill="var(--pv24-text-secondary)">{desc}</text>
-            </motion.g>
+          const x = cx - CARD_W / 2;
+          const card = (
+            <>
+              <rect x={x} y={CARD_TOP} width={CARD_W} height={CARD_H} fill="var(--pv24-surface)" stroke="var(--pv24-border)" strokeWidth={1.5} />
+              <rect x={x} y={CARD_TOP} width={CARD_W} height={5} fill={STAGE_COLORS[i]} />
+              <text x={cx} y={CARD_TOP + 58} textAnchor="middle" fontFamily="Arial, sans-serif" fontSize={38} fontWeight={700} fill="var(--pv24-text)">{kpi}</text>
+              <text x={cx} y={CARD_TOP + 90} textAnchor="middle" fontFamily="Arial, sans-serif" fontSize={18} fill="var(--pv24-text-secondary)">{STAGE_KPIS_DESC[i] ?? ""}</text>
+              <line x1={x + 28} y1={CARD_TOP + 114} x2={x + CARD_W - 28} y2={CARD_TOP + 114} stroke="var(--pv24-border)" strokeWidth={1} />
+              <text x={cx} y={CARD_TOP + 150} textAnchor="middle" fontFamily="Arial, sans-serif" fontSize={19} fontWeight={600} fontStyle="italic" fill="var(--pv24-accent-dark)">{implications[i] ?? ""}</text>
+            </>
           );
-        })}
-
-        {/* Implication labels per stage */}
-        {implications.map((label, i) => {
-          const cx = STAGE_CX[i] ?? 260;
-          if (skip) {
-            return <text key={i} x={cx} y={IMPLICATION_Y} textAnchor="middle" fontFamily="Arial, sans-serif" fontSize={16} fontStyle="italic" fill="var(--pv24-accent)">{label}</text>;
-          }
+          if (skip) return <g key={i}>{card}</g>;
           return (
-            <motion.text key={i} x={cx} y={IMPLICATION_Y} textAnchor="middle" fontFamily="Arial, sans-serif" fontSize={16} fontStyle="italic" fill="var(--pv24-accent)"
-              initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 1.1 + i * 0.1 }}>
-              {label}
-            </motion.text>
+            <motion.g key={i} initial={{ opacity: 0, y: 14 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.8 + i * 0.15, duration: 0.4 }}>
+              {card}
+            </motion.g>
           );
         })}
 
@@ -155,12 +148,11 @@ export function FrictionCausalChainExhibit({ data, exportMode = false }: Props) 
         {(() => {
           const x1 = STAGE_CX[STAGE_COUNT - 1] ?? 1580;
           const x0 = STAGE_CX[0] ?? 260;
-          const arcY = 880;
-          const d = `M ${x1} ${ARROW_Y + 20} Q ${(x1 + x0) / 2} ${arcY}, ${x0} ${ARROW_Y + 20}`;
+          const d = `M ${x1} ${ARC_START_Y} Q ${(x1 + x0) / 2} ${ARC_CTRL_Y}, ${x0} ${ARC_START_Y}`;
           const arc = (
             <>
-              <path d={d} fill="none" stroke="var(--pv24-accent)" strokeWidth={1.5} strokeDasharray="6 4" />
-              <polygon points={`${x0 - 6},${ARROW_Y + 10} ${x0 + 6},${ARROW_Y + 20} ${x0 - 6},${ARROW_Y + 30}`} fill="var(--pv24-accent)" />
+              <path d={d} fill="none" stroke="var(--pv24-accent)" strokeWidth={2} strokeDasharray="6 4" />
+              <polygon points={`${x0 - 9},${ARC_START_Y + 4} ${x0},${ARC_START_Y - 8} ${x0 + 9},${ARC_START_Y + 4}`} fill="var(--pv24-accent)" />
               <text x={(x1 + x0) / 2 + 40} y={ARC_LABEL_Y} textAnchor="start" fontFamily="Arial, sans-serif" fontSize={17} fontStyle="italic" fill="var(--pv24-accent)">{feedbackLabel}</text>
             </>
           );

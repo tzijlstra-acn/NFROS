@@ -154,6 +154,7 @@ export function PresentationV24({
             boxSizing: "border-box",
             display: "flex",
             flexDirection: "column",
+            visibility: navOpen ? "visible" : "hidden",
           }}
         >
           <div

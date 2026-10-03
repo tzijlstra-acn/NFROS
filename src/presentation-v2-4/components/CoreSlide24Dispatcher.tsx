@@ -4,7 +4,8 @@ import { useLayoutEffect, useRef, useState } from "react";
 import type { CoreSlide24, CoreExhibit } from "../data/types";
 import SlideHeader from "./SlideHeader";
 import SlideSource from "./SlideSource";
-import { CapacityConvergenceExhibit } from "../exhibits/CapacityConvergenceExhibit";
+import { CoverExhibit } from "../exhibits/CoverExhibit";
+import { ClosingExhibit } from "../exhibits/ClosingExhibit";
 import { StoryPathExhibit } from "../exhibits/StoryPathExhibit";
 import { FragmentationSankeyExhibit } from "../exhibits/FragmentationSankeyExhibit";
 import { FrictionCausalChainExhibit } from "../exhibits/FrictionCausalChainExhibit";
@@ -39,11 +40,7 @@ const AREA_BOTTOM = 112;
 // 16:9 box so both layers share one coordinate space. The [top, bottom] crop window, in
 // 1080 coordinates, is the band that holds content; it is fitted to the stage height.
 const RATIO_169_CROP: Partial<Record<CoreExhibit["type"], readonly [number, number]>> = {
-  "capacity-convergence": [160, 920],
-  "story-path": [60, 940],
-  "fragmentation-sankey": [96, 1056],
   "friction-causal-chain": [56, 800],
-  "engagement-layer": [72, 944],
   "role-architecture": [236, 1006],
 };
 
@@ -58,10 +55,13 @@ function ratioBoxStyle([cropTop, cropBottom]: readonly [number, number]): React.
   };
 }
 
-function renderExhibit(exhibit: CoreExhibit, exportMode: boolean): React.ReactNode {
+function renderExhibit(slide: CoreSlide24, exportMode: boolean): React.ReactNode {
+  const exhibit = slide.exhibit;
   switch (exhibit.type) {
-    case "capacity-convergence":
-      return <CapacityConvergenceExhibit data={exhibit.data} exportMode={exportMode} />;
+    case "cover":
+      return <CoverExhibit data={exhibit.data} title={slide.title} subtitle={slide.subtitle} exportMode={exportMode} />;
+    case "closing":
+      return <ClosingExhibit data={exhibit.data} title={slide.title} subtitle={slide.subtitle} exportMode={exportMode} />;
     case "story-path":
       return <StoryPathExhibit data={exhibit.data} exportMode={exportMode} />;
     case "fragmentation-sankey":
@@ -118,8 +118,12 @@ export default function CoreSlide24Dispatcher({
   const scale = Math.min(1, areaH / STAGE_H);
   const offsetX = (SLIDE_W - STAGE_W * scale) / 2;
   const offsetY = Math.max(0, (areaH - STAGE_H * scale) / 2);
-  const exhibit = renderExhibit(slide.exhibit, exportMode);
+  const exhibit = renderExhibit(slide, exportMode);
   const crop = RATIO_169_CROP[slide.exhibit.type];
+
+  if (slide.kind === "cover" || slide.kind === "closing") {
+    return <div style={{ position: "absolute", inset: 0 }}>{exhibit}</div>;
+  }
 
   return (
     <>
