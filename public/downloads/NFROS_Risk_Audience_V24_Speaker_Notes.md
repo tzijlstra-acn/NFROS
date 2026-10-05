@@ -1,6 +1,6 @@
 # NFROS Risk Audience Presentation V2.4: speaker notes
 
-Deck version v2.4. Exported 2026-10-05T08:07:17.938Z from commit 6c2cf46b5168. Brand mode: Development only.
+Deck version v2.4. Exported 2026-10-05T08:34:47.342Z from commit e38f3ec1df99. Brand mode: Development only.
 
 37 slides: 13 core, 1 closing, 1 appendix index and 22 appendix slides.
 

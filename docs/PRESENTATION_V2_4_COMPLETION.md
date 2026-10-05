@@ -199,9 +199,14 @@ The 95 links are:
   3. capture the receipt;
   4. run `npm run demo:reset`.
 
-  This was not done without the owner's approval. Slide 10 describes Execution, Receipt and Audit as thread steps, with no mock screenshot. It is laid out so a registered `execution-receipt` capture can drop in.
-- **Brand mode.** Exports are marked "Development only": the approved Accenture logo, Greater Than symbol and Graphik font are not configured (`ACCENTURE_BRAND_ASSET_DIR`). `--client-facing` export fails by design until they are.
-- **Export provenance.** The current exports were produced from the working tree on top of `6c2cf46`. Re-export after committing, so the metadata and hash name the release commit.
+  The owner approved this step, but the session's tool permissions blocked database writes, so it still has to be run by hand or with that permission granted. The confirm-result panel carries `data-presentation-region="decision-result"`, so the capture can target it like every other asset. Then:
+  1. register the asset;
+  2. set `assetId: "execution-receipt"` on the Receipt step of slide 10;
+  3. re-export.
+
+  Until then, slide 10 describes Execution, Receipt and Audit as thread steps, with no mock screenshot.
+- **Brand mode.** Exports are marked "Development only". The approved Accenture logo, Greater Than symbol and Graphik font are not on this machine and must come from the Accenture brand team. Point `ACCENTURE_BRAND_ASSET_DIR` at a local folder holding them, outside the repository, then run `npm run export:presentation-v2-4 -- --client-facing`. That mode fails by design until the assets are present.
+- **Export provenance.** The release commit is `e38f3ec`. The exports were regenerated from that clean tree, so their metadata and hash name it.
 - **Fresh clones.** PDFs, PowerPoint and screenshots are gitignored. On a fresh clone the download menu shows "Not yet exported" until `npm run export:presentation-v2-4` runs. The product captures in `public/presentation-assets/v2.4-final/` are tracked, so the deck itself needs no capture step.
 - **Capture side effect.** Opening the AI Partner dock during capture writes two activity rows each time; 22 rows have accumulated since the last reset. `npm run demo:reset` clears them, and also applies the corrected seed titles to the running database.
 - **Pause.** Motion's JavaScript animations catch up on resume. Browser, SVG and timer-driven animations resume in place.

@@ -1,8 +1,8 @@
 {
   "deckVersion": "v2.4",
   "deckName": "NFROS Risk Audience Presentation",
-  "exportedAt": "2026-10-05T08:07:17.938Z",
-  "gitCommit": "6c2cf46b5168befaf2b16783b0e73841ecd6214d",
+  "exportedAt": "2026-10-05T08:34:47.342Z",
+  "gitCommit": "e38f3ec1df992090d4f45de4cb246842a264b7ec",
   "workingTreeDirty": true,
   "mode": "release",
   "audience": "internal-review",
@@ -77,22 +77,22 @@
     {
       "name": "NFROS_Risk_Audience_V24_Core.pdf",
       "bytes": 9300069,
-      "sha256": "9090a696aa6864f5c5874c3df850e350a36ff20780ac9a2112e6571496d90f00"
+      "sha256": "54e2d98e3d8a9d2cf58789e0736a4f05d289aff46f394254bb3278ce64dbc3a3"
     },
     {
       "name": "NFROS_Risk_Audience_V24_Core_and_Appendix.pdf",
       "bytes": 24104698,
-      "sha256": "6fbc41c7b7c574de1b8d3e454433ea93b76feca1fb0534493c655962565e059d"
+      "sha256": "1274e4fcc8fcd294a9c5494cb502ec41bc13d984cdc84d25dfc73ca7f7a72a6f"
     },
     {
       "name": "NFROS_Risk_Audience_V24_Core_and_Appendix.pptx",
       "bytes": 24349810,
-      "sha256": "7f75afe62b776aa62bff97bb07b1853c539243111cce8a29cf4d614e37bf2a21"
+      "sha256": "fa08453cb76049c1ef57e9e33ad416d39a4d2689d159cad9574b61a574ce2510"
     },
     {
       "name": "NFROS_Risk_Audience_V24_Speaker_Notes.md",
       "bytes": 32594,
-      "sha256": "c84ff165ec137c84ed155b90115e42b20e48c2585a92347dca14b9531064fb68"
+      "sha256": "db5bf729138a9a98a3451ca4487a0239278ae6800d7adf723c021acc1c7438f4"
     }
   ],
   "slides": [
