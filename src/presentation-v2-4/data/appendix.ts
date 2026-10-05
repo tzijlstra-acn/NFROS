@@ -1,721 +1,1078 @@
 /**
  * V2.4 appendix slide data.
  *
- * Every slide has an action title and an evidence subtitle.
- * No double-hyphen (`--`) or em dash in any string value.
- * No invented benchmarks, client savings, or compliance claims.
+ * Twenty-two reference slides in five index groups: Product, Processes,
+ * Controls, Technology, and Service and rollout. Every slide has an action
+ * title, an evidence subtitle, an index group, an implementation status, one
+ * primary visual, at least one evidence basis and short speaker notes.
+ *
+ * Status levels:
+ *   implemented  runs locally on synthetic data
+ *   partial      some of the slide runs today, the rest is labelled
+ *   demo         shown in the product as a shell or seeded illustration
+ *   planned      design or proposal only
+ *   reference    context material, for example the jurisdiction model
+ *
+ * Every fact is grounded in this repository: role-app registry and
+ * definitions, identity, security, audit, integration and product docs, and
+ * the evaluation report. The handoff in docs/handoffs/presentation-v2-4-appendix.md
+ * lists the source for each slide and the claims removed from earlier drafts.
+ *
+ * Synthetic institution and data. No client outcome, saving, benchmark,
+ * certification, production readiness or compliance claim is made.
+ * DORA and EBA references apply to the German and Austrian entities only; the
+ * Swiss entity is FINMA supervised. Illustrative regulatory context, not legal advice.
+ *
+ * Copy rules: no em dash, no en dash, no double hyphen as punctuation.
  */
 
 import type { AppendixSlide24 } from "./types";
 
+const REGULATORY_LABEL = "Illustrative regulatory context, not legal advice";
+
 export const APPENDIX_SLIDES_V24: AppendixSlide24[] = [
+  // ===========================================================================
+  // Product
+  // ===========================================================================
   {
     id: "app-01",
-    section: "Scope",
-    title: "The current release proves two complete Role Operating Systems",
-    subtitle: "Operational Risk and TPRM are available; other roles remain Demo or Planned",
+    section: "Product",
+    group: "Product",
+    status: {
+      level: "partial",
+      note: "Two roles and two Role Apps run locally on synthetic data; four roles show a demo or planned page only",
+    },
+    title: "Two role operating systems run today, while four roles remain demo or planned",
+    subtitle: "Role release data marks two roles available, two demo and two planned; two of seven Role Apps are installed",
     visual: {
       type: "status-table",
-      columns: ["Component", "Status", "Note"],
+      columns: ["Component", "Status", "What runs today"],
       rows: [
-        { Component: "Operational Risk Partner OS", Status: "Implemented", Note: "Role dashboard, work hub and queue running locally" },
-        { Component: "TPRM Manager OS", Status: "Implemented", Note: "Role dashboard, work hub and queue running locally" },
-        { Component: "RCSA Cycle Assistant (Role App)", Status: "Implemented", Note: "Eight-stage workflow with AI drafting at each stage" },
-        { Component: "Third-Party Onboarding (Role App)", Status: "Implemented", Note: "Eight-stage onboarding workflow installed and tested" },
-        { Component: "Control Assurance OS", Status: "Demo only", Note: "Role shell exists; workflow apps not yet built" },
-        { Component: "Incident and Resilience OS", Status: "Demo only", Note: "Role shell exists; workflow apps not yet built" },
-        { Component: "Regulatory Change OS", Status: "Planned", Note: "Design agreed; build not started" },
+        { Component: "Operational Risk Partner OS", Status: "Available", "What runs today": "Home, Work Hub, Processes, Decisions, AI Partner and the RCSA app" },
+        { Component: "Third-Party Risk Manager OS", Status: "Available", "What runs today": "The same shared core with the Third-Party Onboarding app" },
+        { Component: "Control Assurance Specialist", Status: "Demo", "What runs today": "Explanatory demo page in the current interface; no Role App" },
+        { Component: "Incident and Resilience Lead", Status: "Demo", "What runs today": "Explanatory demo page in the current interface; no Role App" },
+        { Component: "Regulatory Change, NFR Portfolio Lead", Status: "Planned", "What runs today": "Listed in the role selector without a link" },
+        { Component: "Role Apps", Status: "2 installed, 5 preview", "What runs today": "Preview apps are registry entries with no route" },
+        { Component: "Platform services", Status: "Partial", "What runs today": "Gate, audit and evaluations run; identity and connectors are local only" },
       ],
     },
     evidenceBasis: [
-      { type: "repository", label: "Role App catalogue, current release state" },
-      { type: "product", label: "NFR OS product state, synthetic data" },
+      { type: "repository", label: "Role release definitions, src/product/release/role-release.ts" },
+      { type: "repository", label: "Role App registry, src/role-apps/registry.ts" },
+      { type: "product", label: "Workday role selector, synthetic data" },
     ],
     speakerNotes:
-      "Walk through each component status honestly. Implemented means running locally with synthetic data and tested end to end. Demo only means the shell exists but process apps have not been built. Planned means design is agreed but build has not started. Do not overstate what is available. The two implemented role operating systems are the foundation for the design-partner engagement.",
+      "Use this table to separate what runs from what is only shown. Available means the role runs locally on synthetic data with its shared core and one installed Role App. Demo roles open an explanatory page in the current interface, and planned roles appear in the selector without a link. Start any design-partner conversation from the two available roles only.",
   },
 
   {
-    id: "app-02",
-    section: "Scope",
-    title: "Role Apps define the expansion path from platform to practice",
-    subtitle: "Installed apps run today; Demo and Planned apps mark the roadmap",
+    id: "app-23",
+    section: "Product",
+    group: "Product",
+    status: {
+      level: "partial",
+      note: "Daily work and decisions run for two roles; meeting minutes, inbox conversion and scheduled routines are not built",
+    },
+    title: "The shared Role OS core already handles daily work and decisions, with gaps labelled",
+    subtitle: "Capability status for the Operational Risk and Third-Party Risk workspaces in the current interface, on synthetic data",
     visual: {
       type: "capability-map",
       groups: [
         {
-          name: "Installed",
+          name: "Daily work",
           items: [
-            { label: "RCSA Cycle Assistant", status: "Installed" },
-            { label: "Third-Party Onboarding", status: "Installed" },
+            { label: "Home with Now, Next and Done", status: "Implemented" },
+            { label: "Agenda and meeting lists", status: "Implemented" },
+            { label: "Actions with ownership filters", status: "Implemented" },
+            { label: "Inbox with AI triage proposal", status: "Implemented" },
+            { label: "Meeting preparation status", status: "Partial" },
+            { label: "Minutes editing and inbox conversion", status: "Not built" },
           ],
         },
         {
-          name: "Demo",
+          name: "Judgment and evidence",
           items: [
-            { label: "Control Assurance Review", status: "Demo" },
-            { label: "Event and Incident Manager", status: "Demo" },
-            { label: "Committee Preparation", status: "Demo" },
-            { label: "Regulatory Horizon Monitor", status: "Demo" },
+            { label: "Decision queue with confirmed rationale", status: "Implemented" },
+            { label: "Approval and execution receipt", status: "Implemented" },
+            { label: "Evidence drawer with provenance", status: "Partial" },
+            { label: "Process stages through Role Apps", status: "Partial" },
           ],
         },
         {
-          name: "Planned",
+          name: "AI Partner",
           items: [
-            { label: "Periodic Third-Party Review", status: "Planned" },
-            { label: "Risk and Control Self-Assessment (standalone)", status: "Planned" },
+            { label: "Suggestions with citations", status: "Implemented" },
+            { label: "Activity log of AI work", status: "Implemented" },
+            { label: "Chat in safe and offline modes", status: "Implemented" },
+            { label: "Live model mode", status: "Partial" },
+            { label: "Scheduled routines", status: "Demo" },
+          ],
+        },
+        {
+          name: "Administration",
+          items: [
+            { label: "Role App registry view", status: "Implemented" },
+            { label: "Entitlements, branding and terminology", status: "Implemented" },
+            { label: "Integration centre", status: "Simulated" },
+            { label: "Operations console", status: "Implemented" },
+            { label: "Sign-in and access guards", status: "Partial" },
           ],
         },
       ],
     },
     evidenceBasis: [
-      { type: "repository", label: "Role App catalogue, current release state" },
+      { type: "product", label: "Workday Home, Work Hub, Processes and Decisions, synthetic data" },
+      { type: "repository", label: "Work Hub handoff, docs/handoffs/workday-v3-3-role-os.md" },
+      { type: "repository", label: "Settings and operations routes, app/settings and app/ops" },
     ],
     speakerNotes:
-      "The catalogue shows what is running, what is demonstrated, and what is on the roadmap. Do not describe a Demo app as available for production use. The App Factory track on slide 12 shows how new apps move from Discover through Release into Installed state.",
+      "This is the shared core that both available roles use. Implemented means it runs locally against the seeded database. Meeting preparation shows a status rather than a full preparation pack, and minutes editing and inbox conversion are not built, so do not demonstrate them as working. The demo and planned roles do not have this core in the current interface.",
   },
 
   {
-    id: "app-03",
-    section: "Process",
-    title: "RCSA remains connected from scope to monitored outcome",
-    subtitle: "Eight stages link evidence, challenge, decisions, actions and reassessment",
-    visual: {
-      type: "process-matrix",
-      stages: ["Scope", "Evidence", "Change", "Input", "Challenge", "Rating", "Actions", "Monitor"],
-      tracks: ["AI prepares", "Human decides", "System executes"],
-      cells: {
-        "Scope_AI prepares": "Trigger criteria, portfolio extraction",
-        "Scope_Human decides": "Scope confirmation",
-        "Scope_System executes": "Cycle opens, notifications sent",
-        "Evidence_AI prepares": "Prior assessment, data pull, gap flags",
-        "Evidence_Human decides": "Evidence adequacy review",
-        "Evidence_System executes": "Evidence drawer updated",
-        "Change_AI prepares": "Change delta analysis",
-        "Change_Human decides": "Change significance assessment",
-        "Change_System executes": "Change log updated",
-        "Input_AI prepares": "First-line input request",
-        "Input_Human decides": "First-line submission",
-        "Input_System executes": "Input captured and linked",
-        "Challenge_AI prepares": "Challenge agenda, question pack",
-        "Challenge_Human decides": "Challenge workshop decision",
-        "Challenge_System executes": "Challenge record archived",
-        "Rating_AI prepares": "Rating comparison, appetite flag",
-        "Rating_Human decides": "Risk rating and appetite sign-off",
-        "Rating_System executes": "Rating recorded in GRC",
-        "Actions_AI prepares": "Action owner suggestions",
-        "Actions_Human decides": "Action approval",
-        "Actions_System executes": "Actions created in action tracker",
-        "Monitor_AI prepares": "Monitoring schedule, trigger flags",
-        "Monitor_Human decides": "Reassessment trigger review",
-        "Monitor_System executes": "Monitoring active, next cycle queued",
-      },
+    id: "app-02",
+    section: "Product",
+    group: "Product",
+    status: {
+      level: "partial",
+      note: "Two apps are installed with process pages; five preview apps exist only as registry entries and cannot be started",
     },
-    evidenceBasis: [
-      { type: "product", label: "RCSA Cycle Assistant, synthetic data" },
-      { type: "repository", label: "Role App process specification" },
-    ],
-    speakerNotes:
-      "Walk through the RCSA process stage by stage. At each stage, show what the AI prepares, what the professional decides, and what the system executes after approval. The three-track structure makes the authority boundary explicit at every step. No stage advances without a human decision on the middle track.",
-  },
-
-  {
-    id: "app-04",
-    section: "Process",
-    title: "Third-party onboarding becomes a persistent governed lifecycle",
-    subtitle: "Classification, due diligence, specialist review, conditions and monitoring remain connected",
-    visual: {
-      type: "process-matrix",
-      stages: ["Request", "Classify", "Due diligence", "Evidence", "Specialists", "Conditions", "Decision", "Monitor"],
-      tracks: ["AI prepares", "Human decides", "System executes"],
-      cells: {
-        "Request_AI prepares": "Intake form, duplicate check",
-        "Request_Human decides": "Request acceptance",
-        "Request_System executes": "Third party created, case opened",
-        "Classify_AI prepares": "Criticality scoring, tier suggestion",
-        "Classify_Human decides": "Criticality and tier classification",
-        "Classify_System executes": "Tier recorded, due diligence scope set",
-        "Due diligence_AI prepares": "Due diligence questionnaire",
-        "Due diligence_Human decides": "Due diligence scope approval",
-        "Due diligence_System executes": "Questionnaire sent to third party",
-        "Evidence_AI prepares": "Response review, gap analysis",
-        "Evidence_Human decides": "Evidence adequacy decision",
-        "Evidence_System executes": "Evidence locked to case",
-        "Specialists_AI prepares": "Specialist routing, context pack",
-        "Specialists_Human decides": "Specialist sign-off per discipline",
-        "Specialists_System executes": "Specialist outputs archived",
-        "Conditions_AI prepares": "Contract condition suggestions",
-        "Conditions_Human decides": "Condition approval",
-        "Conditions_System executes": "Conditions recorded in contract system",
-        "Decision_AI prepares": "Approval summary",
-        "Decision_Human decides": "Onboarding decision",
-        "Decision_System executes": "Third party activated, receipt generated",
-        "Monitor_AI prepares": "Monitoring schedule, event triggers",
-        "Monitor_Human decides": "Reassessment trigger review",
-        "Monitor_System executes": "Monitoring active, periodic review queued",
-      },
-    },
-    evidenceBasis: [
-      { type: "product", label: "Third-Party Onboarding, synthetic data" },
-      { type: "repository", label: "Role App process specification" },
-    ],
-    speakerNotes:
-      "The TPRM process follows the same three-track structure as RCSA. The eight stages take a third party from initial request through to active monitoring. At each stage the AI prepares, the professional decides, and the system executes after approval. The lifecycle does not end at onboarding; monitoring and periodic review are part of the Role App.",
-  },
-
-  {
-    id: "app-05",
-    section: "Scope",
-    title: "Demo Role Apps show the expansion model without production commitment",
-    subtitle: "Four demo apps illustrate how additional processes attach to the shared core",
+    title: "The Role App library holds seven apps, and two of them can be started today",
+    subtitle: "The code registry lists two installed apps with eight-stage processes and five preview apps with no entry route",
     visual: {
       type: "status-table",
-      columns: ["Role App", "Role OS", "Status", "Capability"],
+      columns: ["Role App", "Role", "Status", "Build state"],
       rows: [
-        { "Role App": "Control Assurance Review", "Role OS": "Control Assurance OS", Status: "Demo", Capability: "End-to-end control testing and evidence" },
-        { "Role App": "Event and Incident Manager", "Role OS": "Incident and Resilience OS", Status: "Demo", Capability: "Event capture, impact assessment, escalation" },
-        { "Role App": "Committee Preparation", "Role OS": "OR Partner OS", Status: "Demo", Capability: "Agenda, packs, minutes, and action tracking" },
-        { "Role App": "Regulatory Horizon Monitor", "Role OS": "Regulatory Change OS", Status: "Demo", Capability: "Change identification, impact assessment, tracking" },
+        { "Role App": "RCSA Cycle Assistant", Role: "Operational Risk Partner", Status: "Installed", "Build state": "Routed process, 8 stages, version 1.0.0" },
+        { "Role App": "Third-Party Onboarding", Role: "Third-Party Risk Manager", Status: "Installed", "Build state": "Routed process, 8 stages, version 1.0.0" },
+        { "Role App": "Event-Driven Reassessment", Role: "Operational Risk Partner", Status: "Preview", "Build state": "Prototype definition, 3 stages, no route" },
+        { "Role App": "Rapid Assessment", Role: "Operational Risk Partner", Status: "Preview", "Build state": "Concept definition, 4 stages, no route" },
+        { "Role App": "Periodic Reassessment", Role: "Third-Party Risk Manager", Status: "Preview", "Build state": "Prototype definition, 4 stages, no route" },
+        { "Role App": "Exit Planning", Role: "Third-Party Risk Manager", Status: "Preview", "Build state": "Concept definition, 4 stages, no route" },
+        { "Role App": "Fourth-Party Deep Dive", Role: "Third-Party Risk Manager", Status: "Preview", "Build state": "Concept definition, 4 stages, no route" },
       ],
     },
     evidenceBasis: [
-      { type: "repository", label: "Role App catalogue, current release state" },
+      { type: "repository", label: "Role App registry, src/role-apps/registry.ts" },
+      { type: "product", label: "Administrator Role App view, /settings/role-apps" },
     ],
     speakerNotes:
-      "Demo apps exist as demonstration capability only. They are not available for production use. Their purpose is to show how the App Factory track can extend the platform. Do not describe a demo app as ready for deployment.",
+      "This is the complete catalogue in code; there is no longer list behind it. The two installed apps have process pages a professional can open. The five preview apps are definitions only: the administrator screen shows them as demo or concept apps, and none can be started. Any further app would come through the App Factory as new build.",
   },
 
   {
     id: "app-06",
-    section: "Platform",
-    title: "The AI layer runs four capability groups within defined boundaries",
-    subtitle: "Aggregation, drafting, flagging and linking operate inside the professional's workflow",
+    section: "Product",
+    group: "Product",
+    status: {
+      level: "partial",
+      note: "Suggestions, activity and chat run in safe and offline modes; live mode needs an operator key and does not enforce structured output",
+    },
+    title: "The AI Partner prepares and proposes, while every action it requests passes the gate",
+    subtitle: "Product capture of the AI Partner dock; safe mode is the default and offline mode makes no model call",
     visual: {
-      type: "text-columns",
-      columns: [
-        {
-          heading: "Aggregate",
-          items: [
-            "Pull inputs from connected sources",
-            "Reconcile across GRC and document systems",
-            "Surface relevant prior assessments",
-            "Compile evidence into a single view",
-          ],
-        },
-        {
-          heading: "Draft",
-          items: [
-            "Generate first-draft risk narratives",
-            "Produce challenge question packs",
-            "Summarise third-party due diligence",
-            "Prepare committee-ready summaries",
-          ],
-        },
-        {
-          heading: "Flag",
-          items: [
-            "Identify rating changes from prior cycle",
-            "Surface evidence gaps before submission",
-            "Flag threshold breaches",
-            "Alert on overdue actions and reviews",
-          ],
-        },
-        {
-          heading: "Link",
-          items: [
-            "Associate evidence to workflow stage",
-            "Connect actions to decisions",
-            "Link approvals to execution receipts",
-            "Maintain audit chain across the lifecycle",
-          ],
-        },
+      type: "product-proof",
+      assetId: "ai-partner",
+      caption: "AI Partner in the Operational Risk Partner workday, synthetic data",
+      points: [
+        "Three tabs: suggestions, activity and chat",
+        "Suggestions pass 13 validation rules before display",
+        "Tool calls pass the authority gate and write an audit record",
+        "Prohibited tools, such as external email, are refused and logged",
+        "Live mode calls an OpenAI model when an operator supplies a key",
+        "Safe mode replays cached outputs; offline mode uses seeded answers",
       ],
     },
     evidenceBasis: [
-      { type: "product", label: "AI capability layer, NFR OS platform design" },
-      { type: "repository", label: "AI capability specification" },
+      { type: "product", label: "AI Partner dock, synthetic data" },
+      { type: "repository", label: "Agent runtime and validation, src/agents" },
+      { type: "repository", label: "Demo modes, src/server/config/demo-mode.ts" },
     ],
     speakerNotes:
-      "The four capability groups define what the AI does in concrete terms. Aggregate, draft, flag, and link. The AI does not decide, submit, approve, or escalate. Those actions remain with the professional in every workflow. Each group maps to a set of implemented features in the current product state.",
-  },
-
-  {
-    id: "app-07",
-    section: "Platform",
-    title: "The AI infrastructure is designed for regulated financial services",
-    subtitle: "Model access, data residency, audit, and evaluation are part of the platform design",
-    visual: {
-      type: "text-columns",
-      columns: [
-        {
-          heading: "Model access",
-          items: [
-            "Large language model via enterprise API",
-            "No model training on client data",
-            "Prompt engineering constrained to approved templates",
-            "Output reviewed before display to professional",
-          ],
-        },
-        {
-          heading: "Data handling",
-          items: [
-            "Synthetic data in demonstration environment",
-            "Client data processed in agreed residency boundary",
-            "No persistent storage of LLM inputs or outputs",
-            "Input and output logging for audit where required",
-          ],
-        },
-        {
-          heading: "Evaluation",
-          items: [
-            "AI output quality assessed at each stage",
-            "Human review rates tracked per workflow",
-            "Drift detection for repeatable outputs",
-            "Quarterly model review built into managed service",
-          ],
-        },
-      ],
-    },
-    evidenceBasis: [
-      { type: "product", label: "AI infrastructure specification, NFR OS platform design" },
-      { type: "proposal", label: "Accenture managed service model for AI" },
-    ],
-    speakerNotes:
-      "Address the model governance question directly. The AI does not train on client data. Outputs are reviewed before being shown to the professional. Data residency follows the agreed boundary for the engagement. The evaluation track inside managed operations monitors AI quality over time and flags drift. This is part of the recurring service, not a one-time setup.",
-  },
-
-  {
-    id: "app-08",
-    section: "Platform",
-    title: "The platform architecture connects four layers into one governed path",
-    subtitle: "Role, process, control and integration layers operate together without replacing systems of record",
-    visual: {
-      type: "architecture-layers",
-      layers: [
-        {
-          name: "Role Operating System layer",
-          items: ["OR Partner OS", "TPRM Manager OS", "Control Assurance OS (Demo)", "Incident and Resilience OS (Demo)"],
-        },
-        {
-          name: "Process and workflow layer",
-          items: ["Role Apps", "Stage definitions", "AI assistance at each stage", "Human gate enforcement"],
-        },
-        {
-          name: "Control and identity fabric",
-          items: ["Identity and access", "Authority model", "Approval routing", "Audit event log", "Evaluation pipeline"],
-        },
-        {
-          name: "Integration and systems of record",
-          items: ["GRC connector", "Collaboration connector", "Document store connector", "Data platform connector", "Execution receipt and external acknowledgement"],
-        },
-      ],
-    },
-    evidenceBasis: [
-      { type: "repository", label: "Platform architecture documentation" },
-      { type: "product", label: "NFR OS platform, synthetic data" },
-    ],
-    speakerNotes:
-      "The four-layer model explains how NFROS sits above existing systems without replacing them. The integration layer connects to what the bank already has. The control fabric makes every step governed. The process layer structures the work. The role layer personalises the experience. Walk through each layer in order from bottom to top.",
-  },
-
-  {
-    id: "app-09",
-    section: "Platform",
-    title: "One authority model governs every Role App",
-    subtitle: "Role, materiality and approval tier determine which actions may execute automatically",
-    visual: {
-      type: "authority-matrix",
-      columns: ["Action type", "Executed by", "Approval required", "Audit logged"],
-      rows: [
-        { "Action type": "Routine notification", "Executed by": "AI within policy", "Approval required": "No", "Audit logged": "Yes" },
-        { "Action type": "Evidence association", "Executed by": "AI with human review", "Approval required": "Professional confirmation", "Audit logged": "Yes" },
-        { "Action type": "Draft output", "Executed by": "AI, reviewed by professional", "Approval required": "Professional sign-off", "Audit logged": "Yes" },
-        { "Action type": "Risk rating", "Executed by": "Human", "Approval required": "Role authority required", "Audit logged": "Yes" },
-        { "Action type": "Approval decision", "Executed by": "Human", "Approval required": "Named approver", "Audit logged": "Yes" },
-        { "Action type": "External execution", "Executed by": "System post-approval", "Approval required": "Approval recorded first", "Audit logged": "Yes, with receipt" },
-        { "Action type": "Escalation", "Executed by": "Human", "Approval required": "Escalation authority", "Audit logged": "Yes" },
-      ],
-    },
-    evidenceBasis: [
-      { type: "repository", label: "Identity and access model specification" },
-      { type: "product", label: "Authority model, NFR OS platform design" },
-    ],
-    speakerNotes:
-      "The authority table shows the full range of action types and who or what executes them. Every action is audit logged. External execution only happens after a named approval is recorded. This table can be adapted to show the client's own authority framework once the design-partner baseline is established.",
+      "The AI Partner is where the professional sees what was prepared, what the AI did and where it is uncertain. It can read, cite, draft and propose, but anything that changes a record is held for a person. Refusals are written to the audit log, so the boundary can be shown from data rather than asserted. For a live demonstration we use safe mode, because the story must not depend on a model call.",
   },
 
   {
     id: "app-10",
-    section: "Platform",
-    title: "AI routines run on a defined schedule across active cycles",
-    subtitle: "Eight routine types are implemented; four are in demonstration state",
-    visual: {
-      type: "status-table",
-      columns: ["Routine", "Trigger", "Output", "Status"],
-      rows: [
-        { Routine: "Evidence freshness check", Trigger: "Daily on active cycles", Output: "Freshness flag in evidence drawer", Status: "Implemented" },
-        { Routine: "Action overdue alert", Trigger: "Daily, configured threshold", Output: "Alert to action owner", Status: "Implemented" },
-        { Routine: "Rating drift flag", Trigger: "At evidence stage", Output: "Delta from prior rating", Status: "Implemented" },
-        { Routine: "Challenge question pack", Trigger: "At challenge stage", Output: "Question pack in work hub", Status: "Implemented" },
-        { Routine: "Risk narrative draft", Trigger: "At rating stage", Output: "Draft narrative for review", Status: "Implemented" },
-        { Routine: "Committee summary", Trigger: "At approval stage", Output: "Committee-ready summary", Status: "Demo" },
-        { Routine: "Third-party periodic reminder", Trigger: "Configured review date", Output: "Review task to TPRM Manager", Status: "Demo" },
-        { Routine: "Regulatory horizon briefing", Trigger: "Weekly", Output: "Briefing in work hub", Status: "Demo" },
-      ],
+    section: "Product",
+    group: "Product",
+    status: {
+      level: "demo",
+      note: "Nine routine definitions and their seeded outputs are visible in the product; no scheduler runs them yet",
     },
-    evidenceBasis: [
-      { type: "product", label: "AI routine registry, current implementation state" },
-    ],
-    speakerNotes:
-      "Walk through each routine and its current status. Implemented routines are running in the demonstration environment with synthetic data. Demo routines exist in the registry but are not yet active. The routine schedule is configurable by engagement.",
-  },
-
-  {
-    id: "app-11",
-    section: "Platform",
-    title: "Evaluation and quality assurance are part of the managed service",
-    subtitle: "AI output quality, professional review rates and process compliance are tracked continuously",
+    title: "AI routines are defined to read and draft for each role, but nothing schedules them yet",
+    subtitle: "Nine routines are seeded with a trigger, an authority class and an output; the worker's routine handler is a stub",
     visual: {
       type: "text-columns",
       columns: [
         {
-          heading: "AI output quality",
+          heading: "Operational Risk Partner",
           items: [
-            "Review rate per output type",
-            "Edit rate per draft type",
-            "Flagged output rate",
-            "Output acceptance trend over time",
+            "Morning Brief: daily 07:00, read",
+            "Calendar Scan: daily 07:00, read",
+            "Pre-Meeting Preparation: 30 minutes before, draft",
+            "KRI and Control Watch: hourly, read",
+            "Evidence Freshness Check: weekly, read",
           ],
         },
         {
-          heading: "Process compliance",
+          heading: "Third-Party Risk Manager",
           items: [
-            "Stage completion rate",
-            "Human gate completion rate",
-            "Escalation trigger rate",
-            "Action completion rate",
+            "Morning Brief: daily 07:00, read",
+            "Pre-Meeting Preparation: before meetings, draft",
+            "Supplier Monitoring Watch: daily 08:00, read",
+            "Evidence-Request Follow-up: daily 09:00, draft",
           ],
         },
         {
-          heading: "Service quality",
+          heading: "Boundaries by design",
           items: [
-            "Mean time to AI output",
-            "System availability",
-            "Connector sync latency",
-            "Incident and resolution log",
+            "Routines may only read or draft",
+            "A drafted message waits in the inbox for review",
+            "No routine advances a stage or writes a record",
+            "The act class is reserved and unused",
+          ],
+        },
+        {
+          heading: "Status today",
+          items: [
+            "Definitions and outputs are seeded rows",
+            "Last-run times are seeded, not measured",
+            "Worker handlers complete without real work",
+            "Shown under Processes, AI Routines",
           ],
         },
       ],
     },
     evidenceBasis: [
-      { type: "product", label: "Evaluation pipeline, NFR OS platform design" },
-      { type: "proposal", label: "Managed service quality framework" },
+      { type: "repository", label: "AI routines, docs/AI_ROUTINES.md" },
+      { type: "repository", label: "Routine seed, src/db/seed/role-app-runtime.ts" },
+      { type: "repository", label: "Job worker, scripts/worker.ts" },
     ],
     speakerNotes:
-      "Evaluation is not a post-engagement review. It is a continuous part of the managed service. The three quality dimensions are monitored from day one of the pilot. The data from the pilot feeds the scale decision at the end of step two. No claim is made about what those measures will show; that depends on the bank's own baseline and working patterns.",
+      "Routines are the background layer meant to prepare the day before the professional arrives. Each one is bounded to reading or drafting, so a routine never commits anything without the role holder. Today the nine routines and their outputs are seeded for the demonstration, and the job worker that would run them only marks jobs complete. Present them as designed behaviour, not as a running scheduler.",
+  },
+
+  // ===========================================================================
+  // Processes
+  // ===========================================================================
+  {
+    id: "app-03",
+    section: "Processes",
+    group: "Processes",
+    status: {
+      level: "partial",
+      note: "All eight stages advance locally on synthetic data; AI text is seeded for stages 1 and 2; stage completion is logged but not gated",
+    },
+    title: "RCSA runs as eight stages, each closed by a recorded human decision",
+    subtitle: "The seeded assessment waits at stage 2, Evidence Refresh, shown here as captured from the RCSA Cycle Assistant",
+    visual: {
+      type: "product-proof",
+      assetId: "rcsa-process-stage",
+      caption: "RCSA Cycle Assistant, stage 2 of 8, Evidence Refresh, synthetic data",
+      points: [
+        "Eight stages: Scope and Trigger, Evidence Refresh, Risk and Control Change, First-line Input, Challenge Workshop, Rating and Appetite, Actions and Approval, Monitoring and Reassessment",
+        "AI prepared: four of six required sources retrieved, the two gaps named",
+        "Your task: waive the missing items or escalate before stage 3",
+        "The decision is recorded with its note, then the run moves on",
+      ],
+    },
+    evidenceBasis: [
+      { type: "repository", label: "RCSA Cycle Assistant definition, src/role-apps/rcsa/definition.ts" },
+      { type: "repository", label: "RCSA process documentation, docs/RCSA_PROCESS_APP.md" },
+      { type: "product", label: "RCSA process stage 2, product capture, synthetic data" },
+    ],
+    speakerNotes:
+      "The screen is the RCSA Cycle Assistant at stage 2 of 8, Evidence Refresh, where the seeded assessment waits. The AI has retrieved four of the six required sources and names the two gaps; the professional decides whether to waive them or escalate, and that decision is recorded before stage 3. Each of the eight stages ends the same way, with a judgment that stays with the professional. In the current build only stages 1 and 2 show prepared content and later stages show placeholders. Completing a stage moves the run forward and writes a process event; material consequences, such as a residual rating change, go through the separate decision flow and the authority gate.",
   },
 
   {
+    id: "app-04",
+    section: "Processes",
+    group: "Processes",
+    status: {
+      level: "partial",
+      note: "Stages 1 to 4 show seeded AI preparation; only stage 4 has a decision form, and stages 5 to 8 are locked in the demo case",
+    },
+    title: "Third-party onboarding defines eight gated stages, with the demo case at evidence review",
+    subtitle: "Stage ids come from the onboarding definition; the seeded supplier file for ARC-DE and ARC-AT waits at stage 4",
+    visual: {
+      type: "process-matrix",
+      stages: ["Request", "Classify", "Due diligence", "Evidence", "Specialists", "Conditions", "Decision", "Monitor"],
+      tracks: ["AI prepares", "Human decides", "Recorded outcome"],
+      cells: {
+        "Request_AI prepares": "Procurement request retrieved; duplicate check",
+        "Request_Human decides": "Confirms intake and procurement reference",
+        "Request_Recorded outcome": "Candidate registered with owner and reference",
+        "Classify_AI prepares": "Proposed classification and criticality",
+        "Classify_Human decides": "Outsourcing or ICT service, and criticality",
+        "Classify_Recorded outcome": "Classification and entities with rationale",
+        "Due diligence_AI prepares": "Questionnaire tailored to class and criticality",
+        "Due diligence_Human decides": "Approves the questionnaire before dispatch",
+        "Due diligence_Recorded outcome": "Requests sent; responses checked for completeness",
+        "Evidence_AI prepares": "Document summaries, gaps and drafted chase messages",
+        "Evidence_Human decides": "Pass conditionally, hold or escalate",
+        "Evidence_Recorded outcome": "Each item accepted, rejected or chased",
+        "Specialists_AI prepares": "Specialist review requests drafted",
+        "Specialists_Human decides": "Agrees or challenges each condition",
+        "Specialists_Recorded outcome": "IT Security, Privacy and Legal opinions recorded",
+        "Conditions_AI prepares": "Surfaces open conditions that need a position",
+        "Conditions_Human decides": "Each condition in the contract or waived",
+        "Conditions_Recorded outcome": "Contract approved by owner and procurement",
+        "Decision_AI prepares": "Governance paper for the approval body",
+        "Decision_Human decides": "Records the approval decision with rationale",
+        "Decision_Recorded outcome": "Supplier set to active in the register",
+        "Monitor_AI prepares": "Supplier monitoring routine defined, not running",
+        "Monitor_Human decides": "Sets frequency and next assessment date",
+        "Monitor_Recorded outcome": "Monitoring plan created; case closed",
+      },
+    },
+    evidenceBasis: [
+      { type: "repository", label: "Third-Party Onboarding definition, src/role-apps/tprm/definition.ts" },
+      { type: "repository", label: "Onboarding documentation, docs/TPRM_ONBOARDING_APP.md" },
+      { type: "illustrative", label: REGULATORY_LABEL },
+    ],
+    speakerNotes:
+      "The onboarding app follows the same pattern as RCSA: the AI prepares, the professional decides, and each stage leaves a record. The seeded case is a new supplier for the German and Austrian entities, at evidence review with two items outstanding. In the current build that stage has the decision form and the later stages are locked, so present stages 5 to 8 as the defined design. Monitoring after onboarding is defined but not yet running.",
+  },
+
+  // ===========================================================================
+  // Controls
+  // ===========================================================================
+  {
+    id: "app-24",
+    section: "Controls",
+    group: "Controls",
+    status: {
+      level: "partial",
+      note: "Provenance, freshness and required-source checks run on synthetic data; evidence documents carry no content hash",
+    },
+    title: "Provenance and freshness labels keep fact, approved record and model inference apart",
+    subtitle: "Six provenance kinds, four freshness states and a required-source check; 424 citations resolve to 179 documents",
+    visual: {
+      type: "text-columns",
+      columns: [
+        {
+          heading: "Provenance kinds",
+          items: [
+            "Verified fact",
+            "Approved record",
+            "Stakeholder statement",
+            "Model inference",
+            "Conflicting evidence",
+            "Telemetry",
+          ],
+        },
+        {
+          heading: "Source freshness",
+          items: [
+            "Live: inside threshold, pushed source",
+            "Fresh: inside threshold, polled source",
+            "Stale: shown as last known",
+            "Unknown: never read, kept separate",
+          ],
+        },
+        {
+          heading: "Before a recommendation",
+          items: [
+            "Required sources are checked first",
+            "A missing required source blocks it",
+            "A stale source is named as a limit",
+            "All 38 seeded decisions carry opposing evidence",
+          ],
+        },
+        {
+          heading: "Known gaps",
+          items: [
+            "No content hash on evidence documents",
+            "Citation checks on live output are advisory",
+            "The current evidence drawer shows an empty state",
+            "Evidence bodies are English only",
+          ],
+        },
+      ],
+    },
+    evidenceBasis: [
+      { type: "repository", label: "Provenance kinds, src/db/schema/core.ts" },
+      { type: "repository", label: "Freshness and required sources, docs/INTEGRATION_FABRIC.md" },
+      { type: "simulation", label: "Structural evaluation run, docs/EVALUATION_REPORT.md" },
+    ],
+    speakerNotes:
+      "Evidence items, chronology entries and meeting statements each carry a provenance kind, so a model inference is labelled as such and cannot pass as a verified fact. Freshness is set per source and object type, and a source that was never read is not shown as stale or current. Before a recommendation is published the required sources are checked, and a missing one stops it. The structural check found every one of 424 citations resolving to a real document in the synthetic corpus.",
+  },
+
+  {
+    id: "app-09",
+    section: "Controls",
+    group: "Controls",
+    status: {
+      level: "implemented",
+      note: "Gate, tool registry and approval checks run locally with unit and integration tests; Role App stage completion is not yet gated",
+    },
+    title: "Six authority classes and three independent checks decide what may execute",
+    subtitle: "73 registered tools; autonomy level, role scope and a payload-bound approval are each checked before a change",
+    visual: {
+      type: "authority-matrix",
+      columns: ["Class", "Tools", "Writes a record", "Approval"],
+      rows: [
+        { Class: "Read", Tools: "25", "Writes a record": "No", Approval: "Not needed" },
+        { Class: "Draft", Tools: "6", "Writes a record": "No; text for a person to edit", Approval: "Not needed" },
+        { Class: "Propose", Tools: "7", "Writes a record": "No; options with stated uncertainty", Approval: "Not needed" },
+        { Class: "Policy bound", Tools: "5", "Writes a record": "Yes; low risk and reversible", Approval: "Without approval only at act within policy" },
+        { Class: "Approval required", Tools: "24", "Writes a record": "Yes; material change", Approval: "Always: a person, single use, bound to the payload" },
+        { Class: "Prohibited", Tools: "6", "Writes a record": "Never", Approval: "Refused at every level and logged" },
+      ],
+    },
+    evidenceBasis: [
+      { type: "repository", label: "Authority gate and tool registry, src/server/security/authority.ts" },
+      { type: "repository", label: "Authority tests, tests/unit/authority.test.ts" },
+      { type: "repository", label: "Decision engine tests, tests/integration/decisions.test.ts" },
+    ],
+    speakerNotes:
+      "This is the enforcement behind the authority line on the core slide. Each tool has exactly one class, and the gate checks three things independently: the autonomy level can reach the class, the role holds every required scope, and a material change has an unused approval bound to that exact payload with the rationale confirmed. Raising the autonomy level never removes the approval on a material change, and that is tested. Two gaps to state openly: preparer and approver are not yet separated beyond refusing agent approvers, and Role App stage completion does not yet pass through the gate.",
+  },
+
+  {
+    id: "app-25",
+    section: "Controls",
+    group: "Controls",
+    status: {
+      level: "partial",
+      note: "Role scopes and entitlement profiles work today; signed sessions exist but are not wired to routes, and there is no bank identity provider",
+    },
+    title: "Role scopes are enforced today, while bank identity and segregation of duties are not",
+    subtitle: "Signed sessions and access guards exist in code with 26 unit tests, but no route calls them yet",
+    visual: {
+      type: "status-table",
+      columns: ["Element", "Status", "Today"],
+      rows: [
+        { Element: "Role authority scopes", Status: "Implemented", Today: "18 scopes; a tool runs only if the role holds them all" },
+        { Element: "Acting role", Status: "Implemented", Today: "Scenario state read server side, never from the model" },
+        { Element: "Entitlement profiles", Status: "Implemented", Today: "Group-wide profile and a two-function pilot profile" },
+        { Element: "Signed sessions and modes", Status: "Built, not wired", Today: "Demonstration, design-partner and offline evaluation modes" },
+        { Element: "Route and administrator guards", Status: "Built, not wired", Today: "Settings and /ops are open in demonstration mode" },
+        { Element: "Segregation of duties", Status: "Not enforced", Today: "Only agent and blank approvers are refused" },
+        { Element: "Bank identity federation", Status: "Planned", Today: "OIDC is defined for the dedicated profile only" },
+      ],
+    },
+    evidenceBasis: [
+      { type: "repository", label: "Identity module, src/identity" },
+      { type: "repository", label: "Identity handoff, docs/handoffs/v4-identity-access.md" },
+      { type: "repository", label: "Entitlements, src/product/entitlements/entitlements.ts" },
+    ],
+    speakerNotes:
+      "Authorisation today is the role scope model inside the authority gate, which applies to every governed tool call. Sign-in is a persona choice in demonstration mode and a static account list in design-partner mode, and those sessions are not yet checked on routes. Segregation of duties needs the bank's directory and approver rules, which is design-partner work. Say this before anyone asks.",
+  },
+
+  {
+    id: "app-26",
+    section: "Controls",
+    group: "Controls",
+    status: {
+      level: "partial",
+      note: "Audit log, health probes and file backup run locally; the hash chain covers seeded events only and job handlers are stubs",
+    },
+    title: "The audit trail is append only and backups verify locally, but operations remain partial",
+    subtitle: "Six audit categories, a SHA-256 chain over seeded events, health probes, a leased job queue and file backups",
+    visual: {
+      type: "status-table",
+      columns: ["Capability", "Status", "Detail"],
+      rows: [
+        { Capability: "Append-only audit events", Status: "Implemented", Detail: "Six categories; no update or delete path in the app" },
+        { Capability: "Refused actions on record", Status: "Implemented", Detail: "Blocked attempts logged with a denial code" },
+        { Capability: "Audit hash chain", Status: "Partial", Detail: "SHA-256 chain verifies; covers seeded events only" },
+        { Capability: "Health probes and console", Status: "Implemented", Detail: "Live, ready and detail probes; /ops open in demo mode" },
+        { Capability: "Background job queue", Status: "Partial", Detail: "Leases, retries and idempotency; handlers are stubs" },
+        { Capability: "Backup and restore", Status: "Implemented", Detail: "Database file copy with a SHA-256 manifest check" },
+        { Capability: "Audit export and telemetry", Status: "Planned", Detail: "Export route and external metrics are design only" },
+      ],
+    },
+    evidenceBasis: [
+      { type: "repository", label: "Audit service, src/server/security/audit.ts" },
+      { type: "repository", label: "Audit chain, src/audit and docs/handoffs/v4-audit-integrity.md" },
+      { type: "repository", label: "Reliability and observability, docs/handoffs/v4-reliability.md and v4-observability.md" },
+    ],
+    speakerNotes:
+      "Every governed mutation writes one audit event and every refused action is recorded, so an auditor can see what was asked and declined. The hash chain is tamper evident within the application boundary, and today it covers the seeded history rather than new events. Backups copy the local database file and verify it by hash before a restore. An audit export route, external monitoring and a real job runner are still to be built.",
+  },
+
+  {
+    id: "app-29",
+    section: "Controls",
+    group: "Controls",
+    status: {
+      level: "reference",
+      note: "Entity model and jurisdiction checks run in code on a synthetic institution; every scenario instrument is invented",
+    },
+    title: "The product keeps the EU and Swiss regulatory lanes apart by design",
+    subtitle: "DE and AT entities sit in the EU lane; the CH entity is FINMA supervised. Illustrative regulatory context, not legal advice",
+    visual: {
+      type: "text-columns",
+      columns: [
+        {
+          heading: "EU lane: ARC-DE and ARC-AT",
+          items: [
+            "EU credit institutions under national supervision",
+            "DORA, Regulation (EU) 2022/2554",
+            "EBA/GL/2019/02, outsourcing arrangements",
+            "EBA/GL/2019/04, ICT and security risk",
+            "Applicability decided per entity by a person",
+          ],
+        },
+        {
+          heading: "Swiss lane: ARC-CH",
+          items: [
+            "Swiss bank under FINMA supervision",
+            "FINMA Circular 2023/1, operational risks",
+            "FINMA Circular 2018/3, outsourcing",
+            "DORA does not apply to this entity",
+            "Own impact tolerance; reports in CHF",
+          ],
+        },
+        {
+          heading: "How the code holds the line",
+          items: [
+            "Regulatory bloc is a typed column per entity",
+            "Swiss regulator context derived from the bloc",
+            "Structural check: no EU term on Swiss content",
+            "Separate publications and obligations per lane",
+            "No statement asserts compliance",
+          ],
+        },
+        {
+          heading: "Language",
+          items: [
+            "English interface with partial German labels",
+            "About 90 German strings, written with ae, oe, ue",
+            "Evidence, prompts and guardrails in English",
+            "DD.MM.YYYY dates; EUR and CHF amounts",
+          ],
+        },
+      ],
+    },
+    evidenceBasis: [
+      { type: "repository", label: "Jurisdiction model, docs/DACH_CONTEXT.md" },
+      { type: "repository", label: "Regulator context map, src/product/organisation/profile.ts" },
+      { type: "illustrative", label: REGULATORY_LABEL },
+    ],
+    speakerNotes:
+      "Arcadia is a synthetic group with German, Austrian and Swiss banks, and the product treats them as two regulatory lanes. DORA and EBA references apply to the German and Austrian entities only; the Swiss entity is addressed through FINMA context, and DORA does not apply to it. That separation is a typed field and a structural evaluation, not an editorial convention. All instruments in the scenario are invented, and this is illustrative regulatory context, not legal advice.",
+  },
+
+  // ===========================================================================
+  // Technology
+  // ===========================================================================
+  {
+    id: "app-08",
+    section: "Technology",
+    group: "Technology",
+    status: {
+      level: "implemented",
+      note: "Runs locally as one Node process on synthetic data; no deployment to a cloud or client environment has been run",
+    },
+    title: "The platform stacks five layers so the model never touches the database directly",
+    subtitle: "Next.js and TypeScript over SQLite with Drizzle; live, safe and offline AI modes; one local process",
+    visual: {
+      type: "architecture-layers",
+      layers: [
+        {
+          name: "Role workspaces",
+          items: [
+            "Two available roles; demo and planned roles marked",
+            "Home, Work, Processes and Decisions",
+            "Administrator settings and operations console",
+            "English interface with partial German labels",
+          ],
+        },
+        {
+          name: "Process and decision runtime",
+          items: [
+            "Role App definitions with persisted runs",
+            "Scenario state: clock, role and autonomy level",
+            "Decision engine: rationale, approval, receipt",
+            "Calculators: risk matrix and impact tolerance",
+          ],
+        },
+        {
+          name: "Control kernel",
+          items: [
+            "Authority gate over 73 registered tools",
+            "Append-only audit service",
+            "Guardrails and suggestion validation",
+            "Structural evaluation suite",
+          ],
+        },
+        {
+          name: "AI runtime",
+          items: [
+            "Manager agent with eight specialist prompts",
+            "Live mode: OpenAI model, operator key",
+            "Safe mode, the default: cached outputs",
+            "Offline mode: seeded answers, no calls",
+            "The model requests tools; it never writes data",
+          ],
+        },
+        {
+          name: "Data and integration",
+          items: [
+            "SQLite with Drizzle ORM, one local file",
+            "Full-text retrieval with SQLite FTS5",
+            "Connector runtime with outbox and receipts",
+            "Simulated GRC, Microsoft 365 and document sources",
+          ],
+        },
+      ],
+    },
+    evidenceBasis: [
+      { type: "repository", label: "Architecture, README.md and docs/AI_ARCHITECTURE.md" },
+      { type: "repository", label: "Packaging model, docs/PRODUCT_ARCHITECTURE.md" },
+    ],
+    speakerNotes:
+      "Read the stack from the bottom up. The data layer is one local SQLite file, and the connectors read the same seeded institution rather than a second dataset. The model can only ask the tool runtime to do something; the authority gate decides and the audit service records it. Safe mode is the default for presentations, and the whole story also works offline with no model.",
+  },
+
+  {
+    id: "app-27",
+    section: "Technology",
+    group: "Technology",
+    status: {
+      level: "partial",
+      note: "Pipelines, outbox, retries and receipts are implemented and proved against simulated connectors; no live connector exists",
+    },
+    title: "The integration contract is built and proved, but every connector is still simulated",
+    subtitle: "A headless script proves 29 inbound, outbound and failure steps; no code in the build makes an outbound network call",
+    visual: {
+      type: "integration-flow",
+      inbound: [
+        "Identify the connector and validate the source",
+        "Deduplicate on the sender's event key",
+        "Map to a canonical object; report unmapped fields",
+        "Keep the external reference and source time",
+        "Raise a live workday event and load evidence",
+        "Start AI preparation only when policy allows",
+      ],
+      outbound: [
+        "Reserve the command on an idempotency key",
+        "Pass the authority gate and a bound approval",
+        "Queue in the outbox, then bounded retries",
+        "Wait for the target's acknowledgement",
+        "Write the receipt citing the audit event",
+        "On failure, dead-letter; the decision stands",
+      ],
+      controlPoints: [
+        "Five simulated connectors and no live one",
+        "Graph adapter sandbox-ready; client not built",
+        "Ten named adapters planned; all calls refused",
+        "Four conflict policies declared per mapping",
+        "Webhook signature checks not yet built",
+      ],
+    },
+    evidenceBasis: [
+      { type: "repository", label: "Integration fabric, docs/INTEGRATION_FABRIC.md" },
+      { type: "repository", label: "Connector contract, docs/CONNECTOR_CONTRACT.md" },
+      { type: "repository", label: "Productization gaps, docs/PRODUCTIZATION_GAPS.md" },
+    ],
+    speakerNotes:
+      "The bank's GRC, document and collaboration systems stay the systems of record; this layer writes back only what a person approved. A change is never reported as done until the target acknowledges it, and a failed delivery never rolls back the human decision. The contract is real and tested, but there is no real integration yet, and workday decisions still write to the local database. The first live connector is a material piece of work and belongs in the design-partner plan.",
+  },
+
+  {
+    id: "app-20",
+    section: "Technology",
+    group: "Technology",
+    status: {
+      level: "partial",
+      note: "The restricted local prototype is implemented; three profiles are defined with outstanding work and none of them is built",
+    },
+    title: "One of four deployment profiles runs today; three are defined with open work",
+    subtitle: "The implemented flag is held in the database and checked by a unit test; AI data handling is local today",
+    visual: {
+      type: "status-table",
+      columns: ["Profile", "Status", "Identity and data", "Still to build"],
+      rows: [
+        { Profile: "Restricted local prototype", Status: "Implemented", "Identity and data": "Local SQLite file; role chosen in the scenario", "Still to build": "Not suitable for real institution records" },
+        { Profile: "Dedicated managed", Status: "Defined only", "Identity and data": "OIDC federation; one named EU or Swiss region", "Still to build": "Tenant lifecycle, key management, verified deletion" },
+        { Profile: "Customer-managed private", Status: "Defined only", "Identity and data": "Bank identity; data stays in the bank's estate", "Still to build": "Hardened image, runbooks, replace SQLite" },
+        { Profile: "Bank private cloud", Status: "Defined only", "Identity and data": "Internal SSO; no public inference egress", "Still to build": "Platform conformance, internal model endpoint" },
+        { Profile: "AI data handling today", Status: "Current", "Identity and data": "Turns stored in local SQLite; secrets redacted", "Still to build": "Residency model, retention, PII scrubbing" },
+      ],
+    },
+    evidenceBasis: [
+      { type: "repository", label: "Deployment profiles, docs/DEPLOYMENT_PROFILES.md" },
+      { type: "repository", label: "Profile seed and test, src/product/seed.ts and tests/unit/product.test.ts" },
+      { type: "repository", label: "Data residency gaps, docs/PRODUCTIZATION_GAPS.md" },
+    ],
+    speakerNotes:
+      "Only the restricted local prototype exists, and it is for demonstration and design review, not for real records. The three other profiles are written down with what each would still need, and the settings screen reads the same flags. Prompts and chat turns are stored in the local database today, secrets are redacted from logs, and there is no residency model beyond the machine. A container build file is in the repository, but no cloud deployment has been run.",
+  },
+
+  {
+    id: "app-11",
+    section: "Technology",
+    group: "Technology",
+    status: {
+      level: "partial",
+      note: "Structural evaluations run without a model and pass; live grading, runtime quality metrics and prompt regression tests are not built",
+    },
+    title: "Structural evaluations pass, while live AI quality is not yet measured",
+    subtitle: "14 of 14 structural checks pass without a model; 2 of 4 grounded probes passed in live mode and are advisory",
+    visual: {
+      type: "status-table",
+      columns: ["Check", "Result", "What it covers"],
+      rows: [
+        { Check: "Structural evaluations", Result: "14 of 14 pass", "What it covers": "Citations, authority, jurisdiction and seeded state; no model call" },
+        { Check: "Grounded probes", Result: "2 of 4 pass", "What it covers": "Live mode only; two missed an expected citation" },
+        { Check: "Evaluation corpus", Result: "60 cases", "What it covers": "Seven graders; grading of live output is not wired yet" },
+        { Check: "Suggestion validation", Result: "13 rule codes", "What it covers": "Citations, claims, provider names, Swiss and DORA mixing" },
+        { Check: "Guardrails", Result: "Hygiene layer", "What it covers": "Five English input patterns; not the security boundary" },
+        { Check: "Runtime quality metrics", Result: "Not built", "What it covers": "Review, edit and acceptance rates are not tracked" },
+        { Check: "Prompt regression tests", Result: "Not built", "What it covers": "Prompt templates live in code without regression tests" },
+      ],
+    },
+    evidenceBasis: [
+      { type: "simulation", label: "Evaluation report, docs/EVALUATION_REPORT.md" },
+      { type: "repository", label: "Evaluation suite, src/agents/evaluations and evals/" },
+      { type: "illustrative", label: REGULATORY_LABEL },
+    ],
+    speakerNotes:
+      "The structural suite checks the seeded data and the controls without calling a model, and all fourteen checks pass. The grounded probes need live mode; two of four passed and the result is advisory. The sixty-case corpus exists, but its graders are not yet run against real model output, so it is not a quality result. Measuring review, edit and acceptance rates is pilot work, not something the product reports today.",
+  },
+
+  // ===========================================================================
+  // Service and rollout
+  // ===========================================================================
+  {
     id: "app-13",
-    section: "Service",
-    title: "The service model has four tiers from platform to managed operations",
-    subtitle: "Platform and function packs are recurring; Role Apps are per-app; managed operations spans all",
+    section: "Service and rollout",
+    group: "Service and rollout",
+    status: {
+      level: "planned",
+      note: "Proposal. Function packs and entitlement profiles exist as product configuration; no managed service is operating",
+    },
+    title: "Each service tier carries a defined scope and cadence, from platform to managed operations",
+    subtitle: "Proposal from the service model: platform and packs recur, Role Apps are delivered per app, operations spans all",
     visual: {
       type: "service-stack",
       tiers: [
         {
           name: "Managed operations",
-          detail: "Monitoring, model review, new Role App releases, user support",
+          detail: "Monitoring, model and prompt review, app releases, user support",
           cadence: "Recurring monthly",
           semanticType: "managed-service",
         },
         {
           name: "Role Apps",
-          detail: "RCSA Cycle Assistant, Third-Party Onboarding, additional per roadmap",
+          detail: "Process design, build, evaluation, validation and release per app",
           cadence: "Per app delivered",
           semanticType: "role-app",
         },
         {
           name: "Function packs",
-          detail: "OR, TPRM, Control Assurance: role OS and base configuration",
-          cadence: "Recurring per function",
+          detail: "Objects, roles, governed tools, screens and evaluation cases",
+          cadence: "Recurring per function enabled",
           semanticType: "function",
         },
         {
           name: "Platform",
-          detail: "Infrastructure, identity, AI model access, connectors, security operations",
+          detail: "Core controls, hosting, AI model access, security and backup",
           cadence: "Recurring monthly",
           semanticType: "platform",
         },
       ],
     },
     evidenceBasis: [
-      { type: "proposal", label: "NFR OS service model documentation" },
+      { type: "proposal", label: "Service model, src/presentation-v2-2/data/service-model.ts" },
+      { type: "repository", label: "Packaging model, docs/PRODUCT_ARCHITECTURE.md" },
     ],
     speakerNotes:
-      "Walk through each tier from bottom to top. The platform is the foundation: it does not change as more apps are added. Function packs enable each risk discipline independently. Role Apps are the growth mechanism: each new app adds a governed process. Managed operations covers everything needed to keep the service current and performing. The commercial structure follows from this model.",
+      "This is the operating and commercial shape we propose, not a running service. Function packs are already a configuration unit in the product, with six defined and a two-function pilot profile seeded. The platform tier carries the controls every deployment needs, which is why authority, audit and evaluations are never sold as an add-on. Managed operations is how monitoring, model review and new app releases continue after the pilot.",
   },
 
   {
-    id: "app-14",
-    section: "Service",
-    title: "Commercial packaging separates one-time setup from recurring service",
-    subtitle: "Design-partner engagement establishes the baseline before the programme is scoped",
+    id: "app-28",
+    section: "Service and rollout",
+    group: "Service and rollout",
+    status: {
+      level: "planned",
+      note: "The factory stages are a delivery proposal; the Role App definition contract exists in code and no app has gone through the factory",
+    },
+    title: "The App Factory is a proposed delivery path built on a definition that already exists",
+    subtitle: "Stages and gates are a proposal; today a new Role App is a code change to the registry and its routes",
     visual: {
       type: "text-columns",
       columns: [
         {
-          heading: "Design-partner engagement",
+          heading: "Factory stages, proposed",
           items: [
-            "Fixed scope, time-boxed",
-            "Baseline assessment",
-            "Two role operating systems proved",
-            "Outcome report and scale recommendation",
-            "One-time fee",
+            "Discover: process, sources and pain points",
+            "Design: stages, decisions and evidence",
+            "Build: definition, routes, AI preparation",
+            "Validate: one full cycle with the role",
+            "Release, then operate and improve",
           ],
         },
         {
-          heading: "Programme (post-pilot)",
+          heading: "Definition in code today",
           items: [
-            "Platform recurring fee",
-            "Function packs per discipline",
-            "Role Apps per process delivered",
-            "Managed operations recurring fee",
-            "Scoped after pilot outcome report",
+            "Role, function pack and version",
+            "Ordered stages with outcome and human task",
+            "Decision kinds reserved for a person",
+            "Required connector packs",
+            "Status: installed or preview",
+          ],
+        },
+        {
+          heading: "Release gates, proposed",
+          items: [
+            "Every stage names a human responsibility",
+            "Evaluation cases pass for the app",
+            "A full cycle run by the target role",
+            "No critical defects open",
+          ],
+        },
+        {
+          heading: "Not built yet",
+          items: [
+            "Install flow; adding an app needs code",
+            "Automated checks on app definitions",
+            "Per-app evaluation suites",
+            "Routes for the five preview apps",
           ],
         },
       ],
     },
     evidenceBasis: [
-      { type: "proposal", label: "Accenture NFR OS commercial structure" },
+      { type: "repository", label: "Role App contract, src/role-apps/contracts.ts" },
+      { type: "proposal", label: "App Factory lifecycle, src/presentation-v2-2/data/role-app-library.ts" },
+      { type: "repository", label: "Role App architecture, docs/ROLE_APP_ARCHITECTURE.md" },
     ],
     speakerNotes:
-      "Do not discuss programme pricing before the design-partner engagement is agreed. The commercial structure presented here is indicative only. The programme scope, and therefore the commercial structure, is agreed after the pilot outcome report is reviewed.",
+      "The factory is how we propose to add processes once the first two apps are proved. What exists today is the definition every app declares: its stages, the decisions reserved for a person and the sources it needs. There is no install flow yet, so each preview app would still need routes and build. Present the factory as our delivery method, not as a product feature.",
   },
 
   {
-    id: "app-15",
-    section: "Rollout",
-    title: "The design-partner engagement has a defined scope, timeline and exit criterion",
-    subtitle: "Three steps and three gates turn a bounded commitment into an evidence-based scale decision",
+    id: "app-14",
+    section: "Service and rollout",
+    group: "Service and rollout",
+    status: {
+      level: "planned",
+      note: "Proposal only; no prices are set, and the product screens contain no pricing or upsell",
+    },
+    title: "Commercial packaging separates one-time setup from recurring service",
+    subtitle: "Proposal: mobilisation and builds are one-time; platform, packs and operations recur; no rates are quoted",
     visual: {
       type: "text-columns",
       columns: [
         {
-          heading: "Step 1: Connect and baseline",
+          heading: "One-time",
           items: [
-            "One business area, one team",
-            "Current work map and source map",
-            "Authority model validated",
-            "Baseline measures agreed",
-            "Gate: data and process ready",
+            "Design and mobilisation, scoped per client",
+            "Role App build, scoped at design",
+            "Connector build, per source system",
+            "Cohort training and onboarding",
           ],
         },
         {
-          heading: "Step 2: Prove two role operating systems",
+          heading: "Recurring",
           items: [
-            "OR Partner OS and TPRM Manager OS",
+            "Platform subscription, monthly",
+            "Function pack licence per function enabled",
+            "Managed operations, monthly",
+            "Seat metric: active role seats per month",
+          ],
+        },
+        {
+          heading: "Guardrails",
+          items: [
+            "No prices in this deck; rates are negotiated",
+            "Pilot: fixed mobilisation fee plus platform",
+            "Programme terms agreed after the step 2 gate",
+            "New institutions by configuration, not forks",
+          ],
+        },
+      ],
+    },
+    evidenceBasis: [
+      { type: "proposal", label: "Commercial structure, src/presentation-v2-2/data/service-model.ts" },
+      { type: "repository", label: "No upsell in product screens, docs/WHITE_LABEL_AND_PACKAGING.md" },
+    ],
+    speakerNotes:
+      "Keep this at the level of structure. The client pays once to mobilise and to build each app or connector, and pays recurring fees for the platform, the packs in use and managed operations. We do not quote rates in this deck. The product itself carries no pricing or upsell, which is a deliberate design choice.",
+  },
+
+  {
+    id: "app-15",
+    section: "Service and rollout",
+    group: "Service and rollout",
+    status: {
+      level: "planned",
+      note: "Proposal. Pilot accounts, six readiness checks and the two-function entitlement profile exist in code; no pilot has run",
+    },
+    title: "The design-partner scope starts with two roles and keeps autonomous execution off",
+    subtitle: "Proposal aligned to the seeded two-function pilot profile, which grants Operational Risk and Third-Party Risk only",
+    visual: {
+      type: "text-columns",
+      columns: [
+        {
+          heading: "In scope",
+          items: [
+            "Operational Risk Partner and Third-Party Risk Manager",
+            "RCSA Cycle Assistant and Third-Party Onboarding",
             "Read-only first, then approval-gated execution",
-            "Full RCSA cycle and one TPRM onboarding",
-            "Outcome report produced",
-            "Gate: does the product improve work and retain control",
+            "Two-function profile, no autonomous execution",
+            "Readiness checks and evidence pack before start",
           ],
         },
         {
-          heading: "Step 3: Scale by Role App",
+          heading: "Bank provides",
           items: [
-            "Add processes, functions and connectors",
-            "Increase autonomy only where proved",
-            "Move to managed operation",
-            "Gate: does each wave meet value and control thresholds",
+            "A sponsor who owns each gate decision",
+            "One business area and its cycles",
+            "Authority model and approver roles",
+            "Identity, security and data reviewers",
+            "Baseline measures for the pilot metrics",
+          ],
+        },
+        {
+          heading: "Accenture provides",
+          items: [
+            "Product configuration and pilot set-up",
+            "Connector build for agreed sources",
+            "Evaluation runs and quality reporting",
+            "Change and adoption support",
+          ],
+        },
+        {
+          heading: "Out of scope at start",
+          items: [
+            "Preview apps and demo or planned roles",
+            "Autonomous execution of any kind",
+            "Live write-back before identity and connectors",
+            "Any compliance determination",
           ],
         },
       ],
     },
     evidenceBasis: [
       { type: "proposal", label: "Accenture design-partner engagement structure" },
+      { type: "repository", label: "Pilot readiness, docs/handoffs/v4-pilot-readiness.md" },
+      { type: "repository", label: "Entitlement profiles, docs/WHITE_LABEL_AND_PACKAGING.md" },
+      { type: "illustrative", label: REGULATORY_LABEL },
     ],
     speakerNotes:
-      "Walk through each step and its gate question. The gate questions are not rhetorical. They define the decision point at the end of each step. If step two does not pass its gate, the engagement stops and the outcome report explains why. This protects the client and keeps the scope honest.",
+      "This sets the edges of the first engagement, which the core slide turns into three steps. The scope matches what runs today: two roles, two apps and no autonomous execution. The bank brings the sponsor, the authority model and the reviewers who decide when anything moves from read-only to approval-gated execution. Everything outside the two roles stays out until the step 2 gate.",
   },
 
   {
     id: "app-16",
-    section: "Rollout",
-    title: "Five metrics verify the pilot outcome across capacity, quality, control and continuity",
-    subtitle: "Each metric has a baseline, a pilot measure, and a scale threshold",
+    section: "Service and rollout",
+    group: "Service and rollout",
+    status: {
+      level: "planned",
+      note: "Proposal. The audit log can already count refused actions; no pilot has run and no result is claimed",
+    },
+    title: "Five pilot metrics are measured against the bank's own baseline, not benchmarks",
+    subtitle: "Each metric is defined before the pilot and baselined in step 1; no outcome or saving is claimed",
     visual: {
       type: "measurement-framework",
       dimensions: [
         {
           name: "Capacity",
           metric: "Meeting preparation time per RCSA cycle",
-          baseline: "Established in step 1 work map",
+          baseline: "Step 1 work map of the current cycle",
         },
         {
           name: "Quality",
-          metric: "Evidence completeness rate at submission",
-          baseline: "Established in step 1 baseline assessment",
+          metric: "Evidence complete and current at each stage gate",
+          baseline: "Step 1 sample of recent files",
         },
         {
           name: "Control",
-          metric: "Blocked-action rate: actions without a linked decision",
-          baseline: "Established in step 1 action audit",
+          metric: "Blocked-action rate: attempts refused by the gate",
+          baseline: "Read from the audit log; no pre-pilot equivalent",
         },
         {
           name: "Continuity",
-          metric: "Process waiting time: stages open without active owner",
-          baseline: "Established in step 1 process mapping",
+          metric: "Process waiting time: days a stage waits for an owner",
+          baseline: "Step 1 process map of open cycles",
         },
         {
           name: "Adoption",
-          metric: "Percentage of enrolled professionals using the work hub daily",
-          baseline: "Zero at pilot start; target agreed before pilot",
+          metric: "Share of enrolled professionals active each week",
+          baseline: "Zero at start; target agreed before step 2",
         },
       ],
     },
     evidenceBasis: [
-      { type: "proposal", label: "Pilot success metric framework" },
+      { type: "proposal", label: "Pilot metric framework" },
+      { type: "repository", label: "Audit completeness counts, src/server/security/audit.ts" },
     ],
     speakerNotes:
-      "Each metric requires the bank to establish its own baseline in step one. No claim is made about what the pilot will show. The five metrics are the scorecard agreed before the pilot starts. The outcome report compares pilot results to the baseline and makes a recommendation on the scale decision.",
-  },
-
-  {
-    id: "app-17",
-    section: "Rollout",
-    title: "The pilot involves stakeholders across risk, technology and the business",
-    subtitle: "Roles are confirmed in step one; the sponsor owns the gate decisions",
-    visual: {
-      type: "text-columns",
-      columns: [
-        {
-          heading: "Risk function",
-          items: [
-            "Chief Risk Officer or delegate (sponsor)",
-            "Operational Risk lead",
-            "TPRM lead",
-            "3 to 5 OR professionals (cohort)",
-            "3 to 5 TPRM professionals (cohort)",
-          ],
-        },
-        {
-          heading: "Technology",
-          items: [
-            "CTO or CIO delegate",
-            "Data and integration lead",
-            "Identity and access lead",
-            "Security review representative",
-          ],
-        },
-        {
-          heading: "Accenture",
-          items: [
-            "Engagement lead",
-            "Product lead",
-            "Data and integration specialist",
-            "AI and evaluation specialist",
-            "Change and adoption specialist",
-          ],
-        },
-      ],
-    },
-    evidenceBasis: [
-      { type: "proposal", label: "Pilot stakeholder structure" },
-    ],
-    speakerNotes:
-      "The stakeholder map is a starting point. The specific roles on the bank side are confirmed in step one. The sponsor must have authority to approve each gate decision. The cohort is confirmed before step two begins. The Accenture team scales with the engagement scope.",
-  },
-
-  {
-    id: "app-20",
-    section: "Platform",
-    title: "Deployment profiles match the bank's data and security requirements",
-    subtitle: "Three profiles cover cloud-hosted, hybrid, and on-premise deployment with the same product",
-    visual: {
-      type: "text-columns",
-      columns: [
-        {
-          heading: "Cloud-hosted",
-          items: [
-            "Full product hosted in Accenture cloud environment",
-            "Synthetic data used in demonstration mode",
-            "Client data requires agreed residency boundary",
-            "Fastest time to value for design-partner engagement",
-          ],
-        },
-        {
-          heading: "Hybrid",
-          items: [
-            "Core platform hosted; connectors run in bank environment",
-            "Data stays inside bank boundary",
-            "Requires connector deployment and network configuration",
-            "Preferred for production engagement",
-          ],
-        },
-        {
-          heading: "On-premise",
-          items: [
-            "Full product deployed in bank environment",
-            "Maximum data sovereignty",
-            "Longer deployment timeline",
-            "Requires bank infrastructure provisioning",
-          ],
-        },
-      ],
-    },
-    evidenceBasis: [
-      { type: "proposal", label: "Deployment profile documentation" },
-    ],
-    speakerNotes:
-      "The design-partner engagement typically uses the cloud-hosted profile with synthetic data. The production profile is agreed based on the bank's data and security requirements. Do not commit to a deployment profile without confirming the bank's constraints in step one.",
+      "These are the measures we would agree before the pilot starts, and each one needs the bank's own baseline. The control metric comes straight from the audit log, because refused actions are recorded with their reason. We make no claim about what the pilot will show. The outcome report compares the pilot to the baseline and supports the scale decision.",
   },
 
   {
     id: "app-22",
-    section: "Scope",
-    title: "The current limitations define the design-partner boundary",
-    subtitle: "Identity, live connectors and production controls require bank-specific validation",
+    section: "Service and rollout",
+    group: "Service and rollout",
+    status: {
+      level: "reference",
+      note: "Compiled from repository documentation and code review of the current build",
+    },
+    title: "Known limitations set the boundary for any design-partner engagement",
+    subtitle: "Identity, connectors, AI quality and scale need work before real data. Illustrative regulatory context, not legal advice",
     visual: {
       type: "limitations-landscape",
       areas: [
         {
-          label: "Identity integration",
-          detail: "The current build uses a demonstration identity provider. Bank identity integration requires configuration and security review.",
+          label: "Identity",
+          detail: "Sessions are not wired to routes; no bank identity provider; the role is scenario state",
           category: "current",
         },
         {
-          label: "Live GRC connectors",
-          detail: "Connectors to live GRC systems are not deployed in the demonstration environment. Integration is designed and tested with synthetic data.",
+          label: "Connectors",
+          detail: "All connectors are simulated; no code makes an outbound network call",
           category: "current",
         },
         {
-          label: "Production approval controls",
-          detail: "Full production approval routing requires the bank's identity and authority model to be integrated and validated.",
+          label: "Segregation of duties",
+          detail: "Agents cannot approve, but preparer and approver are not yet separated",
           category: "current",
         },
         {
-          label: "Multi-language support",
-          detail: "The current product is English-language only. Localisation is on the roadmap.",
+          label: "Role App depth",
+          detail: "AI preparation is seeded for early stages; onboarding cannot yet run past stage 5",
+          category: "current",
+        },
+        {
+          label: "Live AI quality",
+          detail: "Structured output is not enforced on live turns; 2 of 4 grounded probes pass",
+          category: "current",
+        },
+        {
+          label: "Scale and tenancy",
+          detail: "Single tenant SQLite in one process; a server database and workers are needed",
           category: "roadmap",
         },
         {
-          label: "Mobile-native experience",
-          detail: "The product is designed for desktop use. A mobile-optimised interface is planned.",
+          label: "German coverage",
+          detail: "About 90 interface strings; evidence, prompts and guardrails are English",
           category: "roadmap",
         },
         {
-          label: "Custom role OS",
-          detail: "Additional role operating systems beyond OR and TPRM require the App Factory design process.",
-          category: "roadmap",
+          label: "Compliance and notification",
+          detail: "No compliance claims; the product never contacts a supervisor",
+          category: "out-of-scope",
         },
       ],
     },
     evidenceBasis: [
-      { type: "product", label: "NFR OS product state, current release" },
-      { type: "proposal", label: "Design-partner scope and constraints" },
+      { type: "repository", label: "Productization gaps, docs/PRODUCTIZATION_GAPS.md" },
+      { type: "repository", label: "README limitations and V4 handoffs, docs/handoffs" },
+      { type: "illustrative", label: REGULATORY_LABEL },
     ],
     speakerNotes:
-      "Be explicit about limitations. Every current limitation has a path to resolution, but that path requires the design-partner engagement to establish the bank-specific configuration. Limitations marked as roadmap are not committed delivery; they are planned. Do not describe a limitation as resolved unless it has been addressed in the current product state.",
+      "Share this slide before the client finds these points themselves. The current items are the work a design partner would do with us: identity, a first live connector, separation of duties and deeper Role App stages. The roadmap items need a server database and wider language coverage before scale. Regulatory determinations stay with the bank in every case.",
   },
 ];

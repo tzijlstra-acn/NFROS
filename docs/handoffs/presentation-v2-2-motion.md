@@ -4,7 +4,7 @@
 
 Package: `motion` v13.4.6 (the modern successor to framer-motion).
 Import path used throughout: `"motion/react"`.
-Do NOT use `"framer-motion"` — that package is not installed.
+Do NOT use `"framer-motion"`: that package is not installed.
 
 ## Files created
 
@@ -87,16 +87,16 @@ import { barRevealVariants } from "@/presentation-v2-2/motion";
 
 ## Reduced motion
 
-Every component calls `useReducedMotion()` from `"motion/react"`. When the OS/browser `prefers-reduced-motion: reduce` media query is active, all animated wrappers render as plain `<div>` elements with no transitions. No opt-in required from the slide author — it is automatic.
+Every component calls `useReducedMotion()` from `"motion/react"`. When the OS/browser `prefers-reduced-motion: reduce` media query is active, all animated wrappers render as plain `<div>` elements with no transitions. No opt-in required from the slide author: it is automatic.
 
 `REDUCED_MOTION_VARIANTS` is exported from `tokens.ts` for use in edge cases where you must use `motion.div` directly and need a compliant fallback.
 
 ## Export mode
 
 Pass `exportMode={true}` to any motion component to skip all animations. This applies to:
-- `SharedSlideTransition` — renders children unwrapped (no `AnimatePresence`)
-- `RevealSequence` — renders a plain `<div>` with children
-- `MotionPath` — renders a plain `<div>`
+- `SharedSlideTransition`: renders children unwrapped (no `AnimatePresence`)
+- `RevealSequence`: renders a plain `<div>` with children
+- `MotionPath`: renders a plain `<div>`
 
 The `export:presentation` script sets `exportMode` to ensure static screenshots and PDF exports capture fully-visible content.
 

@@ -87,7 +87,7 @@ async function captureAsset(
   if (isLoginPage(finalUrl)) {
     throw new Error(
       `[FATAL] Auth redirect on "${asset.id}": page landed at ${finalUrl}. ` +
-        `Stopping capture run — authenticate the app first.`
+        `Stopping capture run: authenticate the app first.`
     );
   }
 
@@ -134,7 +134,7 @@ async function captureAsset(
   }
 
   const sha = sha256File(outFile);
-  console.log(`     ok — ${(stats.size / 1024).toFixed(1)} KB  sha256:${sha.slice(0, 12)}...`);
+  console.log(`     ok: ${(stats.size / 1024).toFixed(1)} KB  sha256:${sha.slice(0, 12)}...`);
   return { id: asset.id, sha256: sha, sizeBytes: stats.size };
 }
 
@@ -143,7 +143,7 @@ async function captureAsset(
    -------------------------------------------------------------------------- */
 
 async function main() {
-  console.log(`NFR WorkOS — V2.3 presentation asset capture`);
+  console.log(`NFR WorkOS: V2.3 presentation asset capture`);
   console.log(`Base URL: ${BASE_URL}`);
   console.log(`Registry: ${ASSET_REGISTRY.length} assets`);
   console.log("");

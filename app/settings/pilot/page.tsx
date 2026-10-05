@@ -45,7 +45,7 @@ function runReadinessChecks(): ReadinessCheck[] {
         .get() as { n: number } | undefined;
       if ((row?.n ?? 0) > 0) {
         status = "pass";
-        detail = `Schema present -- ${String(row?.n ?? 0)} tables found.`;
+        detail = `Schema present: ${String(row?.n ?? 0)} tables found.`;
       } else {
         status = "warn";
         detail = "Database accessible but no tables found. Run db:migrate and db:seed.";
@@ -90,7 +90,7 @@ function runReadinessChecks(): ReadinessCheck[] {
       detail = "PRODUCT_MODE = offline-evaluation. Sessions are unattended-safe.";
     } else if (productMode === "") {
       status = "warn";
-      detail = "PRODUCT_MODE is not set. Running in demonstration mode -- not suitable for pilot sessions.";
+      detail = "PRODUCT_MODE is not set. Running in demonstration mode, not suitable for pilot sessions.";
     } else {
       status = "warn";
       detail = `PRODUCT_MODE = ${productMode}. Set to 'design-partner' for pilot sessions.`;
@@ -130,7 +130,7 @@ function runReadinessChecks(): ReadinessCheck[] {
       status = "pass";
       detail =
         count > 0
-          ? `Audit chain initialised -- ${String(count)} record(s).`
+          ? `Audit chain initialised: ${String(count)} record(s).`
           : "Audit chain table present. Records will be written when events occur.";
     } catch {
       status = "warn";
@@ -317,7 +317,7 @@ export default function PilotReadinessPage() {
               productMode === "design-partner" || productMode === "offline-evaluation" ? (
                 <Chip tone="success">Configured for pilot</Chip>
               ) : (
-                <Chip tone="warning">Demonstration mode -- set PRODUCT_MODE for pilot use</Chip>
+                <Chip tone="warning">Demonstration mode: set PRODUCT_MODE for pilot use</Chip>
               )
             }
           />

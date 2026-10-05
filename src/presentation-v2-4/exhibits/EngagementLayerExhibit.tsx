@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import type { CSSProperties, ReactNode } from "react";
 import { motion, useReducedMotion } from "motion/react";
 import {
@@ -26,6 +26,7 @@ import {
   IconTerminal2,
 } from "@tabler/icons-react";
 import type { EngagementLayerData } from "../data/types";
+import { useDeckMotion } from "../motion/DeckMotion";
 
 interface Props {
   data: EngagementLayerData;
@@ -77,9 +78,11 @@ const GLOW_OFF = "0 0 0 0px rgba(161, 0, 255, 0), 0 0 0px rgba(161, 0, 255, 0)";
 const MONO = 'Consolas, Menlo, "Courier New", monospace';
 
 // Boot and steady state timing
-const BOOT_START = 300;
-const BOOT_STEP = 500;
-const STEADY_START = 5300;
+// Ten boot phases finish by 2.77 s and the first trace step settles by about 3.9 s,
+// inside the 4 s reveal budget; later steps are the steady loop
+const BOOT_START = 250;
+const BOOT_STEP = 280;
+const STEADY_START = 2900;
 const STEP_MS = 2600;
 const TRAVEL_S = 1.0;
 
@@ -93,12 +96,13 @@ const SYSTEM_HOLDS = ["Controls, issues", "Mail, meetings", "Policies, evidence"
 const SERVICE_ICONS: readonly TablerIcon[] = [IconCalendarEvent, IconApps, IconScale];
 const CONTROL_ICONS: readonly TablerIcon[] = [IconFingerprint, IconGavel, IconChecks, IconHistory, IconGauge];
 
-// Illustrative role workspaces for a synthetic institution
+// Role workspaces from the role release data: two available roles and one demo role
 const WORKSPACES = [
   { name: "Operational Risk", icon: IconShieldHalfFilled, status: "3 decisions ready", detail: "Next: KRI breach, payments" },
-  { name: "TPRM", icon: IconBuildingStore, status: "2 reviews due", detail: "Next: Vendor X renewal" },
-  { name: "Audit", icon: IconClipboardCheck, status: "Audit trail live", detail: "Every action traceable" },
+  { name: "TPRM", icon: IconBuildingStore, status: "Onboarding at stage 4", detail: "Next: Veridian evidence review" },
+  { name: "Control Assurance", icon: IconClipboardCheck, status: "Demo role", detail: "Same core, no Role App yet" },
 ] as const;
+const DEMO_WORKSPACE = 2;
 
 // Work item route through the stack: dwell points per step
 const P0: Pt = [372, 612];
@@ -304,32 +308,53 @@ export function EngagementLayerExhibit({ data, exportMode = false }: Props) {
 
   const [bootPhase, setBootPhase] = useState(0);
   const [tick, setTick] = useState(-1);
+  const { paused } = useDeckMotion();
+  // Running time already spent on the boot and the steady loop, so a pause resumes in place
+  const clockRef = useRef(0);
 
   useEffect(() => {
-    if (skip) return;
+    if (skip || paused) return;
+    const base = clockRef.current;
+    const resumedAt = performance.now();
     const timers: ReturnType<typeof setTimeout>[] = [];
     let interval: ReturnType<typeof setInterval> | undefined;
+    const at = (ms: number, fn: () => void) => {
+      if (ms >= base) timers.push(setTimeout(fn, ms - base));
+    };
     for (let k = 1; k <= 10; k++) {
-      timers.push(setTimeout(() => setBootPhase(k), BOOT_START + (k - 1) * BOOT_STEP));
+      at(BOOT_START + (k - 1) * BOOT_STEP, () => setBootPhase(k));
     }
+    // Steady loop: tick n fires at STEADY_START + n * STEP_MS
+    let n = base <= STEADY_START ? 0 : Math.ceil((base - STEADY_START) / STEP_MS);
     timers.push(
       setTimeout(() => {
-        setTick(0);
-        interval = setInterval(() => setTick((t) => t + 1), STEP_MS);
-      }, STEADY_START),
+        setTick(n);
+        interval = setInterval(() => {
+          n += 1;
+          setTick(n);
+        }, STEP_MS);
+      }, STEADY_START + n * STEP_MS - base),
     );
     return () => {
+      clockRef.current = base + (performance.now() - resumedAt);
       timers.forEach(clearTimeout);
       if (interval) clearInterval(interval);
     };
-  }, [skip]);
+  }, [skip, paused]);
 
   const [arrivedTick, setArrivedTick] = useState(-1);
+  const travelRef = useRef({ tick: -1, spent: 0 });
   useEffect(() => {
-    if (skip || tick < 0) return;
-    const t = setTimeout(() => setArrivedTick(tick), TRAVEL_S * 1000);
-    return () => clearTimeout(t);
-  }, [tick, skip]);
+    if (skip || tick < 0 || paused) return;
+    if (travelRef.current.tick !== tick) travelRef.current = { tick, spent: 0 };
+    const travel = travelRef.current;
+    const startedAt = performance.now();
+    const t = setTimeout(() => setArrivedTick(tick), Math.max(0, TRAVEL_S * 1000 - travel.spent));
+    return () => {
+      travel.spent += performance.now() - startedAt;
+      clearTimeout(t);
+    };
+  }, [tick, skip, paused]);
 
   const systems = pick(data.systemsOfRecord, DEFAULT_SYSTEMS);
   const work = pick(data.workItems, DEFAULT_WORK);
@@ -348,7 +373,7 @@ export function EngagementLayerExhibit({ data, exportMode = false }: Props) {
     { text: "Starting work services", status: "ok", lights: ["svc0", "svc1", "svc2"] },
     { text: `Launching ${wsName(0)} workspace`, status: "ready", lights: ["ws0"] },
     { text: `Launching ${wsName(1)} workspace`, status: "ready", lights: ["ws1"] },
-    { text: `Launching ${wsName(2)} workspace`, status: "ready", lights: ["ws2"] },
+    { text: `Loading ${wsName(DEMO_WORKSPACE)} demo`, status: "demo", lights: ["ws2"] },
   ];
 
   const phase = skip ? 10 : bootPhase;
@@ -417,6 +442,7 @@ export function EngagementLayerExhibit({ data, exportMode = false }: Props) {
   return (
     <div
       style={{ position: "absolute", inset: 0, background: "var(--pv24-canvas)", overflow: "hidden", fontFamily: "var(--pv24-font-family)" }}
+      role="group"
       aria-label="NFR Operating System: role workspaces, OS services, control kernel and connectors on top of existing systems of record"
     >
       {/* OS window body */}
@@ -465,6 +491,7 @@ export function EngagementLayerExhibit({ data, exportMode = false }: Props) {
         {frames && !skip && (
           <motion.g
             key={`token-${tick}`}
+            data-pv24-loop=""
             initial={{ x: frames.xs[0] ?? P0[0], y: frames.ys[0] ?? P0[1], opacity: frames.opacity[0] ?? 1 }}
             animate={{ x: frames.xs, y: frames.ys, opacity: frames.opacity }}
             transition={{
@@ -540,7 +567,7 @@ export function EngagementLayerExhibit({ data, exportMode = false }: Props) {
       {/* Layer labels */}
       <LayerLabel y={ROW.ws.band} h={ROW.ws.bandH} title="Role workspaces" sub="Apps running on the OS" />
       <LayerLabel y={ROW.svc.band} h={ROW.svc.bandH} title="OS services" sub="Coordinate the work" />
-      <LayerLabel y={ROW.kern.band} h={ROW.kern.bandH} title="Control kernel" sub="Checks every action" accent />
+      <LayerLabel y={ROW.kern.band} h={ROW.kern.bandH} title="Control kernel" sub="Checks every AI action" accent />
       <LayerLabel y={ROW.conn.band} h={ROW.conn.bandH} title="Connectors" sub="Device drivers" />
       <LayerLabel y={SYS_Y} h={SYS_H} title="Systems of record" sub="Existing platforms, plugged in, unchanged" />
 
@@ -553,13 +580,12 @@ export function EngagementLayerExhibit({ data, exportMode = false }: Props) {
         const r = rectOf(id);
         let status: string = on ? ws.status : isStarting ? "Starting" : "Not started";
         let detail: string = on ? ws.detail : "Waiting for boot";
-        let statusColor = on ? TEXT : TEXT_2;
+        let statusColor = on && i !== DEMO_WORKSPACE ? TEXT : TEXT_2;
         if (on && i === 0 && active) {
           status = `Decision on ${wi}`;
           detail = "Approved by role owner";
           statusColor = ACCENT_DARK;
         }
-        if (on && i === 2 && steady) detail = `Logged: ${path[step] ?? ""}`;
         return (
           <motion.div
             key={id}
@@ -684,7 +710,8 @@ export function EngagementLayerExhibit({ data, exportMode = false }: Props) {
         <Led on={booted} skip={skip} />
         <span style={{ color: TEXT }}>
           {plural(count("conn"), "system", "systems")} connected, {plural(count("kern"), "control service", "control services")} running,{" "}
-          {plural(count("ws"), "role workspace", "role workspaces")} open
+          {plural(Math.min(count("ws"), DEMO_WORKSPACE), "role workspace", "role workspaces")} open
+          {lit.has(`ws${DEMO_WORKSPACE}`) ? ", 1 demo" : ""}
         </span>
         <span style={{ marginLeft: "auto", display: "flex", alignItems: "center", gap: 10, fontWeight: 600, color: steady ? ACCENT_DARK : TEXT_2 }}>
           {steady ? (
@@ -847,7 +874,7 @@ export function EngagementLayerExhibit({ data, exportMode = false }: Props) {
                   }}
                 >
                   <span>
-                    <span style={{ color: current ? ACCENT_LIGHT : CON_DIM }}>{current ? ">" : k < step ? "+" : " "}</span>
+                    <span style={{ color: current ? ACCENT_LIGHT : CON_DIM }}>{current ? "■" : k < step ? "+" : " "}</span>
                     {` ${k + 1} ${label}`}
                   </span>
                   <span style={{ flex: "none" }}>{locations[k]}</span>

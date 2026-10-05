@@ -10,15 +10,18 @@
  * - No topic-only title (single word), except structural slides (cover, agenda, closing)
  * - No em dash in title or subtitle
  * - No double-hyphen punctuation in title or subtitle
- * - Story order follows opening, complication, answer, proof, value, control, scale, action, close
+ * - Thirteen core slides; the closing Q&A slide plays after the core and is not counted in it
+ * - Story order follows opening, complication, answer, proof, control, value, scale, action
+ * - Supporting insights stay within 30 words and do not repeat the title or subtitle
+ * - Every appendix reference resolves, and every appendix slide carries a group and a status
  */
 
 import { describe, it, expect } from "vitest";
-import { CORE_SLIDES_V24 } from "../../src/presentation-v2-4/data/core-story";
+import { CORE_SLIDES_V24, CLOSING_SLIDE_V24, PRESENTATION_SLIDES_V24 } from "../../src/presentation-v2-4/data/core-story";
 import { APPENDIX_SLIDES_V24 } from "../../src/presentation-v2-4/data/appendix";
 
-const EM_DASH = "—";
-const EN_DASH = "–";
+const EM_DASH = "\u2014";
+const EN_DASH = "\u2013";
 
 function noEmDash(s: string) {
   return !s.includes(EM_DASH) && !s.includes(EN_DASH);
@@ -39,26 +42,27 @@ const EXPECTED_SECTIONS = [
   "Proof",
   "Proof",
   "Proof",
-  "Value",
   "Control",
+  "Value",
   "Scale",
   "Action",
-  "Close",
 ];
 
 const STRUCTURAL_KINDS = new Set(["cover", "agenda", "closing"]);
 
 describe("CORE_SLIDES_V24", () => {
-  it("has exactly fourteen slides", () => {
-    expect(CORE_SLIDES_V24).toHaveLength(14);
+  it("has exactly thirteen core slides", () => {
+    expect(CORE_SLIDES_V24).toHaveLength(13);
   });
 
   it("opens with a cover and an agenda and closes with questions", () => {
     expect(CORE_SLIDES_V24[0]!.kind).toBe("cover");
     expect(CORE_SLIDES_V24[1]!.kind).toBe("agenda");
-    expect(CORE_SLIDES_V24[CORE_SLIDES_V24.length - 1]!.kind).toBe("closing");
+    expect(CLOSING_SLIDE_V24.kind).toBe("closing");
+    expect(PRESENTATION_SLIDES_V24[PRESENTATION_SLIDES_V24.length - 1]).toBe(CLOSING_SLIDE_V24);
+    expect(PRESENTATION_SLIDES_V24).toHaveLength(CORE_SLIDES_V24.length + 1);
     const structural = CORE_SLIDES_V24.filter((s) => s.kind !== undefined && STRUCTURAL_KINDS.has(s.kind));
-    expect(structural).toHaveLength(3);
+    expect(structural).toHaveLength(2);
   });
 
   it("every slide has a non-empty title", () => {
@@ -166,22 +170,58 @@ describe("CORE_SLIDES_V24", () => {
     expect(firstProof).toBeGreaterThan(firstAnswer);
   });
 
-  it("proof section precedes value", () => {
+  it("proof section precedes control", () => {
     const lastProof = [...CORE_SLIDES_V24].reverse().findIndex((s) => s.section === "Proof");
-    const firstValue = CORE_SLIDES_V24.findIndex((s) => s.section === "Value");
-    expect(firstValue).toBeGreaterThan(CORE_SLIDES_V24.length - 1 - lastProof);
+    const firstControl = CORE_SLIDES_V24.findIndex((s) => s.section === "Control");
+    expect(firstControl).toBeGreaterThan(CORE_SLIDES_V24.length - 1 - lastProof);
   });
 
-  it("value section precedes control", () => {
-    const firstValue = CORE_SLIDES_V24.findIndex((s) => s.section === "Value");
+  // The authority slide asks how the boundary is enforced; trust answers it before value is discussed
+  it("control (trust) precedes value", () => {
     const firstControl = CORE_SLIDES_V24.findIndex((s) => s.section === "Control");
-    expect(firstControl).toBeGreaterThan(firstValue);
+    const firstValue = CORE_SLIDES_V24.findIndex((s) => s.section === "Value");
+    expect(firstValue).toBe(firstControl + 1);
+    expect(CORE_SLIDES_V24[firstControl]!.title).toBe("Trust is engineered into every material step");
   });
 
-  it("control section precedes scale", () => {
-    const firstControl = CORE_SLIDES_V24.findIndex((s) => s.section === "Control");
+  it("value section precedes scale", () => {
+    const firstValue = CORE_SLIDES_V24.findIndex((s) => s.section === "Value");
     const firstScale = CORE_SLIDES_V24.findIndex((s) => s.section === "Scale");
-    expect(firstScale).toBeGreaterThan(firstControl);
+    expect(firstScale).toBeGreaterThan(firstValue);
+  });
+
+  it("slide ids follow the play order", () => {
+    CORE_SLIDES_V24.forEach((slide, i) => {
+      expect(slide.id).toBe(`slide-${String(i + 1).padStart(2, "0")}`);
+    });
+  });
+
+  it("supporting insights are compact and do not repeat the title or subtitle", () => {
+    for (const slide of PRESENTATION_SLIDES_V24) {
+      if (slide.insight === undefined) continue;
+      const words = slide.insight.trim().split(/\s+/).length;
+      expect(words, `slide ${slide.id} insight has ${words} words`).toBeLessThanOrEqual(30);
+      expect(noEmDash(slide.insight), `slide ${slide.id} insight contains a dash`).toBe(true);
+      const insight = slide.insight.toLowerCase();
+      expect(insight.includes(slide.title.toLowerCase()), `slide ${slide.id} insight repeats the title`).toBe(false);
+      expect(insight.includes(slide.subtitle.toLowerCase()), `slide ${slide.id} insight repeats the subtitle`).toBe(false);
+    }
+  });
+
+  it("every appendix reference resolves to an appendix slide", () => {
+    const ids = new Set(APPENDIX_SLIDES_V24.map((s) => s.id));
+    for (const slide of PRESENTATION_SLIDES_V24) {
+      for (const ref of slide.appendixRefs) {
+        expect(ids.has(ref.appendixId), `slide ${slide.id} references missing ${ref.appendixId}`).toBe(true);
+      }
+    }
+  });
+
+  it("the closing slide has copy, notes and no dashes", () => {
+    expect(CLOSING_SLIDE_V24.title.trim().length).toBeGreaterThan(0);
+    expect(CLOSING_SLIDE_V24.subtitle.trim().length).toBeGreaterThan(0);
+    expect(CLOSING_SLIDE_V24.speakerNotes.trim().length).toBeGreaterThan(0);
+    expect(noEmDash(CLOSING_SLIDE_V24.title) && noEmDash(CLOSING_SLIDE_V24.subtitle)).toBe(true);
   });
 
   it("scale section precedes action", () => {
@@ -259,6 +299,15 @@ describe("APPENDIX_SLIDES_V24", () => {
   it("every appendix slide declares at least one evidence basis", () => {
     for (const slide of APPENDIX_SLIDES_V24) {
       expect(slide.evidenceBasis.length, `appendix ${slide.id} has no evidence basis`).toBeGreaterThan(0);
+    }
+  });
+
+  it("every appendix slide has an index group, an implementation status and notes", () => {
+    for (const slide of APPENDIX_SLIDES_V24) {
+      expect(slide.group, `appendix ${slide.id} has no group`).toBeTruthy();
+      expect(slide.status, `appendix ${slide.id} has no status`).toBeTruthy();
+      expect(slide.status?.note.trim().length ?? 0, `appendix ${slide.id} status has no note`).toBeGreaterThan(0);
+      expect(slide.speakerNotes.trim().length, `appendix ${slide.id} has no notes`).toBeGreaterThan(0);
     }
   });
 

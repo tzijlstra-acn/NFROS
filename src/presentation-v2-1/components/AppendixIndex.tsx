@@ -23,21 +23,21 @@ export interface AppendixIndexProps {
 function getDescription(content: AppendixContent): string {
   switch (content.kind) {
     case "status-table":
-      return `Status overview -- ${content.rows.length} items`;
+      return `Status overview: ${content.rows.length} items`;
     case "capability-map":
-      return `Capability map -- ${content.groups.length} groups`;
+      return `Capability map: ${content.groups.length} groups`;
     case "service-stack":
-      return `Service model -- ${content.tiers.length} tiers`;
+      return `Service model: ${content.tiers.length} tiers`;
     case "text-columns":
       return `${content.columns.length}-column detail`;
     case "process-flow":
       return `${content.steps.length}-stage process flow`;
     case "matrix":
-      return `Reference matrix -- ${content.rows.length} rows`;
+      return `Reference matrix: ${content.rows.length} rows`;
     case "three-column":
       return "Three-column reference";
     case "simple-list":
-      return `Catalogue -- ${content.groups.length} groups`;
+      return `Catalogue: ${content.groups.length} groups`;
   }
 }
 

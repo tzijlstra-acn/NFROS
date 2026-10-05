@@ -47,7 +47,11 @@ export default async function DecisionsV3({
   });
 
   return (
-    <div className="wd-main-inner">
+    <div
+      className="wd-main-inner"
+      data-presentation-region="decision-queue"
+      data-presentation-ready={model.rows.length > 0 ? "true" : undefined}
+    >
       <div className="wd-location">
         {model.locationParts.map((part, index) => (
           <span key={part} className="wd-row" style={{ gap: "var(--wd-2)" }}>

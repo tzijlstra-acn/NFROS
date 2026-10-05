@@ -85,6 +85,8 @@
     "test:presentation-motion": "playwright test tests/e2e/presentation-v2-4-motion.spec.ts",
     "verify:presentation-exports": "tsx scripts/verify-presentation-exports-v2-4.ts",
     "export:presentation-v2-4": "tsx scripts/export-presentation-v2-4.ts",
+    "presentation:capture-v2-4": "tsx scripts/capture-presentation-assets-v2-4.ts",
+    "verify:presentation-assets-v2-4": "tsx scripts/verify-presentation-assets-v2-4.ts",
     "audit:all": "npm run typecheck && npm run lint && npm run check:copy && npm run scan:secrets && npm run test:unit && npm run test:integration && npm run eval:structural"
   },
   "dependencies": {

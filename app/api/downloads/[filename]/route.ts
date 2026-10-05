@@ -23,6 +23,10 @@ const ALLOWED_FILES = [
   "NFROS_Risk_Audience_Core.pdf",
   "NFROS_Risk_Audience_Core_and_Appendix.pdf",
   "NFROS_Risk_Audience_Export_Metadata.json",
+  "NFROS_Risk_Audience_V24_Core.pdf",
+  "NFROS_Risk_Audience_V24_Core_and_Appendix.pdf",
+  "NFROS_Risk_Audience_V24_Core_and_Appendix.pptx",
+  "NFROS_Risk_Audience_V24_Speaker_Notes.md",
 ] as const;
 
 type AllowedFile = (typeof ALLOWED_FILES)[number];
@@ -35,6 +39,11 @@ const CONTENT_TYPE: Record<AllowedFile, string> = {
   "NFROS_Risk_Audience_Core.pdf": "application/pdf",
   "NFROS_Risk_Audience_Core_and_Appendix.pdf": "application/pdf",
   "NFROS_Risk_Audience_Export_Metadata.json": "application/json",
+  "NFROS_Risk_Audience_V24_Core.pdf": "application/pdf",
+  "NFROS_Risk_Audience_V24_Core_and_Appendix.pdf": "application/pdf",
+  "NFROS_Risk_Audience_V24_Core_and_Appendix.pptx":
+    "application/vnd.openxmlformats-officedocument.presentationml.presentation",
+  "NFROS_Risk_Audience_V24_Speaker_Notes.md": "text/markdown; charset=utf-8",
 };
 
 // ---------------------------------------------------------------------------

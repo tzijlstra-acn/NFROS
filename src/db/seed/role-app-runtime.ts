@@ -279,7 +279,7 @@ export const meetingMinutesData: NewMeetingMinutes[] = [
     runId: DEFAULT_RUN_ID,
     meetingId: "MTG-RCSA-PAYOPS-Q4-2026-SCOPE",
     roleId: "rcsa",
-    title: "RCSA Scope Confirmation -- Payments Execution Q4 2026",
+    title: "RCSA Scope Confirmation: Payments Execution Q4 2026",
     summary:
       "The scope for the Payments Execution Q4 RCSA was confirmed as PRC-0041 (Payment repair and manual override). The trigger reason is the breach of KRI-PAY-007 (override rate) above the amber threshold for three consecutive months. Arcadia Bank AG (ARC-DE) is the primary entity. The assessment period runs from 01.07.2026 to 30.09.2026. Anna Weber confirmed the scope and trigger. The challenge workshop is scheduled for 06.10.2026 at 10:30.",
     factItems: [
@@ -309,7 +309,7 @@ export const meetingMinutesData: NewMeetingMinutes[] = [
     runId: DEFAULT_RUN_ID,
     meetingId: "MTG-TPRM-VERIDIAN-TRIAGE-2026",
     roleId: "tprm",
-    title: "Veridian Evidence Triage -- Stage 4 Review Call",
+    title: "Veridian Evidence Triage: Stage 4 Review Call",
     summary:
       "Stefan Brunner reviewed the outstanding evidence position for Veridian Document Systems GmbH (TP-0099) with Group IT Security. Four evidence items are accepted. Two items are outstanding: the full penetration test report (EVD-OB-0099-05, expected 09.10.2026) and the BCM plan and test report (EVD-OB-0099-06). The group agreed that a conditional gate pass to Stage 5 is appropriate if both items are received by 09.10.2026. Draft minutes pending confirmation by Stefan Brunner.",
     factItems: [
@@ -324,7 +324,7 @@ export const meetingMinutesData: NewMeetingMinutes[] = [
     actionIds: ["ACT-TPRM-OB-0099-PENTEST-CHASE", "ACT-TPRM-OB-0099-BCM-CHASE"],
     unresolvedItems: [
       "Netherlands backup data residency confirmation from supplier",
-      "Subprocessor consent model -- prior consent vs notice and objection"
+      "Subprocessor consent model: prior consent or notice and objection"
     ],
     evidenceIds: ["EVD-OB-0099-02", "EVD-OB-0099-05", "EVD-OB-0099-06", "EVD-OB-0099-08"],
     participantUserIds: ["P-002"],

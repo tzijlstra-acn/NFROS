@@ -38,7 +38,15 @@ const COPY = {
   review: { en: "Review preparation", de: "Vorbereitung ansehen" },
   due: { en: "Due", de: "Faellig" },
   ago: { en: "ago", de: "her" },
+  justNow: { en: "Just arrived", de: "Gerade eingegangen" },
 } as const;
+
+/** `momentAge` says "now" under a minute, which cannot take "ago" after it. */
+function arrivedLabel(arrived: string, current: string, language: Language): string {
+  const age = momentAge(arrived, current, language);
+  if (age === momentAge(current, current, language)) return pick(COPY.justNow, language);
+  return `${age} ${pick(COPY.ago, language)}`;
+}
 
 /**
  * The subject of the item, named in the reader's own professional language.
@@ -147,7 +155,7 @@ export function RoleHome({
   const doneCount = sections.handled.length;
 
   return (
-    <div className="wd-main-inner" data-presentation-region="role-home">
+    <div className="wd-main-inner" data-presentation-region="role-home" data-presentation-ready="true">
       {/*
         * The page says what day it is, and nothing the header already said.
         *
@@ -235,10 +243,7 @@ export function RoleHome({
                     {pick(COPY.due, language)} <strong>{now.item.dueMoment}</strong>
                   </>
                 ) : (
-                  <>
-                    {momentAge(now.item.arrivedAtMoment, currentMoment, language)}{" "}
-                    {pick(COPY.ago, language)}
-                  </>
+                  arrivedLabel(now.item.arrivedAtMoment, currentMoment, language)
                 )}
               </span>
 

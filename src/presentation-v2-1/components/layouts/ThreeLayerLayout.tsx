@@ -30,8 +30,10 @@ const TIER_ATTRS = ["intelligence", "human", "evidence"] as const;
 // ---------------------------------------------------------------------------
 
 export function ThreeLayerLayout({ slide }: ThreeLayerLayoutProps) {
-  // Use emphasis lines as the three layers; fall back to bullets.
-  const layers = slide.emphasis ?? slide.bullets ?? [];
+  // Use the heading/detail cards as the three layers; fall back to emphasis
+  // lines, then bullets, rendered as headings only.
+  const layers: { heading: string; detail?: string }[] =
+    slide.cards ?? (slide.emphasis ?? slide.bullets ?? []).map((heading) => ({ heading }));
 
   return (
     <div className="pv21-layout-three-layer">
@@ -75,10 +77,8 @@ export function ThreeLayerLayout({ slide }: ThreeLayerLayoutProps) {
       >
         {layers.map((layer, i) => {
           const tier = TIER_ATTRS[i] ?? "intelligence";
-          // Split "Label -- detail" if available.
-          const dashIdx = layer.indexOf(" -- ");
-          const label = dashIdx >= 0 ? layer.slice(0, dashIdx) : layer;
-          const detail = dashIdx >= 0 ? layer.slice(dashIdx + 4) : undefined;
+          const label = layer.heading;
+          const detail = layer.detail;
 
           return (
             <div key={i} className="pv21-layer-card" data-tier={tier}>

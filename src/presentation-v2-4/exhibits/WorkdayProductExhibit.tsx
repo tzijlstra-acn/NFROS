@@ -2,289 +2,404 @@
 
 import * as React from "react";
 import { motion, useReducedMotion } from "motion/react";
-import {
-  IconAlertTriangle,
-  IconClipboardCheck,
-  IconUserCheck,
-  IconClock,
-  IconCircleCheck,
-  IconCircleCheckFilled,
-  IconBolt,
-  IconChecklist,
-} from "@tabler/icons-react";
+import { IconBolt, IconCalendarEvent, IconCircleCheck, IconClock, IconSparkles } from "@tabler/icons-react";
 import type { WorkdayProductData } from "@/presentation-v2-4/data/types";
+import { STAGE_H, STAGE_W } from "@/presentation-v2-4/components/SlideStage";
+import { ProductCapture, type ProductCaptureFocus } from "@/presentation-v2-4/product-proof/ProductCapture";
+import { isAssetIdV24 } from "@/presentation-v2-4/product-proof/asset-registry";
+import { getCaptureV24 } from "@/presentation-v2-4/product-proof/manifest";
+import type { PresentationAssetIdV24 } from "@/presentation-v2-4/product-proof/types";
 
 export interface WorkdayProductExhibitProps {
   data: WorkdayProductData;
   exportMode?: boolean;
 }
 
-// Drawn on the 1920 x 780 exhibit stage
-const FRAME_X = 60;
-const FRAME_Y = 16;
-const FRAME_W = 1260;
-const FRAME_H = 664;
-const ANNOT_X = 1360;
-const ANNOT_W = 500;
-const DAYLINE_Y = 716;
+// Layout on the 1920 x 780 exhibit stage. The whole captured home is shown at full stage
+// height; callouts sit to its right, each centred on the focus box it explains where the
+// column allows, so every link can run straight across.
+const EDGE = 4;
+const CAP_MAX_W = 900;
+const LINK_GAP = 110;
+const CALLOUT_W = 640;
+const CALLOUT_H = 84;
+const CALLOUT_GAP = 12;
+const LINK_INSET = 20;
+const MARKER = 10;
+const ICON_BOX = 48;
+
+// ProductCapture chrome for frame="plain", mirrored so the links meet its focus boxes
+const CAP_BORDER = 1;
+const FOCUS_PAD = 4;
+// The state frame is drawn this far outside each focus box, so product text never touches it.
+// Vertically the role home sections sit about 15 px apart, which leaves room for 1 px only.
+const FRAME_EXT_X = 6;
+const FRAME_EXT_Y = 1;
+const CALLOUT_PAD = 26;
+
+const SCOPE = "pv24-s06-capture";
 const DONE_GREEN = "#1F7A45";
 
-type ZoneKey = "now" | "next" | "done";
-type ZoneItem = { icon: typeof IconClock; title: string; meta: string; chip: string };
-type Zone = { key: ZoneKey; label: string; tagline: string; icon: typeof IconClock; items: ZoneItem[] };
+// Reveal, in seconds: the capture, then each state from top to bottom. Five states end at 3.5 s.
+const CAPTURE_IN = 0.5;
+const STATE_START = 0.4;
+const STATE_STEP = 0.6;
+const LINK_DELAY = 0.15;
+const CALLOUT_DELAY = 0.3;
+const STEP_DUR = 0.4;
+const stateStart = (i: number) => STATE_START + i * STATE_STEP;
 
-// Illustrative work items for a synthetic Operational Risk Partner
-const ZONES: Zone[] = [
-  {
-    key: "now",
-    label: "Now",
-    tagline: "Needs your judgment",
-    icon: IconBolt,
-    items: [
-      {
-        icon: IconAlertTriangle,
-        title: "KRI breach: payments outage time above appetite",
-        meta: "AI Partner: evidence pack ready, 2 comparable incidents attached",
-        chip: "Open pack",
-      },
-      {
-        icon: IconClipboardCheck,
-        title: "OpRisk Committee pack: sign-off required by 17:00",
-        meta: "5 open items, 1 awaiting your approval",
-        chip: "Sign off",
-      },
-    ],
-  },
-  {
-    key: "next",
-    label: "Next",
-    tagline: "Prepared for later today and this week",
-    icon: IconClock,
-    items: [
-      { icon: IconUserCheck, title: "Q3 TPRM review: Fintech Vendor X", meta: "Contract scan complete, 3 open findings prepared", chip: "Due 15 Oct" },
-      { icon: IconChecklist, title: "Annual control assessment: Payment Services", meta: "Evidence collection 80% complete", chip: "Due 28 Oct" },
-    ],
-  },
-  {
-    key: "done",
-    label: "Done",
-    tagline: "Handled, audit trail kept",
-    icon: IconCircleCheck,
-    items: [
-      { icon: IconCircleCheckFilled, title: "TPRM sign-off: Tier 1 supplier renewal", meta: "Approved by you, decision record linked", chip: "Done 09:42" },
-    ],
-  },
-];
+// State keys double as the manifest sub-region names of a role home capture
+type StateKey = "now" | "ai-partner" | "next" | "meetings-actions" | "done";
 
-const ZONE_STYLE: Record<ZoneKey, { box: React.CSSProperties; accent: string; title: string; itemBg: string; chipBg: string; chipText: string; delay: number }> = {
+type StateStyle = {
+  icon: typeof IconBolt;
+  /** Frame on the capture, link and marker */
+  stroke: string;
+  strokeWidth: number;
+  dashed: boolean;
+  ink: string;
+  text: string;
+  fill: string;
+  iconFill: string;
+  iconInk: string;
+  shadow?: string;
+  live?: boolean;
+};
+
+const STATES: Record<StateKey, StateStyle> = {
+  // Needs attention this second: heaviest frame, solid accent, a live marker
   now: {
-    box: { border: "2px solid var(--pv24-accent)", background: "#FBF5FF", boxShadow: "0 6px 22px rgba(161, 0, 255, 0.12)" },
-    accent: "var(--pv24-accent)",
-    title: "var(--pv24-text)",
-    itemBg: "var(--pv24-surface)",
-    chipBg: "var(--pv24-accent)",
-    chipText: "#FFFFFF",
-    delay: 0.45,
+    icon: IconBolt,
+    stroke: "var(--pv24-accent)",
+    strokeWidth: 3,
+    dashed: false,
+    ink: "var(--pv24-accent)",
+    text: "var(--pv24-text)",
+    fill: "var(--pv24-surface)",
+    iconFill: "var(--pv24-accent)",
+    iconInk: "#FFFFFF",
+    shadow: "0 6px 22px rgba(161, 0, 255, 0.14)",
+    live: true,
   },
+  // Prepared by the AI Partner: light purple, as the product marks AI work
+  "ai-partner": {
+    icon: IconSparkles,
+    stroke: "var(--pv24-brand-purple-light)",
+    strokeWidth: 2,
+    dashed: false,
+    ink: "var(--pv24-accent-dark)",
+    text: "var(--pv24-text)",
+    fill: "#F9F2FF",
+    iconFill: "var(--pv24-surface)",
+    iconInk: "var(--pv24-accent)",
+  },
+  // Comes later: dashed, not yet active
   next: {
-    box: { border: "1.5px dashed var(--pv24-border-strong)", background: "var(--pv24-surface)" },
-    accent: "var(--pv24-text-secondary)",
-    title: "var(--pv24-text)",
-    itemBg: "var(--pv24-surface)",
-    chipBg: "var(--pv24-muted-bg)",
-    chipText: "var(--pv24-text)",
-    delay: 1.0,
+    icon: IconClock,
+    stroke: "var(--pv24-accent-dark)",
+    strokeWidth: 2,
+    dashed: true,
+    ink: "var(--pv24-accent-dark)",
+    text: "var(--pv24-text)",
+    fill: "var(--pv24-surface)",
+    iconFill: "var(--pv24-accent-lightest)",
+    iconInk: "var(--pv24-accent-dark)",
   },
+  // The day around the decision: solid dark purple, steady rather than urgent
+  "meetings-actions": {
+    icon: IconCalendarEvent,
+    stroke: "var(--pv24-accent-dark)",
+    strokeWidth: 2,
+    dashed: false,
+    ink: "var(--pv24-accent-dark)",
+    text: "var(--pv24-text)",
+    fill: "var(--pv24-surface)",
+    iconFill: "var(--pv24-muted-bg)",
+    iconInk: "var(--pv24-accent-dark)",
+  },
+  // Already done: quiet and receded, with a check
   done: {
-    box: { border: "1px solid var(--pv24-border)", background: "var(--pv24-muted-bg)" },
-    accent: DONE_GREEN,
-    title: "var(--pv24-text-secondary)",
-    itemBg: "transparent",
-    chipBg: "#E3F2E9",
-    chipText: DONE_GREEN,
-    delay: 1.4,
+    icon: IconCircleCheck,
+    stroke: DONE_GREEN,
+    strokeWidth: 2,
+    dashed: false,
+    ink: DONE_GREEN,
+    text: "var(--pv24-text-secondary)",
+    fill: "var(--pv24-muted-bg)",
+    iconFill: "#E3F2E9",
+    iconInk: DONE_GREEN,
   },
 };
 
-const STATS = [
-  { label: "Signals monitored", value: "12 active" },
-  { label: "Evidence packs prepared", value: "3 today" },
-  { label: "Routine tasks handled", value: "8 complete" },
-  { label: "Decisions awaiting you", value: "2 now" },
-];
+const STATE_BY_LABEL: Record<string, StateKey> = {
+  now: "now",
+  "ai partner": "ai-partner",
+  next: "next",
+  "your day": "meetings-actions",
+  done: "done",
+};
 
-// Day from 08:00 to 18:00 mapped onto the frame width
-const timeX = (h: number, m = 0) => FRAME_X + ((h + m / 60 - 8) / 10) * FRAME_W;
+type Box = { x: number; y: number; w: number; h: number };
 
-export function WorkdayProductExhibit({ data: _data, exportMode = false }: WorkdayProductExhibitProps) {
+/** Capture size and position, and the stage box of each drawn state frame, from the manifest. */
+function captureLayout(assetId: PresentationAssetIdV24) {
+  const capture = getCaptureV24(assetId);
+  const maxHeight = STAGE_H - 2 * EDGE;
+  const innerH = maxHeight - 2 * CAP_BORDER;
+  const width = capture
+    ? Math.min(CAP_MAX_W, Math.round((capture.width * innerH) / capture.height) + 2 * CAP_BORDER)
+    : Math.round(maxHeight * 1.08);
+  const scale = capture ? (width - 2 * CAP_BORDER) / capture.width : 0;
+  const height = capture ? Math.min(maxHeight, Math.round(capture.height * scale) + 2 * CAP_BORDER) : maxHeight;
+  const x = Math.round((STAGE_W - (width + LINK_GAP + CALLOUT_W)) / 2);
+  const y = Math.round((STAGE_H - height) / 2);
+  const focusBox = (region: string): Box | null => {
+    const r = capture?.subRegions[region];
+    if (!r) return null;
+    const padX = FOCUS_PAD + FRAME_EXT_X;
+    const padY = FOCUS_PAD + FRAME_EXT_Y;
+    return {
+      x: x + CAP_BORDER + r.x * scale - padX,
+      y: y + CAP_BORDER + r.y * scale - padY,
+      w: r.width * scale + 2 * padX,
+      h: r.height * scale + 2 * padY,
+    };
+  };
+  return { x, y, width, maxHeight, calloutX: x + width + LINK_GAP, focusBox };
+}
+
+// Callout tops for targets sorted top to bottom. Each callout is centred on its target where
+// it can be; callouts that would overlap move as one group, centred on the mean of their
+// targets and kept inside the stage, so the offset is shared rather than pushed onto one.
+function placeTops(targets: readonly number[]): number[] {
+  const pitch = CALLOUT_H + CALLOUT_GAP;
+  const lo = EDGE;
+  const hi = STAGE_H - EDGE - CALLOUT_H;
+  // sum: the group top each member asks for, added up
+  type Group = { count: number; sum: number; top: number };
+  const settle = (count: number, sum: number): Group => ({
+    count,
+    sum,
+    top: Math.min(Math.max(sum / count, lo), hi - (count - 1) * pitch),
+  });
+  const groups: Group[] = [];
+  for (const t of targets) {
+    let group = settle(1, t - CALLOUT_H / 2);
+    let prev = groups[groups.length - 1];
+    while (prev && prev.top + prev.count * pitch > group.top) {
+      groups.pop();
+      group = settle(prev.count + group.count, prev.sum + group.sum - prev.count * group.count * pitch);
+      prev = groups[groups.length - 1];
+    }
+    groups.push(group);
+  }
+  return groups.flatMap((g) => Array.from({ length: g.count }, (_, k) => Math.round(g.top + k * pitch)));
+}
+
+// Restyles the capture's focus boxes per state: the plain box border gives way to a state
+// frame drawn slightly wider than the box. Its chip label is hidden; the callouts carry it.
+function captureCss(order: readonly StateKey[], animate: boolean): string {
+  const sel = (key: StateKey) => `.${SCOPE} [data-focus-region=${key}]`;
+  const rules = [
+    `.${SCOPE} [data-focus-region] { border: none !important; }`,
+    `.${SCOPE} [data-focus-region] span { display: none; }`,
+    `.${SCOPE} [data-focus-region]::before { content: ""; position: absolute; inset: -${FRAME_EXT_Y}px -${FRAME_EXT_X}px; box-sizing: border-box; pointer-events: none; }`,
+  ];
+  for (const key of order) {
+    const st = STATES[key];
+    rules.push(`${sel(key)}::before { border: ${st.strokeWidth}px ${st.dashed ? "dashed" : "solid"} ${st.stroke}; }`);
+  }
+  if (animate) {
+    rules.push(`@keyframes ${SCOPE}-in { from { opacity: 0; transform: scale(1.03); } to { opacity: 1; transform: none; } }`);
+    order.forEach((key, i) => {
+      rules.push(`${sel(key)} { animation: ${SCOPE}-in ${STEP_DUR}s ease-out ${stateStart(i)}s both; }`);
+    });
+  }
+  return rules.join("\n");
+}
+
+type LinkProps = { from: Box; toX: number; top: number; st: StateStyle; delay: number; skip: boolean };
+
+// Square marker on the focus box edge, then a line to the callout's left edge
+function Link({ from, toX, top, st, delay, skip }: LinkProps) {
+  const x0 = from.x + from.w;
+  const y0 = from.y + from.h / 2;
+  const y1 = Math.min(Math.max(y0, top + LINK_INSET), top + CALLOUT_H - LINK_INSET);
+  const left = x0 - MARKER;
+  const minY = Math.min(y0, y1) - MARKER;
+  const w = toX - left;
+  const h = Math.abs(y1 - y0) + 2 * MARKER;
+  const lx = (x: number) => x - left;
+  const ly = (y: number) => y - minY;
+  const xm = toX - LINK_GAP / 2;
+  const d =
+    Math.abs(y1 - y0) < 0.5
+      ? `M ${lx(x0)} ${ly(y0)} H ${lx(toX)}`
+      : `M ${lx(x0)} ${ly(y0)} H ${lx(xm)} V ${ly(y1)} H ${lx(toX)}`;
+  return (
+    <motion.svg
+      aria-hidden="true"
+      width={w}
+      height={h}
+      viewBox={`0 0 ${w} ${h}`}
+      initial={skip ? false : { clipPath: "inset(0% 100% 0% 0%)" }}
+      animate={{ clipPath: "inset(0% 0% 0% 0%)" }}
+      transition={skip ? undefined : { delay, duration: STEP_DUR, ease: "easeOut" }}
+      style={{ position: "absolute", left, top: minY, pointerEvents: "none" }}
+    >
+      <path
+        d={d}
+        fill="none"
+        strokeDasharray={st.dashed ? "7 5" : undefined}
+        style={{ stroke: st.stroke, strokeWidth: st.strokeWidth }}
+      />
+      <rect x={lx(x0) - MARKER / 2} y={ly(y0) - MARKER / 2} width={MARKER} height={MARKER} style={{ fill: st.stroke }} />
+    </motion.svg>
+  );
+}
+
+type CalloutProps = {
+  stateKey: StateKey;
+  label: string;
+  meaning: string;
+  x: number;
+  top: number;
+  delay: number;
+  pulseDelay: number;
+  skip: boolean;
+};
+
+function Callout({ stateKey, label, meaning, x, top, delay, pulseDelay, skip }: CalloutProps) {
+  const st = STATES[stateKey];
+  const Icon = st.icon;
+  return (
+    <motion.div
+      data-workday-state={stateKey}
+      initial={skip ? false : { opacity: 0, x: 24 }}
+      animate={{ opacity: 1, x: 0 }}
+      transition={skip ? undefined : { delay, duration: STEP_DUR, ease: "easeOut" }}
+      style={{
+        position: "absolute",
+        left: x,
+        top,
+        width: CALLOUT_W,
+        height: CALLOUT_H,
+        boxSizing: "border-box",
+        display: "flex",
+        alignItems: "center",
+        gap: 20,
+        // Same content position whatever the border weight
+        padding: `0 ${CALLOUT_PAD - st.strokeWidth}px`,
+        background: st.fill,
+        border: `${st.strokeWidth}px ${st.dashed ? "dashed" : "solid"} ${st.stroke}`,
+        boxShadow: st.shadow,
+      }}
+    >
+      <div
+        style={{
+          width: ICON_BOX,
+          height: ICON_BOX,
+          flexShrink: 0,
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+          background: st.iconFill,
+        }}
+      >
+        <Icon size={28} stroke={2} color={st.iconInk} aria-hidden="true" />
+      </div>
+      <div style={{ display: "flex", flexDirection: "column", gap: 4, minWidth: 0 }}>
+        <div
+          style={{
+            display: "flex",
+            alignItems: "center",
+            gap: 10,
+            fontSize: 16,
+            lineHeight: "20px",
+            fontWeight: 700,
+            letterSpacing: "0.12em",
+            textTransform: "uppercase",
+            color: st.ink,
+          }}
+        >
+          {label}
+          {st.live ? (
+            <motion.span
+              aria-hidden="true"
+              style={{ width: 10, height: 10, borderRadius: "50%", background: st.stroke, display: "inline-block" }}
+              animate={skip ? undefined : { opacity: [1, 0.25, 1] }}
+              transition={skip ? undefined : { duration: 1.6, repeat: Infinity, delay: pulseDelay }}
+            />
+          ) : null}
+        </div>
+        <div style={{ fontSize: 24, lineHeight: "30px", fontWeight: 600, color: st.text, whiteSpace: "nowrap" }}>{meaning}</div>
+      </div>
+    </motion.div>
+  );
+}
+
+export function WorkdayProductExhibit({ data, exportMode = false }: WorkdayProductExhibitProps) {
   const prefersReduced = useReducedMotion();
   const skip = exportMode || !!prefersReduced;
-  const nowX = timeX(10, 30);
+  const assetId: PresentationAssetIdV24 = isAssetIdV24(data.assetId) ? data.assetId : "or-home";
+  const cap = captureLayout(assetId);
+
+  const known = data.focusAnnotations.flatMap((a) => {
+    const key = STATE_BY_LABEL[a.label.trim().toLowerCase()];
+    return key ? [{ key, label: a.label, meaning: a.meaning, focus: cap.focusBox(key) }] : [];
+  });
+  const states = known
+    .map((s, i) => ({ ...s, target: s.focus ? s.focus.y + s.focus.h / 2 : ((i + 1) * STAGE_H) / (known.length + 1) }))
+    .sort((a, b) => a.target - b.target);
+  const tops = placeTops(states.map((s) => s.target));
+  const focus: ProductCaptureFocus[] = states.filter((s) => s.focus).map((s) => ({ region: s.key, label: s.label }));
+  const revealEnd = stateStart(Math.max(0, states.length - 1)) + CALLOUT_DELAY + STEP_DUR;
 
   return (
     <div
+      role="group"
+      aria-label="Operational Risk Partner home with Now, AI Partner, Next, Your day and Done marked"
       style={{ position: "absolute", inset: 0, background: "var(--pv24-canvas)", fontFamily: "var(--pv24-font-family)", overflow: "hidden" }}
-      aria-label="Workday product exhibit"
     >
+      <style dangerouslySetInnerHTML={{ __html: captureCss(states.map((s) => s.key), !skip) }} />
       <motion.div
-        initial={skip ? false : { opacity: 0, scale: 0.98 }}
-        animate={{ opacity: 1, scale: 1 }}
-        transition={skip ? undefined : { duration: 0.4, ease: "easeOut" }}
-        style={{
-          position: "absolute",
-          left: FRAME_X,
-          top: FRAME_Y,
-          width: FRAME_W,
-          height: FRAME_H,
-          background: "var(--pv24-surface)",
-          boxShadow: "0 2px 24px rgba(0,0,0,0.10)",
-          padding: "18px 22px",
-          boxSizing: "border-box",
-          display: "flex",
-          flexDirection: "column",
-          gap: 14,
-        }}
+        className={SCOPE}
+        initial={skip ? false : { opacity: 0 }}
+        animate={{ opacity: 1 }}
+        transition={skip ? undefined : { duration: CAPTURE_IN, ease: "easeOut" }}
+        style={{ position: "absolute", left: cap.x, top: cap.y, width: cap.width, boxShadow: "0 2px 24px rgba(0, 0, 0, 0.08)" }}
       >
-        {ZONES.map((zone) => {
-          const st = ZONE_STYLE[zone.key];
-          const ZoneIcon = zone.icon;
-          return (
-            <motion.div
-              key={zone.key}
-              initial={skip ? false : { opacity: 0, y: 14 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={skip ? undefined : { duration: 0.4, delay: st.delay }}
-              style={{ position: "relative", padding: "12px 16px 14px", display: "flex", flexDirection: "column", gap: 10, ...st.box }}
-            >
-              {zone.key === "now" && !skip && (
-                <motion.div
-                  aria-hidden="true"
-                  style={{ position: "absolute", inset: -7, border: "2px solid var(--pv24-accent)", pointerEvents: "none" }}
-                  animate={{ opacity: [0, 0.5, 0] }}
-                  transition={{ duration: 2.2, delay: 1.2, repeat: Infinity, repeatDelay: 0.6 }}
-                />
-              )}
-              <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
-                <ZoneIcon size={24} color={st.accent} stroke={2} />
-                <span style={{ fontSize: 19, fontWeight: 700, letterSpacing: "0.1em", textTransform: "uppercase", color: st.accent }}>{zone.label}</span>
-                <span style={{ fontSize: 16, color: "var(--pv24-text-secondary)" }}>{zone.tagline}</span>
-                {zone.key === "now" && (
-                  <span style={{ marginLeft: "auto", display: "flex", alignItems: "center", gap: 8, fontSize: 16, fontWeight: 700, color: "var(--pv24-accent-dark)" }}>
-                    <motion.span
-                      style={{ width: 10, height: 10, borderRadius: "50%", background: "var(--pv24-accent)", display: "inline-block" }}
-                      animate={skip ? undefined : { opacity: [1, 0.25, 1] }}
-                      transition={skip ? undefined : { duration: 1.4, repeat: Infinity }}
-                    />
-                    {zone.items.length} need you
-                  </span>
-                )}
-              </div>
-              {zone.items.map((item, ii) => {
-                const Icon = item.icon;
-                return (
-                  <motion.div
-                    key={item.title}
-                    initial={skip ? false : { opacity: 0, x: -10 }}
-                    animate={{ opacity: 1, x: 0 }}
-                    transition={skip ? undefined : { duration: 0.3, delay: st.delay + 0.2 + ii * 0.12 }}
-                    style={{
-                      display: "flex",
-                      alignItems: "center",
-                      gap: 14,
-                      padding: zone.key === "done" ? "4px 4px" : "10px 14px",
-                      background: st.itemBg,
-                      border: zone.key === "now" ? "1px solid var(--pv24-border)" : "none",
-                      borderLeft: zone.key === "now" ? "4px solid var(--pv24-accent)" : undefined,
-                    }}
-                  >
-                    <Icon size={24} color={zone.key === "now" && ii === 0 ? "#B0510C" : st.accent} stroke={1.7} style={{ flexShrink: 0 }} />
-                    <div style={{ flex: 1, minWidth: 0 }}>
-                      <div style={{ fontSize: 18, fontWeight: 600, color: st.title, lineHeight: 1.3 }}>{item.title}</div>
-                      <div style={{ fontSize: 16, color: "var(--pv24-text-secondary)", marginTop: 2, lineHeight: 1.3 }}>{item.meta}</div>
-                    </div>
-                    <span
-                      style={{
-                        flexShrink: 0,
-                        fontSize: 16,
-                        fontWeight: 700,
-                        padding: "6px 14px",
-                        background: st.chipBg,
-                        color: st.chipText,
-                        whiteSpace: "nowrap",
-                      }}
-                    >
-                      {item.chip}
-                    </span>
-                  </motion.div>
-                );
-              })}
-            </motion.div>
-          );
-        })}
+        <ProductCapture assetId={assetId} width={cap.width} maxHeight={cap.maxHeight} frame="plain" focus={focus} />
       </motion.div>
 
-      {/* Right: what the AI Partner already did */}
-      <div style={{ position: "absolute", left: ANNOT_X, top: FRAME_Y, width: ANNOT_W, height: FRAME_H, display: "flex", flexDirection: "column", gap: 18 }}>
-        <div style={{ fontSize: 16, fontWeight: 700, letterSpacing: "0.12em", color: "var(--pv24-accent)", textTransform: "uppercase", paddingTop: 6 }}>
-          AI Partner activity
-        </div>
-        {STATS.map((item, i) => (
-          <motion.div
-            key={item.label}
-            initial={skip ? false : { opacity: 0, x: 16 }}
-            animate={{ opacity: 1, x: 0 }}
-            transition={skip ? undefined : { delay: 0.5 + i * 0.15, duration: 0.35 }}
-            style={{
-              background: "var(--pv24-surface)",
-              border: i === 3 ? "2px solid var(--pv24-accent)" : "1px solid var(--pv24-border)",
-              padding: "14px 20px",
-              display: "flex",
-              flexDirection: "column",
-              gap: 4,
-            }}
-          >
-            <div style={{ fontSize: 17, color: "var(--pv24-text-secondary)" }}>{item.label}</div>
-            <div style={{ fontSize: 30, fontWeight: 700, color: i === 3 ? "var(--pv24-accent)" : "var(--pv24-text)" }}>{item.value}</div>
-          </motion.div>
-        ))}
-        <div style={{ marginTop: "auto", fontSize: 16, color: "var(--pv24-text-secondary)", fontStyle: "italic", lineHeight: 1.4 }}>
-          Illustrative: synthetic institution and data
-        </div>
-      </div>
+      {states.map((s, i) =>
+        s.focus ? (
+          <Link
+            key={`link-${s.key}`}
+            from={s.focus}
+            toX={cap.calloutX}
+            top={tops[i] ?? 0}
+            st={STATES[s.key]}
+            delay={stateStart(i) + LINK_DELAY}
+            skip={skip}
+          />
+        ) : null,
+      )}
 
-      {/* Day rail: done before now, the next items after it */}
-      <svg aria-hidden="true" width={1920} height={780} style={{ position: "absolute", left: 0, top: 0, pointerEvents: "none" }}>
-        <line x1={FRAME_X} y1={DAYLINE_Y} x2={FRAME_X + FRAME_W} y2={DAYLINE_Y} stroke="var(--pv24-border-strong)" strokeWidth={2} />
-        <line x1={FRAME_X} y1={DAYLINE_Y} x2={nowX} y2={DAYLINE_Y} stroke={DONE_GREEN} strokeWidth={4} />
-        {[8, 10, 12, 14, 16, 18].map((h, i, arr) => {
-          const x = timeX(h);
-          return (
-            <g key={h}>
-              <line x1={x} y1={DAYLINE_Y - 6} x2={x} y2={DAYLINE_Y + 6} stroke="var(--pv24-border-strong)" strokeWidth={1.5} />
-              {h !== 16 && (
-                <text x={x} y={DAYLINE_Y + 30} textAnchor={i === 0 ? "start" : i === arr.length - 1 ? "end" : "middle"} fontSize={16} fill="var(--pv24-text-secondary)" fontFamily="var(--pv24-font-family)">
-                  {String(h).padStart(2, "0")}:00
-                </text>
-              )}
-            </g>
-          );
-        })}
-        <circle cx={timeX(9, 42)} cy={DAYLINE_Y} r={7} fill={DONE_GREEN} />
-        <circle cx={timeX(17)} cy={DAYLINE_Y} r={7} fill="var(--pv24-surface)" stroke="var(--pv24-accent)" strokeWidth={3} />
-        <circle cx={nowX} cy={DAYLINE_Y} r={11} fill="var(--pv24-accent)" />
-        {!skip && (
-          <circle cx={nowX} cy={DAYLINE_Y} r={11} fill="none" stroke="var(--pv24-accent)" strokeWidth={2}>
-            <animate attributeName="r" values="11;24" dur="1.8s" repeatCount="indefinite" />
-            <animate attributeName="stroke-opacity" values="0.7;0" dur="1.8s" repeatCount="indefinite" />
-          </circle>
-        )}
-      </svg>
-      <div style={{ position: "absolute", left: nowX + 18, top: DAYLINE_Y + 14, fontSize: 16, fontWeight: 700, color: "var(--pv24-accent-dark)" }}>
-        Now 10:30
-      </div>
-      <div style={{ position: "absolute", left: timeX(17) - 120, top: DAYLINE_Y + 14, width: 112, textAlign: "right", fontSize: 16, fontWeight: 700, color: "var(--pv24-accent-dark)" }}>
-        Sign-off due
-      </div>
+      {states.map((s, i) => (
+        <Callout
+          key={s.key}
+          stateKey={s.key}
+          label={s.label}
+          meaning={s.meaning}
+          x={cap.calloutX}
+          top={tops[i] ?? 0}
+          delay={stateStart(i) + CALLOUT_DELAY}
+          pulseDelay={revealEnd}
+          skip={skip}
+        />
+      ))}
     </div>
   );
 }

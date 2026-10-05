@@ -44,12 +44,12 @@ function isValidView(v: unknown): v is ViewTab {
 const LABELS = {
   title: { en: "Work", de: "Arbeit" },
   contextRcsa: {
-    en: "RCSA-ARC-DE-PAYOPS-2026-Q4 -- Q4 cycle in progress",
-    de: "RCSA-ARC-DE-PAYOPS-2026-Q4 -- Q4-Zyklus laeuft",
+    en: "RCSA-ARC-DE-PAYOPS-2026-Q4: Q4 cycle in progress",
+    de: "RCSA-ARC-DE-PAYOPS-2026-Q4: Q4-Zyklus laeuft",
   },
   contextTprm: {
-    en: "Third-party onboarding -- Veridian Document Systems GmbH",
-    de: "Drittanbieter-Onboarding -- Veridian Document Systems GmbH",
+    en: "Third-party onboarding: Veridian Document Systems GmbH",
+    de: "Drittanbieter-Onboarding: Veridian Document Systems GmbH",
   },
   tabs: {
     agenda: { en: "Agenda", de: "Agenda" },
@@ -532,7 +532,7 @@ function MeetingsView({
                     }}
                   >
                     {mtg.scheduledFor}
-                    {mtg.participantCount > 0 ? ` -- ${mtg.participantCount} participants` : ""}
+                    {mtg.participantCount > 0 ? `, ${mtg.participantCount} participants` : ""}
                   </p>
                 </div>
                 <Badge
@@ -681,7 +681,7 @@ function MeetingsView({
 const RCSA_STATIC_UPCOMING: MeetingRow[] = [
   {
     id: "rcsa-mtg-1",
-    title: "RCSA Challenge Workshop -- Payments Operations",
+    title: "RCSA Challenge Workshop: Payments Operations",
     scheduledFor: "Today 10:30",
     participantCount: 4,
     status: "not-started",
@@ -702,7 +702,7 @@ const RCSA_STATIC_UPCOMING: MeetingRow[] = [
 const RCSA_STATIC_ARCHIVE: ArchiveRow[] = [
   {
     id: "rcsa-arc-1",
-    title: "RCSA Scoping Workshop -- Q4 2026",
+    title: "RCSA Scoping Workshop: Q4 2026",
     date: "2026-09-25",
     archiveStatus: "concluded",
   },
@@ -714,7 +714,7 @@ const RCSA_STATIC_ARCHIVE: ArchiveRow[] = [
   },
   {
     id: "rcsa-arc-3",
-    title: "Risk Committee Alignment -- Q3 Close",
+    title: "Risk Committee Alignment: Q3 Close",
     date: "2026-09-10",
     archiveStatus: "concluded",
   },
@@ -732,7 +732,7 @@ const TPRM_STATIC_UPCOMING: MeetingRow[] = [
   },
   {
     id: "tprm-mtg-2",
-    title: "Supplier Challenge Call -- Security Controls",
+    title: "Supplier Challenge Call: Security Controls",
     scheduledFor: "Today 10:30",
     participantCount: 4,
     status: "not-started",
@@ -744,7 +744,7 @@ const TPRM_STATIC_UPCOMING: MeetingRow[] = [
 const TPRM_STATIC_ARCHIVE: ArchiveRow[] = [
   {
     id: "tprm-arc-1",
-    title: "Preliminary Due Diligence -- Veridian",
+    title: "Preliminary Due Diligence: Veridian",
     date: "2026-09-28",
     archiveStatus: "concluded",
   },
@@ -756,7 +756,7 @@ const TPRM_STATIC_ARCHIVE: ArchiveRow[] = [
   },
   {
     id: "tprm-arc-3",
-    title: "Procurement Kickoff -- PRQ-2026-0087",
+    title: "Procurement Kickoff: PRQ-2026-0087",
     date: "2026-09-08",
     archiveStatus: "concluded",
   },
@@ -916,7 +916,7 @@ function ActionsView({
                 margin: "var(--wd-1) 0 0",
               }}
             >
-              {action.ownerLabel ? `${action.ownerLabel} -- ` : ""}
+              {action.ownerLabel ? `${action.ownerLabel}: ` : ""}
               {action.relatedObjectId ?? action.origin}
             </p>
           </div>
@@ -1203,7 +1203,7 @@ const RCSA_STATIC_INBOX: InboxItem[] = [
     id: "rcsa-msg-3",
     channel: "collaboration",
     fromLabel: "Finance",
-    subject: "Evidence gap -- please review",
+    subject: "Evidence gap: please review",
     receivedAt: "Today 09:30",
     triage: "decision",
   },
@@ -1391,6 +1391,7 @@ export default async function WorkV3({
     <div
       className="wd-main-inner"
       data-presentation-region={roleId === "rcsa" ? "rcsa-work-hub" : "tprm-work-hub"}
+      data-presentation-ready="true"
     >
       <h1 className="wd-page-title">{pick(LABELS.title, language)}</h1>
       <p className="wd-context-line" style={{ marginTop: "var(--wd-1)" }}>

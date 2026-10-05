@@ -5,7 +5,7 @@
  *
  * For slide 9 (Improvement). 2x2 grid of outcome cards.
  * Each card: heading (large) + support text (small, secondary).
- * Headings and support text are parsed from slide.bullets by splitting on " -- ".
+ * Headings and support text come from the structured slide.cards pairs.
  */
 
 import React from "react";
@@ -24,17 +24,10 @@ interface OutcomeGridLayoutProps {
 // ---------------------------------------------------------------------------
 
 export function OutcomeGridLayout({ slide }: OutcomeGridLayoutProps) {
-  const bullets = slide.bullets ?? [];
-
-  // Parse each bullet: "Heading -- support text"
-  const cards = bullets.map((bullet) => {
-    const dashIdx = bullet.indexOf(" -- ");
-    if (dashIdx < 0) return { heading: bullet, support: "" };
-    return {
-      heading: bullet.slice(0, dashIdx),
-      support: bullet.slice(dashIdx + 4),
-    };
-  });
+  // Heading/support pairs; plain bullets fall back to headings only.
+  const cards =
+    slide.cards?.map((card) => ({ heading: card.heading, support: card.detail })) ??
+    (slide.bullets ?? []).map((bullet) => ({ heading: bullet, support: "" }));
 
   return (
     <div

@@ -208,7 +208,7 @@ export default function AIQualitySettingsPage() {
 
       <SettingsSection title="Regulatory context">
         <Notice tone="warning">
-          Illustrative regulatory context only -- not legal advice. The AI quality
+          Illustrative regulatory context, not legal advice. The AI quality
           controls shown here support demonstrability under operational risk frameworks
           (e.g. DORA, EBA guidelines on ICT risk) but do not constitute a compliance
           opinion. Engage your compliance function before using these controls as

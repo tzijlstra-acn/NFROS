@@ -57,8 +57,8 @@ const LABELS = {
   artifacts: { en: "Artifacts", de: "Artefakte" },
   stageCompleted: { en: "Stage completed", de: "Stufe abgeschlossen" },
   stageLocked: {
-    en: "Stage locked -- complete Stage 4 first",
-    de: "Stufe gesperrt -- zuerst Stufe 4 abschliessen",
+    en: "Stage locked: complete Stage 4 first",
+    de: "Stufe gesperrt: zuerst Stufe 4 abschliessen",
   },
   decisionNote: { en: "Decision note", de: "Entscheidungsnotiz" },
   submitDecision: {
@@ -73,8 +73,8 @@ const LABELS = {
     de: "Akzeptiert mit Bedingung",
   },
   missingRequested: {
-    en: "Missing -- requested",
-    de: "Fehlend -- angefordert",
+    en: "Missing, requested",
+    de: "Fehlend, angefordert",
   },
   pendingDraft: { en: "Pending (draft)", de: "Ausstehend (Entwurf)" },
 } as const;
@@ -362,7 +362,7 @@ export default async function ThirdPartyOnboardingV3({
   const procRef = "PRQ-2026-0087";
   const stageLabel =
     language === "de" ? (currentStage?.nameDe ?? "") : (currentStage?.name ?? "");
-  const statusLine = `${pick(LABELS.stageOf, language)} ${currentSequence} ${pick(LABELS.of, language)} ${process.stages.length}: ${stageLabel} -- ${pick(LABELS.inProgress, language)}`;
+  const statusLine = `${pick(LABELS.stageOf, language)} ${currentSequence} ${pick(LABELS.of, language)} ${process.stages.length}: ${stageLabel} (${pick(LABELS.inProgress, language)})`;
 
   // --------------------------------------------------------------------------
   // Evidence items for Stage 4
@@ -418,7 +418,7 @@ export default async function ThirdPartyOnboardingV3({
           marginTop: "var(--wd-1)",
         }}
       >
-        {supplierName} -- {procRef}
+        {supplierName} ({procRef})
       </p>
       <p
         style={{
@@ -447,6 +447,8 @@ export default async function ThirdPartyOnboardingV3({
           --------------------------------------------------------------------- */}
       <section
         aria-label={selectedStageName}
+        data-presentation-region="tprm-stage-workspace"
+        data-presentation-ready="true"
         style={{
           marginTop: "var(--wd-8)",
           display: "flex",
@@ -543,7 +545,11 @@ export default async function ThirdPartyOnboardingV3({
 
         {/* Evidence status section -- Stage 4 only */}
         {selectedStage.id === "evidence-review" && (
-          <section aria-label={pick(LABELS.evidenceStatus, language)}>
+          <section
+            aria-label={pick(LABELS.evidenceStatus, language)}
+            data-presentation-region="tprm-evidence-status"
+            data-presentation-ready={evidenceItems.length > 0 ? "true" : undefined}
+          >
             <h3
               style={{
                 fontSize: "var(--wd-text-sm)",
@@ -562,7 +568,7 @@ export default async function ThirdPartyOnboardingV3({
               }}
             >
               {acceptedCount} {language === "de" ? "akzeptiert" : "accepted"},{" "}
-              {missingCount} {language === "de" ? "fehlend" : "missing"} --{" "}
+              {missingCount} {language === "de" ? "fehlend" : "missing"},{" "}
               {language === "de" ? "Stand 06.10.2026" : "as at 06.10.2026"}
             </p>
             {evidenceItems.length > 0 ? (

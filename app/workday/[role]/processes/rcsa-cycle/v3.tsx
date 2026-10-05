@@ -134,8 +134,8 @@ const STATIC_ARTIFACTS: Record<string, StageArtifact[]> = {
 const COPY = {
   title: { en: "RCSA Cycle Assistant", de: "RCSA-Zyklus-Assistent" },
   subtitle: {
-    en: "Payments Execution Q4 -- Arcadia Bank AG DE",
-    de: "Zahlungsausfuehrung Q4 -- Arcadia Bank AG DE",
+    en: "Payments Execution Q4, Arcadia Bank AG DE",
+    de: "Zahlungsausfuehrung Q4, Arcadia Bank AG DE",
   },
   openDecision: { en: "Open decision", de: "Offene Entscheidung" },
   viewDecision: { en: "View decision", de: "Entscheidung anzeigen" },

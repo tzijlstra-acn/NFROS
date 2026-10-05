@@ -9,6 +9,7 @@ type Props = {
   data: CoverData;
   title: string;
   subtitle: string;
+  insight?: string;
   exportMode?: boolean;
 };
 
@@ -42,7 +43,7 @@ function signalPath([sx, sy]: [number, number]): string {
   return `M ${sx} ${sy} C ${c1x} ${c1y}, ${c2x} ${c2y}, ${ex} ${ey}`;
 }
 
-export function CoverExhibit({ data, title, subtitle, exportMode = false }: Props) {
+export function CoverExhibit({ data, title, subtitle, insight, exportMode = false }: Props) {
   const prefersReduced = useReducedMotion();
   const skip = exportMode || !!prefersReduced;
   const beamTop = CORE.y + CORE_R + 4;
@@ -51,6 +52,7 @@ export function CoverExhibit({ data, title, subtitle, exportMode = false }: Prop
   return (
     <div
       style={{ position: "absolute", inset: 0, background: BG, overflow: "hidden", fontFamily: "var(--pv24-font-family)" }}
+      role="group"
       aria-label="Cover"
     >
       <svg aria-hidden="true" width={W} height={H} style={{ position: "absolute", left: 0, top: 0 }}>
@@ -175,6 +177,11 @@ export function CoverExhibit({ data, title, subtitle, exportMode = false }: Prop
         <div style={{ width: 96, height: 6, background: LIGHT, margin: "28px 0 40px" }} />
         <h1 style={{ margin: 0, fontSize: 96, fontWeight: 700, lineHeight: 1.04, letterSpacing: "-0.02em" }}>{title}</h1>
         <p style={{ margin: "36px 0 0", fontSize: 32, lineHeight: 1.35, color: "rgba(255,255,255,0.85)", maxWidth: 820 }}>{subtitle}</p>
+        {insight && (
+          <p style={{ margin: "28px 0 0", paddingLeft: 20, borderLeft: `4px solid ${LIGHT}`, fontSize: 24, lineHeight: 1.4, fontStyle: "italic", color: "#FFFFFF", maxWidth: 820 }}>
+            {insight}
+          </p>
+        )}
       </motion.div>
 
       <motion.div

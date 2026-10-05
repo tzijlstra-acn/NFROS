@@ -43,7 +43,7 @@ const DOWNLOADS = [
   },
   {
     label: "Download core story (PDF)",
-    description: "Slides 1 -- 13 only",
+    description: "Slides 1 to 13 only",
     href: "/downloads/NFROS_Risk_Audience_Core.pdf",
     filename: "NFROS_Risk_Audience_Core.pdf",
   },

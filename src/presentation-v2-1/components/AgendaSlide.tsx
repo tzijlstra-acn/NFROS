@@ -12,11 +12,11 @@
  * to the `agendaSection` values on CORE_SLIDES.
  *
  * Agenda item to section key mapping:
- *   1. "The problem -- fragmented NFR work"    -> "Problem"
- *   2. "The product -- an OS for risk roles"   -> "Product"
+ *   1. "The problem: fragmented NFR work"      -> "Problem"
+ *   2. "The product: an OS for risk roles"     -> "Product"
  *   3. "The daily experience"                  -> "Daily" (+ Roles, RoleApps, HumanAI, Improvement, Control)
- *   4. "The service -- how we deliver"         -> "Service" / "Rollout"
- *   5. "The next step -- a narrow pilot"       -> "NextStep"
+ *   4. "The service: how we deliver"           -> "Service" / "Rollout"
+ *   5. "The next step: a narrow pilot"         -> "NextStep"
  */
 
 import React from "react";
@@ -36,27 +36,27 @@ interface AgendaItem {
 const AGENDA_ITEMS: AgendaItem[] = [
   {
     number: 1,
-    label: "The problem -- fragmented NFR work",
+    label: "The problem: fragmented NFR work",
     sections: ["Problem"],
   },
   {
     number: 2,
-    label: "The product -- an OS for risk roles",
+    label: "The product: an OS for risk roles",
     sections: ["Product", "Roles", "RoleApps"],
   },
   {
     number: 3,
-    label: "The daily experience -- work that finds you",
+    label: "The daily experience: work that finds you",
     sections: ["Daily", "HumanAI", "Improvement", "Control"],
   },
   {
     number: 4,
-    label: "The service -- how we deliver and scale",
+    label: "The service: how we deliver and scale",
     sections: ["Service", "Rollout"],
   },
   {
     number: 5,
-    label: "The next step -- a narrow pilot proposal",
+    label: "The next step: a narrow pilot proposal",
     sections: ["NextStep"],
   },
 ];

@@ -222,6 +222,7 @@ export type CoreSlide24 = {
   title: string;
   subtitle: string;            // mandatory; TypeScript error when missing
   exhibit: CoreExhibit;
+  insight?: string;            // optional takeaway, at most 30 words, never repeating title or subtitle
   evidenceBasis: EvidenceBasis[];
   appendixRefs: AppendixReference[];
   speakerNotes: string;
@@ -245,7 +246,17 @@ export type AppendixVisual =
   | { type: "status-table"; columns: string[]; rows: AppendixTableRow[] }
   | { type: "limitations-landscape"; areas: Array<{ label: string; detail: string; category: "current" | "roadmap" | "out-of-scope" }> }
   | { type: "measurement-framework"; dimensions: Array<{ name: string; metric: string; baseline: string }> }
-  | { type: "text-columns"; columns: Array<{ heading: string; items: string[] }> };
+  | { type: "text-columns"; columns: Array<{ heading: string; items: string[] }> }
+  | { type: "product-proof"; assetId: string; caption: string; points: string[] };
+
+export type AppendixGroup = "Product" | "Processes" | "Controls" | "Technology" | "Service and rollout";
+
+export const APPENDIX_GROUP_ORDER: AppendixGroup[] = ["Product", "Processes", "Controls", "Technology", "Service and rollout"];
+
+export type ImplementationStatus = {
+  level: "implemented" | "partial" | "demo" | "planned" | "reference";
+  note: string;
+};
 
 // ---------------------------------------------------------------------------
 // Appendix slide contract: subtitle is mandatory
@@ -254,6 +265,8 @@ export type AppendixVisual =
 export type AppendixSlide24 = {
   id: string;
   section: string;
+  group?: AppendixGroup;       // appendix index grouping; required by test once consolidated
+  status?: ImplementationStatus;
   title: string;
   subtitle: string;            // mandatory
   visual: AppendixVisual;

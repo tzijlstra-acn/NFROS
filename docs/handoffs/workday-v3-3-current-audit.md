@@ -458,7 +458,7 @@ No approval rows and no execution receipt lines are written by the seed.
 
 **Yes. Evidence is hardcoded.**
 
-File: `app/workday/[role]/processes/third-party-onboarding/v3.tsx`, lines 48–88.
+File: `app/workday/[role]/processes/third-party-onboarding/v3.tsx`, lines 48 to 88.
 
 A `EVIDENCE_ITEMS` array is defined as a TypeScript constant in the component
 file. It is not read from the database. It renders regardless of which role

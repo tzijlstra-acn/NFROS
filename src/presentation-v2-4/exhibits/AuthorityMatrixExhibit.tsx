@@ -56,7 +56,7 @@ const ZONE_STYLES: ZoneStyle[] = [
     border: "var(--pv24-border-strong)",
     tick: "var(--pv24-text-secondary)",
     statuses: ["14 sent today, all logged", "212 items checked, 9 stale flagged", "Synced to GRC at 08:00"],
-    control: "Pre-approved policy. Every action logged and sampled.",
+    control: "Pre-approved policy. Low risk, reversible and logged.",
     delay: 0.4,
   },
   {
@@ -94,7 +94,7 @@ const ZONE_STYLES: ZoneStyle[] = [
 
 const CONTROL_FACTS = [
   { icon: IconLock, text: "Every material decision carries a named approver" },
-  { icon: IconScale, text: "Policy limits are set by the risk function, not by the AI" },
+  { icon: IconScale, text: "Policy limits are set by the risk function, not the AI" },
   { icon: IconCircleCheck, text: "Every AI action is logged and reviewable" },
 ];
 
@@ -233,6 +233,7 @@ export function AuthorityMatrixExhibit({ data, exportMode = false }: AuthorityMa
         fontFamily: "var(--pv24-font-family)",
         overflow: "hidden",
       }}
+      role="group"
       aria-label="Authority matrix exhibit"
     >
       <svg

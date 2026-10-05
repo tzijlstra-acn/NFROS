@@ -35,7 +35,7 @@ function srcY(i: number) {
 }
 
 // Animate packets traveling from source midpoint to person midpoint
-// Uses CSS animation via keyframes — 3 packets per line at staggered phases
+// Uses CSS animation via keyframes: 3 packets per line at staggered phases
 function TravelingPacket({
   x1, y1, x2, y2,
   delay,
@@ -146,7 +146,7 @@ export function FragmentationFlowSlide({ slide, exportMode = false }: Props) {
           );
         })}
 
-        {/* Traveling packets — two per source at different phases */}
+        {/* Traveling packets: two per source at different phases */}
         {SOURCE_LABELS.map((_, i) => {
           const sy = srcY(i);
           return [0, 0.5].map((phaseOffset, pi) => (
@@ -189,7 +189,7 @@ export function FragmentationFlowSlide({ slide, exportMode = false }: Props) {
           );
         })}
 
-        {/* Person node — centre */}
+        {/* Person node: centre */}
         <rect x={PERSON_X} y={PERSON_Y} width={PERSON_W} height={PERSON_H} fill="var(--pv23-surface)" stroke="var(--pv23-border-strong)" strokeWidth={2} />
         <foreignObject x={PERSON_X} y={PERSON_Y} width={PERSON_W} height={PERSON_H}>
           <div style={{ width: "100%", height: "100%", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: 8 }}>

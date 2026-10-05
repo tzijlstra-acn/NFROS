@@ -19,6 +19,7 @@ src/db/migrations/meta/_journal.json.bak
 # Generated exports are reproducible, keep the folder but not the binaries
 exports/
 public/downloads/*.pdf
+public/downloads/*.pptx
 
 # Test output
 test-results/

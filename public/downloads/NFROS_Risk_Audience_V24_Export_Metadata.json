@@ -1,0 +1,1666 @@
+{
+  "deckVersion": "v2.4",
+  "deckName": "NFROS Risk Audience Presentation",
+  "exportedAt": "2026-10-05T08:07:17.938Z",
+  "gitCommit": "6c2cf46b5168befaf2b16783b0e73841ecd6214d",
+  "workingTreeDirty": true,
+  "mode": "release",
+  "audience": "internal-review",
+  "brandMode": "Development only",
+  "brandAssets": {
+    "configured": false,
+    "logo": false,
+    "greaterThan": false,
+    "font": false
+  },
+  "brandPreflight": {
+    "status": "passed",
+    "exitCode": 0
+  },
+  "productProofGate": {
+    "status": "passed",
+    "script": "scripts/verify-presentation-assets-v2-4.ts",
+    "detail": "Asset verifier passed.",
+    "pendingCaptureSlides": []
+  },
+  "manifestSource": "dom",
+  "capture": {
+    "viewport": "1920x1080",
+    "deviceScaleFactor": 2,
+    "documentImageFormat": "jpeg",
+    "jpegQuality": 92,
+    "readySignalObserved": 37,
+    "readySignalMissing": []
+  },
+  "slideCounts": {
+    "core": 13,
+    "closing": 1,
+    "appendixIndex": 1,
+    "appendix": 22,
+    "total": 37,
+    "corePdfPages": 14,
+    "fullPdfPages": 37,
+    "pptxSlides": 37
+  },
+  "links": {
+    "corePdf": {
+      "appendix-chip": 0,
+      "appendix-cross": 0,
+      "return": 0,
+      "index-entry": 0,
+      "index-link": 0,
+      "core-link": 0,
+      "total": 0
+    },
+    "corePdfAppendixRefsNotLinked": 28,
+    "fullPdf": {
+      "appendix-chip": 28,
+      "appendix-cross": 0,
+      "return": 22,
+      "index-entry": 22,
+      "index-link": 22,
+      "core-link": 1,
+      "total": 95
+    },
+    "pptx": {
+      "appendix-chip": 28,
+      "appendix-cross": 0,
+      "return": 22,
+      "index-entry": 22,
+      "index-link": 22,
+      "core-link": 1,
+      "total": 95
+    }
+  },
+  "corePdfNote": "Appendix references are shown on the core slides but are not linked in this file. They resolve in the full deck, NFROS_Risk_Audience_V24_Core_and_Appendix.pdf.",
+  "files": [
+    {
+      "name": "NFROS_Risk_Audience_V24_Core.pdf",
+      "bytes": 9300069,
+      "sha256": "9090a696aa6864f5c5874c3df850e350a36ff20780ac9a2112e6571496d90f00"
+    },
+    {
+      "name": "NFROS_Risk_Audience_V24_Core_and_Appendix.pdf",
+      "bytes": 24104698,
+      "sha256": "6fbc41c7b7c574de1b8d3e454433ea93b76feca1fb0534493c655962565e059d"
+    },
+    {
+      "name": "NFROS_Risk_Audience_V24_Core_and_Appendix.pptx",
+      "bytes": 24349810,
+      "sha256": "7f75afe62b776aa62bff97bb07b1853c539243111cce8a29cf4d614e37bf2a21"
+    },
+    {
+      "name": "NFROS_Risk_Audience_V24_Speaker_Notes.md",
+      "bytes": 32594,
+      "sha256": "c84ff165ec137c84ed155b90115e42b20e48c2585a92347dca14b9531064fb68"
+    }
+  ],
+  "slides": [
+    {
+      "page": 1,
+      "key": "core-1",
+      "kind": "core",
+      "coreNumber": 1,
+      "id": "slide-01",
+      "title": "AI can return NFR capacity to judgment",
+      "section": "Opening",
+      "group": null,
+      "url": "/story?deck=v2.4&core=1&export=1&safe=1",
+      "image": "slides-v2-4/01-core-1.png",
+      "links": []
+    },
+    {
+      "page": 2,
+      "key": "core-2",
+      "kind": "core",
+      "coreNumber": 2,
+      "id": "slide-02",
+      "title": "Agenda",
+      "section": "Opening",
+      "group": null,
+      "url": "/story?deck=v2.4&core=2&export=1&safe=1",
+      "image": "slides-v2-4/02-core-2.png",
+      "links": []
+    },
+    {
+      "page": 3,
+      "key": "core-3",
+      "kind": "core",
+      "coreNumber": 3,
+      "id": "slide-03",
+      "title": "Fragmented work consumes capacity before judgment begins",
+      "section": "Complication",
+      "group": null,
+      "url": "/story?deck=v2.4&core=3&export=1&safe=1",
+      "image": "slides-v2-4/03-core-3.png",
+      "links": [
+        {
+          "target": "appendix:app-01",
+          "kind": "appendix-chip",
+          "targetPage": 16,
+          "rect": {
+            "x": 64,
+            "y": 976,
+            "w": 280.42,
+            "h": 30.8
+          }
+        },
+        {
+          "target": "appendix:app-27",
+          "kind": "appendix-chip",
+          "targetPage": 29,
+          "rect": {
+            "x": 352.42,
+            "y": 976,
+            "w": 209.89,
+            "h": 30.8
+          }
+        }
+      ]
+    },
+    {
+      "page": 4,
+      "key": "core-4",
+      "kind": "core",
+      "coreNumber": 4,
+      "id": "slide-04",
+      "title": "The burden between systems slows decisions and weakens continuity",
+      "section": "Complication",
+      "group": null,
+      "url": "/story?deck=v2.4&core=4&export=1&safe=1",
+      "image": "slides-v2-4/04-core-4.png",
+      "links": [
+        {
+          "target": "appendix:app-23",
+          "kind": "appendix-chip",
+          "targetPage": 17,
+          "rect": {
+            "x": 64,
+            "y": 976,
+            "w": 256.58,
+            "h": 30.8
+          }
+        },
+        {
+          "target": "appendix:app-10",
+          "kind": "appendix-chip",
+          "targetPage": 20,
+          "rect": {
+            "x": 328.58,
+            "y": 976,
+            "w": 252.66,
+            "h": 30.8
+          }
+        }
+      ]
+    },
+    {
+      "page": 5,
+      "key": "core-5",
+      "kind": "core",
+      "coreNumber": 5,
+      "id": "slide-05",
+      "title": "NFROS creates one engagement layer across existing risk platforms",
+      "section": "Answer",
+      "group": null,
+      "url": "/story?deck=v2.4&core=5&export=1&safe=1",
+      "image": "slides-v2-4/05-core-5.png",
+      "links": [
+        {
+          "target": "appendix:app-08",
+          "kind": "appendix-chip",
+          "targetPage": 28,
+          "rect": {
+            "x": 64,
+            "y": 976,
+            "w": 210,
+            "h": 30.8
+          }
+        },
+        {
+          "target": "appendix:app-27",
+          "kind": "appendix-chip",
+          "targetPage": 29,
+          "rect": {
+            "x": 282,
+            "y": 976,
+            "w": 229.89,
+            "h": 30.8
+          }
+        },
+        {
+          "target": "appendix:app-20",
+          "kind": "appendix-chip",
+          "targetPage": 30,
+          "rect": {
+            "x": 519.89,
+            "y": 976,
+            "w": 201.92,
+            "h": 30.8
+          }
+        }
+      ]
+    },
+    {
+      "page": 6,
+      "key": "core-6",
+      "kind": "core",
+      "coreNumber": 6,
+      "id": "slide-06",
+      "title": "The workday starts with the next decision, already prepared",
+      "section": "Proof",
+      "group": null,
+      "url": "/story?deck=v2.4&core=6&export=1&safe=1",
+      "image": "slides-v2-4/06-core-6.png",
+      "links": [
+        {
+          "target": "appendix:app-23",
+          "kind": "appendix-chip",
+          "targetPage": 17,
+          "rect": {
+            "x": 64,
+            "y": 976,
+            "w": 256.58,
+            "h": 30.8
+          }
+        },
+        {
+          "target": "appendix:app-06",
+          "kind": "appendix-chip",
+          "targetPage": 19,
+          "rect": {
+            "x": 328.58,
+            "y": 976,
+            "w": 122.78,
+            "h": 30.8
+          }
+        },
+        {
+          "target": "appendix:app-10",
+          "kind": "appendix-chip",
+          "targetPage": 20,
+          "rect": {
+            "x": 459.36,
+            "y": 976,
+            "w": 252.66,
+            "h": 30.8
+          }
+        }
+      ]
+    },
+    {
+      "page": 7,
+      "key": "core-7",
+      "kind": "core",
+      "coreNumber": 7,
+      "id": "slide-07",
+      "title": "A shared core adapts to each risk role",
+      "section": "Proof",
+      "group": null,
+      "url": "/story?deck=v2.4&core=7&export=1&safe=1",
+      "image": "slides-v2-4/07-core-7.png",
+      "links": [
+        {
+          "target": "appendix:app-01",
+          "kind": "appendix-chip",
+          "targetPage": 16,
+          "rect": {
+            "x": 64,
+            "y": 976,
+            "w": 280.42,
+            "h": 30.8
+          }
+        },
+        {
+          "target": "appendix:app-23",
+          "kind": "appendix-chip",
+          "targetPage": 17,
+          "rect": {
+            "x": 352.42,
+            "y": 976,
+            "w": 236.58,
+            "h": 30.8
+          }
+        }
+      ]
+    },
+    {
+      "page": 8,
+      "key": "core-8",
+      "kind": "core",
+      "coreNumber": 8,
+      "id": "slide-08",
+      "title": "Role Apps turn complete risk processes into reusable products",
+      "section": "Proof",
+      "group": null,
+      "url": "/story?deck=v2.4&core=8&export=1&safe=1",
+      "image": "slides-v2-4/08-core-8.png",
+      "links": [
+        {
+          "target": "appendix:app-03",
+          "kind": "appendix-chip",
+          "targetPage": 21,
+          "rect": {
+            "x": 64,
+            "y": 976,
+            "w": 245.5,
+            "h": 30.8
+          }
+        },
+        {
+          "target": "appendix:app-04",
+          "kind": "appendix-chip",
+          "targetPage": 22,
+          "rect": {
+            "x": 317.5,
+            "y": 976,
+            "w": 262.7,
+            "h": 30.8
+          }
+        },
+        {
+          "target": "appendix:app-02",
+          "kind": "appendix-chip",
+          "targetPage": 18,
+          "rect": {
+            "x": 588.2,
+            "y": 976,
+            "w": 148.86,
+            "h": 30.8
+          }
+        }
+      ]
+    },
+    {
+      "page": 9,
+      "key": "core-9",
+      "kind": "core",
+      "coreNumber": 9,
+      "id": "slide-09",
+      "title": "Automation expands capacity without shifting accountability",
+      "section": "Proof",
+      "group": null,
+      "url": "/story?deck=v2.4&core=9&export=1&safe=1",
+      "image": "slides-v2-4/09-core-9.png",
+      "links": [
+        {
+          "target": "appendix:app-09",
+          "kind": "appendix-chip",
+          "targetPage": 24,
+          "rect": {
+            "x": 64,
+            "y": 976,
+            "w": 319.91,
+            "h": 30.8
+          }
+        },
+        {
+          "target": "appendix:app-25",
+          "kind": "appendix-chip",
+          "targetPage": 25,
+          "rect": {
+            "x": 391.91,
+            "y": 976,
+            "w": 219.36,
+            "h": 30.8
+          }
+        }
+      ]
+    },
+    {
+      "page": 10,
+      "key": "core-10",
+      "kind": "core",
+      "coreNumber": 10,
+      "id": "slide-10",
+      "title": "Trust is engineered into every material step",
+      "section": "Control",
+      "group": null,
+      "url": "/story?deck=v2.4&core=10&export=1&safe=1",
+      "image": "slides-v2-4/10-core-10.png",
+      "links": [
+        {
+          "target": "appendix:app-24",
+          "kind": "appendix-chip",
+          "targetPage": 23,
+          "rect": {
+            "x": 64,
+            "y": 976,
+            "w": 224.27,
+            "h": 30.8
+          }
+        },
+        {
+          "target": "appendix:app-26",
+          "kind": "appendix-chip",
+          "targetPage": 26,
+          "rect": {
+            "x": 296.27,
+            "y": 976,
+            "w": 263,
+            "h": 30.8
+          }
+        },
+        {
+          "target": "appendix:app-29",
+          "kind": "appendix-chip",
+          "targetPage": 27,
+          "rect": {
+            "x": 567.27,
+            "y": 976,
+            "w": 262.27,
+            "h": 30.8
+          }
+        }
+      ]
+    },
+    {
+      "page": 11,
+      "key": "core-11",
+      "kind": "core",
+      "coreNumber": 11,
+      "id": "slide-11",
+      "title": "The value case spans capacity, quality, control and continuity",
+      "section": "Value",
+      "group": null,
+      "url": "/story?deck=v2.4&core=11&export=1&safe=1",
+      "image": "slides-v2-4/11-core-11.png",
+      "links": [
+        {
+          "target": "appendix:app-16",
+          "kind": "appendix-chip",
+          "targetPage": 36,
+          "rect": {
+            "x": 64,
+            "y": 976,
+            "w": 231.59,
+            "h": 30.8
+          }
+        },
+        {
+          "target": "appendix:app-11",
+          "kind": "appendix-chip",
+          "targetPage": 31,
+          "rect": {
+            "x": 303.59,
+            "y": 976,
+            "w": 223.41,
+            "h": 30.8
+          }
+        }
+      ]
+    },
+    {
+      "page": 12,
+      "key": "core-12",
+      "kind": "core",
+      "coreNumber": 12,
+      "id": "slide-12",
+      "title": "A modular service model scales through Function Packs and Role Apps",
+      "section": "Scale",
+      "group": null,
+      "url": "/story?deck=v2.4&core=12&export=1&safe=1",
+      "image": "slides-v2-4/12-core-12.png",
+      "links": [
+        {
+          "target": "appendix:app-13",
+          "kind": "appendix-chip",
+          "targetPage": 32,
+          "rect": {
+            "x": 64,
+            "y": 976,
+            "w": 244.84,
+            "h": 30.8
+          }
+        },
+        {
+          "target": "appendix:app-28",
+          "kind": "appendix-chip",
+          "targetPage": 33,
+          "rect": {
+            "x": 316.84,
+            "y": 976,
+            "w": 139.69,
+            "h": 30.8
+          }
+        },
+        {
+          "target": "appendix:app-14",
+          "kind": "appendix-chip",
+          "targetPage": 34,
+          "rect": {
+            "x": 464.53,
+            "y": 976,
+            "w": 224.22,
+            "h": 30.8
+          }
+        }
+      ]
+    },
+    {
+      "page": 13,
+      "key": "core-13",
+      "kind": "core",
+      "coreNumber": 13,
+      "id": "slide-13",
+      "title": "Start with two roles, prove the outcomes, then scale",
+      "section": "Action",
+      "group": null,
+      "url": "/story?deck=v2.4&core=13&export=1&safe=1",
+      "image": "slides-v2-4/13-core-13.png",
+      "links": [
+        {
+          "target": "appendix:app-15",
+          "kind": "appendix-chip",
+          "targetPage": 35,
+          "rect": {
+            "x": 64,
+            "y": 976,
+            "w": 192.61,
+            "h": 30.8
+          }
+        },
+        {
+          "target": "appendix:app-16",
+          "kind": "appendix-chip",
+          "targetPage": 36,
+          "rect": {
+            "x": 264.61,
+            "y": 976,
+            "w": 231.59,
+            "h": 30.8
+          }
+        },
+        {
+          "target": "appendix:app-22",
+          "kind": "appendix-chip",
+          "targetPage": 37,
+          "rect": {
+            "x": 504.2,
+            "y": 976,
+            "w": 170.23,
+            "h": 30.8
+          }
+        }
+      ]
+    },
+    {
+      "page": 14,
+      "key": "closing",
+      "kind": "closing",
+      "coreNumber": null,
+      "id": "closing",
+      "title": "Questions and discussion",
+      "section": "Close",
+      "group": null,
+      "url": "/story?deck=v2.4&core=14&export=1&safe=1",
+      "image": "slides-v2-4/14-closing.png",
+      "links": []
+    },
+    {
+      "page": 15,
+      "key": "appendix-index",
+      "kind": "appendix-index",
+      "coreNumber": null,
+      "id": "appendix-index",
+      "title": "Appendix index",
+      "section": "Appendix",
+      "group": null,
+      "url": "/story?deck=v2.4&view=appendix-index&export=1&safe=1",
+      "image": "slides-v2-4/15-appendix-index.png",
+      "links": [
+        {
+          "target": "appendix:app-01",
+          "kind": "index-entry",
+          "targetPage": 16,
+          "rect": {
+            "x": 124.87,
+            "y": 300.65,
+            "w": 322.11,
+            "h": 81.26
+          }
+        },
+        {
+          "target": "appendix:app-23",
+          "kind": "index-entry",
+          "targetPage": 17,
+          "rect": {
+            "x": 124.87,
+            "y": 387.51,
+            "w": 322.11,
+            "h": 99.9
+          }
+        },
+        {
+          "target": "appendix:app-02",
+          "kind": "index-entry",
+          "targetPage": 18,
+          "rect": {
+            "x": 124.87,
+            "y": 493,
+            "w": 322.11,
+            "h": 81.26
+          }
+        },
+        {
+          "target": "appendix:app-06",
+          "kind": "index-entry",
+          "targetPage": 19,
+          "rect": {
+            "x": 124.87,
+            "y": 579.86,
+            "w": 322.11,
+            "h": 99.9
+          }
+        },
+        {
+          "target": "appendix:app-10",
+          "kind": "index-entry",
+          "targetPage": 20,
+          "rect": {
+            "x": 124.87,
+            "y": 685.36,
+            "w": 322.11,
+            "h": 99.9
+          }
+        },
+        {
+          "target": "appendix:app-03",
+          "kind": "index-entry",
+          "targetPage": 21,
+          "rect": {
+            "x": 461.89,
+            "y": 300.65,
+            "w": 322.11,
+            "h": 81.26
+          }
+        },
+        {
+          "target": "appendix:app-04",
+          "kind": "index-entry",
+          "targetPage": 22,
+          "rect": {
+            "x": 461.89,
+            "y": 387.51,
+            "w": 322.11,
+            "h": 99.9
+          }
+        },
+        {
+          "target": "appendix:app-24",
+          "kind": "index-entry",
+          "targetPage": 23,
+          "rect": {
+            "x": 798.92,
+            "y": 300.65,
+            "w": 322.13,
+            "h": 99.9
+          }
+        },
+        {
+          "target": "appendix:app-09",
+          "kind": "index-entry",
+          "targetPage": 24,
+          "rect": {
+            "x": 798.92,
+            "y": 406.15,
+            "w": 322.13,
+            "h": 99.9
+          }
+        },
+        {
+          "target": "appendix:app-25",
+          "kind": "index-entry",
+          "targetPage": 25,
+          "rect": {
+            "x": 798.92,
+            "y": 511.64,
+            "w": 322.13,
+            "h": 99.9
+          }
+        },
+        {
+          "target": "appendix:app-26",
+          "kind": "index-entry",
+          "targetPage": 26,
+          "rect": {
+            "x": 798.92,
+            "y": 617.14,
+            "w": 322.13,
+            "h": 99.9
+          }
+        },
+        {
+          "target": "appendix:app-29",
+          "kind": "index-entry",
+          "targetPage": 27,
+          "rect": {
+            "x": 798.92,
+            "y": 722.64,
+            "w": 322.13,
+            "h": 81.26
+          }
+        },
+        {
+          "target": "appendix:app-08",
+          "kind": "index-entry",
+          "targetPage": 28,
+          "rect": {
+            "x": 1135.96,
+            "y": 300.65,
+            "w": 322.11,
+            "h": 99.9
+          }
+        },
+        {
+          "target": "appendix:app-27",
+          "kind": "index-entry",
+          "targetPage": 29,
+          "rect": {
+            "x": 1135.96,
+            "y": 406.15,
+            "w": 322.11,
+            "h": 99.9
+          }
+        },
+        {
+          "target": "appendix:app-20",
+          "kind": "index-entry",
+          "targetPage": 30,
+          "rect": {
+            "x": 1135.96,
+            "y": 511.64,
+            "w": 322.11,
+            "h": 81.26
+          }
+        },
+        {
+          "target": "appendix:app-11",
+          "kind": "index-entry",
+          "targetPage": 31,
+          "rect": {
+            "x": 1135.96,
+            "y": 598.5,
+            "w": 322.11,
+            "h": 81.26
+          }
+        },
+        {
+          "target": "appendix:app-13",
+          "kind": "index-entry",
+          "targetPage": 32,
+          "rect": {
+            "x": 1472.98,
+            "y": 300.65,
+            "w": 322.13,
+            "h": 99.9
+          }
+        },
+        {
+          "target": "appendix:app-28",
+          "kind": "index-entry",
+          "targetPage": 33,
+          "rect": {
+            "x": 1472.98,
+            "y": 406.15,
+            "w": 322.13,
+            "h": 99.9
+          }
+        },
+        {
+          "target": "appendix:app-14",
+          "kind": "index-entry",
+          "targetPage": 34,
+          "rect": {
+            "x": 1472.98,
+            "y": 511.64,
+            "w": 322.13,
+            "h": 81.26
+          }
+        },
+        {
+          "target": "appendix:app-15",
+          "kind": "index-entry",
+          "targetPage": 35,
+          "rect": {
+            "x": 1472.98,
+            "y": 598.5,
+            "w": 322.13,
+            "h": 99.9
+          }
+        },
+        {
+          "target": "appendix:app-16",
+          "kind": "index-entry",
+          "targetPage": 36,
+          "rect": {
+            "x": 1472.98,
+            "y": 704,
+            "w": 322.13,
+            "h": 99.9
+          }
+        },
+        {
+          "target": "appendix:app-22",
+          "kind": "index-entry",
+          "targetPage": 37,
+          "rect": {
+            "x": 1472.98,
+            "y": 809.49,
+            "w": 322.13,
+            "h": 81.26
+          }
+        },
+        {
+          "target": "core:2",
+          "kind": "core-link",
+          "targetPage": 2,
+          "rect": {
+            "x": 64,
+            "y": 976,
+            "w": 179.36,
+            "h": 30.8
+          }
+        }
+      ]
+    },
+    {
+      "page": 16,
+      "key": "appendix-app-01",
+      "kind": "appendix",
+      "coreNumber": null,
+      "id": "app-01",
+      "title": "Two role operating systems run today, while four roles remain demo or planned",
+      "section": "Product",
+      "group": "Product",
+      "url": "/story?deck=v2.4&appendix=app-01&export=1&safe=1",
+      "image": "slides-v2-4/16-appendix-app-01.png",
+      "links": [
+        {
+          "target": "core:3",
+          "kind": "return",
+          "targetPage": 3,
+          "rect": {
+            "x": 64,
+            "y": 976,
+            "w": 180.03,
+            "h": 30.8
+          }
+        },
+        {
+          "target": "appendix-index",
+          "kind": "index-link",
+          "targetPage": 15,
+          "rect": {
+            "x": 252.03,
+            "y": 976,
+            "w": 166.63,
+            "h": 30.8
+          }
+        }
+      ]
+    },
+    {
+      "page": 17,
+      "key": "appendix-app-23",
+      "kind": "appendix",
+      "coreNumber": null,
+      "id": "app-23",
+      "title": "The shared Role OS core already handles daily work and decisions, with gaps labelled",
+      "section": "Product",
+      "group": "Product",
+      "url": "/story?deck=v2.4&appendix=app-23&export=1&safe=1",
+      "image": "slides-v2-4/17-appendix-app-23.png",
+      "links": [
+        {
+          "target": "core:4",
+          "kind": "return",
+          "targetPage": 4,
+          "rect": {
+            "x": 64,
+            "y": 976,
+            "w": 180.36,
+            "h": 30.8
+          }
+        },
+        {
+          "target": "appendix-index",
+          "kind": "index-link",
+          "targetPage": 15,
+          "rect": {
+            "x": 252.36,
+            "y": 976,
+            "w": 166.63,
+            "h": 30.8
+          }
+        }
+      ]
+    },
+    {
+      "page": 18,
+      "key": "appendix-app-02",
+      "kind": "appendix",
+      "coreNumber": null,
+      "id": "app-02",
+      "title": "The Role App library holds seven apps, and two of them can be started today",
+      "section": "Product",
+      "group": "Product",
+      "url": "/story?deck=v2.4&appendix=app-02&export=1&safe=1",
+      "image": "slides-v2-4/18-appendix-app-02.png",
+      "links": [
+        {
+          "target": "core:8",
+          "kind": "return",
+          "targetPage": 8,
+          "rect": {
+            "x": 64,
+            "y": 976,
+            "w": 180.09,
+            "h": 30.8
+          }
+        },
+        {
+          "target": "appendix-index",
+          "kind": "index-link",
+          "targetPage": 15,
+          "rect": {
+            "x": 252.09,
+            "y": 976,
+            "w": 166.63,
+            "h": 30.8
+          }
+        }
+      ]
+    },
+    {
+      "page": 19,
+      "key": "appendix-app-06",
+      "kind": "appendix",
+      "coreNumber": null,
+      "id": "app-06",
+      "title": "The AI Partner prepares and proposes, while every action it requests passes the gate",
+      "section": "Product",
+      "group": "Product",
+      "url": "/story?deck=v2.4&appendix=app-06&export=1&safe=1",
+      "image": "slides-v2-4/19-appendix-app-06.png",
+      "links": [
+        {
+          "target": "core:6",
+          "kind": "return",
+          "targetPage": 6,
+          "rect": {
+            "x": 64,
+            "y": 976,
+            "w": 180.33,
+            "h": 30.8
+          }
+        },
+        {
+          "target": "appendix-index",
+          "kind": "index-link",
+          "targetPage": 15,
+          "rect": {
+            "x": 252.33,
+            "y": 976,
+            "w": 166.63,
+            "h": 30.8
+          }
+        }
+      ]
+    },
+    {
+      "page": 20,
+      "key": "appendix-app-10",
+      "kind": "appendix",
+      "coreNumber": null,
+      "id": "app-10",
+      "title": "AI routines are defined to read and draft for each role, but nothing schedules them yet",
+      "section": "Product",
+      "group": "Product",
+      "url": "/story?deck=v2.4&appendix=app-10&export=1&safe=1",
+      "image": "slides-v2-4/20-appendix-app-10.png",
+      "links": [
+        {
+          "target": "core:4",
+          "kind": "return",
+          "targetPage": 4,
+          "rect": {
+            "x": 64,
+            "y": 976,
+            "w": 180.36,
+            "h": 30.8
+          }
+        },
+        {
+          "target": "appendix-index",
+          "kind": "index-link",
+          "targetPage": 15,
+          "rect": {
+            "x": 252.36,
+            "y": 976,
+            "w": 166.63,
+            "h": 30.8
+          }
+        }
+      ]
+    },
+    {
+      "page": 21,
+      "key": "appendix-app-03",
+      "kind": "appendix",
+      "coreNumber": null,
+      "id": "app-03",
+      "title": "RCSA runs as eight stages, each closed by a recorded human decision",
+      "section": "Processes",
+      "group": "Processes",
+      "url": "/story?deck=v2.4&appendix=app-03&export=1&safe=1",
+      "image": "slides-v2-4/21-appendix-app-03.png",
+      "links": [
+        {
+          "target": "core:8",
+          "kind": "return",
+          "targetPage": 8,
+          "rect": {
+            "x": 64,
+            "y": 976,
+            "w": 180.09,
+            "h": 30.8
+          }
+        },
+        {
+          "target": "appendix-index",
+          "kind": "index-link",
+          "targetPage": 15,
+          "rect": {
+            "x": 252.09,
+            "y": 976,
+            "w": 166.63,
+            "h": 30.8
+          }
+        }
+      ]
+    },
+    {
+      "page": 22,
+      "key": "appendix-app-04",
+      "kind": "appendix",
+      "coreNumber": null,
+      "id": "app-04",
+      "title": "Third-party onboarding defines eight gated stages, with the demo case at evidence review",
+      "section": "Processes",
+      "group": "Processes",
+      "url": "/story?deck=v2.4&appendix=app-04&export=1&safe=1",
+      "image": "slides-v2-4/22-appendix-app-04.png",
+      "links": [
+        {
+          "target": "core:8",
+          "kind": "return",
+          "targetPage": 8,
+          "rect": {
+            "x": 64,
+            "y": 976,
+            "w": 180.09,
+            "h": 30.8
+          }
+        },
+        {
+          "target": "appendix-index",
+          "kind": "index-link",
+          "targetPage": 15,
+          "rect": {
+            "x": 252.09,
+            "y": 976,
+            "w": 166.63,
+            "h": 30.8
+          }
+        }
+      ]
+    },
+    {
+      "page": 23,
+      "key": "appendix-app-24",
+      "kind": "appendix",
+      "coreNumber": null,
+      "id": "app-24",
+      "title": "Provenance and freshness labels keep fact, approved record and model inference apart",
+      "section": "Controls",
+      "group": "Controls",
+      "url": "/story?deck=v2.4&appendix=app-24&export=1&safe=1",
+      "image": "slides-v2-4/23-appendix-app-24.png",
+      "links": [
+        {
+          "target": "core:10",
+          "kind": "return",
+          "targetPage": 10,
+          "rect": {
+            "x": 64,
+            "y": 976,
+            "w": 188.36,
+            "h": 30.8
+          }
+        },
+        {
+          "target": "appendix-index",
+          "kind": "index-link",
+          "targetPage": 15,
+          "rect": {
+            "x": 260.36,
+            "y": 976,
+            "w": 166.63,
+            "h": 30.8
+          }
+        }
+      ]
+    },
+    {
+      "page": 24,
+      "key": "appendix-app-09",
+      "kind": "appendix",
+      "coreNumber": null,
+      "id": "app-09",
+      "title": "Six authority classes and three independent checks decide what may execute",
+      "section": "Controls",
+      "group": "Controls",
+      "url": "/story?deck=v2.4&appendix=app-09&export=1&safe=1",
+      "image": "slides-v2-4/24-appendix-app-09.png",
+      "links": [
+        {
+          "target": "core:9",
+          "kind": "return",
+          "targetPage": 9,
+          "rect": {
+            "x": 64,
+            "y": 976,
+            "w": 180.34,
+            "h": 30.8
+          }
+        },
+        {
+          "target": "appendix-index",
+          "kind": "index-link",
+          "targetPage": 15,
+          "rect": {
+            "x": 252.34,
+            "y": 976,
+            "w": 166.63,
+            "h": 30.8
+          }
+        }
+      ]
+    },
+    {
+      "page": 25,
+      "key": "appendix-app-25",
+      "kind": "appendix",
+      "coreNumber": null,
+      "id": "app-25",
+      "title": "Role scopes are enforced today, while bank identity and segregation of duties are not",
+      "section": "Controls",
+      "group": "Controls",
+      "url": "/story?deck=v2.4&appendix=app-25&export=1&safe=1",
+      "image": "slides-v2-4/25-appendix-app-25.png",
+      "links": [
+        {
+          "target": "core:9",
+          "kind": "return",
+          "targetPage": 9,
+          "rect": {
+            "x": 64,
+            "y": 976,
+            "w": 180.34,
+            "h": 30.8
+          }
+        },
+        {
+          "target": "appendix-index",
+          "kind": "index-link",
+          "targetPage": 15,
+          "rect": {
+            "x": 252.34,
+            "y": 976,
+            "w": 166.63,
+            "h": 30.8
+          }
+        }
+      ]
+    },
+    {
+      "page": 26,
+      "key": "appendix-app-26",
+      "kind": "appendix",
+      "coreNumber": null,
+      "id": "app-26",
+      "title": "The audit trail is append only and backups verify locally, but operations remain partial",
+      "section": "Controls",
+      "group": "Controls",
+      "url": "/story?deck=v2.4&appendix=app-26&export=1&safe=1",
+      "image": "slides-v2-4/26-appendix-app-26.png",
+      "links": [
+        {
+          "target": "core:10",
+          "kind": "return",
+          "targetPage": 10,
+          "rect": {
+            "x": 64,
+            "y": 976,
+            "w": 188.36,
+            "h": 30.8
+          }
+        },
+        {
+          "target": "appendix-index",
+          "kind": "index-link",
+          "targetPage": 15,
+          "rect": {
+            "x": 260.36,
+            "y": 976,
+            "w": 166.63,
+            "h": 30.8
+          }
+        }
+      ]
+    },
+    {
+      "page": 27,
+      "key": "appendix-app-29",
+      "kind": "appendix",
+      "coreNumber": null,
+      "id": "app-29",
+      "title": "The product keeps the EU and Swiss regulatory lanes apart by design",
+      "section": "Controls",
+      "group": "Controls",
+      "url": "/story?deck=v2.4&appendix=app-29&export=1&safe=1",
+      "image": "slides-v2-4/27-appendix-app-29.png",
+      "links": [
+        {
+          "target": "core:10",
+          "kind": "return",
+          "targetPage": 10,
+          "rect": {
+            "x": 64,
+            "y": 976,
+            "w": 188.36,
+            "h": 30.8
+          }
+        },
+        {
+          "target": "appendix-index",
+          "kind": "index-link",
+          "targetPage": 15,
+          "rect": {
+            "x": 260.36,
+            "y": 976,
+            "w": 166.63,
+            "h": 30.8
+          }
+        }
+      ]
+    },
+    {
+      "page": 28,
+      "key": "appendix-app-08",
+      "kind": "appendix",
+      "coreNumber": null,
+      "id": "app-08",
+      "title": "The platform stacks five layers so the model never touches the database directly",
+      "section": "Technology",
+      "group": "Technology",
+      "url": "/story?deck=v2.4&appendix=app-08&export=1&safe=1",
+      "image": "slides-v2-4/28-appendix-app-08.png",
+      "links": [
+        {
+          "target": "core:5",
+          "kind": "return",
+          "targetPage": 5,
+          "rect": {
+            "x": 64,
+            "y": 976,
+            "w": 179.7,
+            "h": 30.8
+          }
+        },
+        {
+          "target": "appendix-index",
+          "kind": "index-link",
+          "targetPage": 15,
+          "rect": {
+            "x": 251.7,
+            "y": 976,
+            "w": 166.63,
+            "h": 30.8
+          }
+        }
+      ]
+    },
+    {
+      "page": 29,
+      "key": "appendix-app-27",
+      "kind": "appendix",
+      "coreNumber": null,
+      "id": "app-27",
+      "title": "The integration contract is built and proved, but every connector is still simulated",
+      "section": "Technology",
+      "group": "Technology",
+      "url": "/story?deck=v2.4&appendix=app-27&export=1&safe=1",
+      "image": "slides-v2-4/29-appendix-app-27.png",
+      "links": [
+        {
+          "target": "core:3",
+          "kind": "return",
+          "targetPage": 3,
+          "rect": {
+            "x": 64,
+            "y": 976,
+            "w": 180.03,
+            "h": 30.8
+          }
+        },
+        {
+          "target": "appendix-index",
+          "kind": "index-link",
+          "targetPage": 15,
+          "rect": {
+            "x": 252.03,
+            "y": 976,
+            "w": 166.63,
+            "h": 30.8
+          }
+        }
+      ]
+    },
+    {
+      "page": 30,
+      "key": "appendix-app-20",
+      "kind": "appendix",
+      "coreNumber": null,
+      "id": "app-20",
+      "title": "One of four deployment profiles runs today; three are defined with open work",
+      "section": "Technology",
+      "group": "Technology",
+      "url": "/story?deck=v2.4&appendix=app-20&export=1&safe=1",
+      "image": "slides-v2-4/30-appendix-app-20.png",
+      "links": [
+        {
+          "target": "core:5",
+          "kind": "return",
+          "targetPage": 5,
+          "rect": {
+            "x": 64,
+            "y": 976,
+            "w": 179.7,
+            "h": 30.8
+          }
+        },
+        {
+          "target": "appendix-index",
+          "kind": "index-link",
+          "targetPage": 15,
+          "rect": {
+            "x": 251.7,
+            "y": 976,
+            "w": 166.63,
+            "h": 30.8
+          }
+        }
+      ]
+    },
+    {
+      "page": 31,
+      "key": "appendix-app-11",
+      "kind": "appendix",
+      "coreNumber": null,
+      "id": "app-11",
+      "title": "Structural evaluations pass, while live AI quality is not yet measured",
+      "section": "Technology",
+      "group": "Technology",
+      "url": "/story?deck=v2.4&appendix=app-11&export=1&safe=1",
+      "image": "slides-v2-4/31-appendix-app-11.png",
+      "links": [
+        {
+          "target": "core:11",
+          "kind": "return",
+          "targetPage": 11,
+          "rect": {
+            "x": 64,
+            "y": 976,
+            "w": 183.77,
+            "h": 30.8
+          }
+        },
+        {
+          "target": "appendix-index",
+          "kind": "index-link",
+          "targetPage": 15,
+          "rect": {
+            "x": 255.77,
+            "y": 976,
+            "w": 166.63,
+            "h": 30.8
+          }
+        }
+      ]
+    },
+    {
+      "page": 32,
+      "key": "appendix-app-13",
+      "kind": "appendix",
+      "coreNumber": null,
+      "id": "app-13",
+      "title": "Each service tier carries a defined scope and cadence, from platform to managed operations",
+      "section": "Service and rollout",
+      "group": "Service and rollout",
+      "url": "/story?deck=v2.4&appendix=app-13&export=1&safe=1",
+      "image": "slides-v2-4/32-appendix-app-13.png",
+      "links": [
+        {
+          "target": "core:12",
+          "kind": "return",
+          "targetPage": 12,
+          "rect": {
+            "x": 64,
+            "y": 976,
+            "w": 186.44,
+            "h": 30.8
+          }
+        },
+        {
+          "target": "appendix-index",
+          "kind": "index-link",
+          "targetPage": 15,
+          "rect": {
+            "x": 258.44,
+            "y": 976,
+            "w": 166.63,
+            "h": 30.8
+          }
+        }
+      ]
+    },
+    {
+      "page": 33,
+      "key": "appendix-app-28",
+      "kind": "appendix",
+      "coreNumber": null,
+      "id": "app-28",
+      "title": "The App Factory is a proposed delivery path built on a definition that already exists",
+      "section": "Service and rollout",
+      "group": "Service and rollout",
+      "url": "/story?deck=v2.4&appendix=app-28&export=1&safe=1",
+      "image": "slides-v2-4/33-appendix-app-28.png",
+      "links": [
+        {
+          "target": "core:12",
+          "kind": "return",
+          "targetPage": 12,
+          "rect": {
+            "x": 64,
+            "y": 976,
+            "w": 186.44,
+            "h": 30.8
+          }
+        },
+        {
+          "target": "appendix-index",
+          "kind": "index-link",
+          "targetPage": 15,
+          "rect": {
+            "x": 258.44,
+            "y": 976,
+            "w": 166.63,
+            "h": 30.8
+          }
+        }
+      ]
+    },
+    {
+      "page": 34,
+      "key": "appendix-app-14",
+      "kind": "appendix",
+      "coreNumber": null,
+      "id": "app-14",
+      "title": "Commercial packaging separates one-time setup from recurring service",
+      "section": "Service and rollout",
+      "group": "Service and rollout",
+      "url": "/story?deck=v2.4&appendix=app-14&export=1&safe=1",
+      "image": "slides-v2-4/34-appendix-app-14.png",
+      "links": [
+        {
+          "target": "core:12",
+          "kind": "return",
+          "targetPage": 12,
+          "rect": {
+            "x": 64,
+            "y": 976,
+            "w": 186.44,
+            "h": 30.8
+          }
+        },
+        {
+          "target": "appendix-index",
+          "kind": "index-link",
+          "targetPage": 15,
+          "rect": {
+            "x": 258.44,
+            "y": 976,
+            "w": 166.63,
+            "h": 30.8
+          }
+        }
+      ]
+    },
+    {
+      "page": 35,
+      "key": "appendix-app-15",
+      "kind": "appendix",
+      "coreNumber": null,
+      "id": "app-15",
+      "title": "The design-partner scope starts with two roles and keeps autonomous execution off",
+      "section": "Service and rollout",
+      "group": "Service and rollout",
+      "url": "/story?deck=v2.4&appendix=app-15&export=1&safe=1",
+      "image": "slides-v2-4/35-appendix-app-15.png",
+      "links": [
+        {
+          "target": "core:13",
+          "kind": "return",
+          "targetPage": 13,
+          "rect": {
+            "x": 64,
+            "y": 976,
+            "w": 187.11,
+            "h": 30.8
+          }
+        },
+        {
+          "target": "appendix-index",
+          "kind": "index-link",
+          "targetPage": 15,
+          "rect": {
+            "x": 259.11,
+            "y": 976,
+            "w": 166.63,
+            "h": 30.8
+          }
+        }
+      ]
+    },
+    {
+      "page": 36,
+      "key": "appendix-app-16",
+      "kind": "appendix",
+      "coreNumber": null,
+      "id": "app-16",
+      "title": "Five pilot metrics are measured against the bank's own baseline, not benchmarks",
+      "section": "Service and rollout",
+      "group": "Service and rollout",
+      "url": "/story?deck=v2.4&appendix=app-16&export=1&safe=1",
+      "image": "slides-v2-4/36-appendix-app-16.png",
+      "links": [
+        {
+          "target": "core:11",
+          "kind": "return",
+          "targetPage": 11,
+          "rect": {
+            "x": 64,
+            "y": 976,
+            "w": 183.77,
+            "h": 30.8
+          }
+        },
+        {
+          "target": "appendix-index",
+          "kind": "index-link",
+          "targetPage": 15,
+          "rect": {
+            "x": 255.77,
+            "y": 976,
+            "w": 166.63,
+            "h": 30.8
+          }
+        }
+      ]
+    },
+    {
+      "page": 37,
+      "key": "appendix-app-22",
+      "kind": "appendix",
+      "coreNumber": null,
+      "id": "app-22",
+      "title": "Known limitations set the boundary for any design-partner engagement",
+      "section": "Service and rollout",
+      "group": "Service and rollout",
+      "url": "/story?deck=v2.4&appendix=app-22&export=1&safe=1",
+      "image": "slides-v2-4/37-appendix-app-22.png",
+      "links": [
+        {
+          "target": "core:13",
+          "kind": "return",
+          "targetPage": 13,
+          "rect": {
+            "x": 64,
+            "y": 976,
+            "w": 187.11,
+            "h": 30.8
+          }
+        },
+        {
+          "target": "appendix-index",
+          "kind": "index-link",
+          "targetPage": 15,
+          "rect": {
+            "x": 259.11,
+            "y": 976,
+            "w": 166.63,
+            "h": 30.8
+          }
+        }
+      ]
+    }
+  ],
+  "integrityWarnings": [],
+  "linkNotices": [],
+  "disclosures": {
+    "syntheticData": "Synthetic institution and data.",
+    "regulatory": "Illustrative regulatory context, not legal advice."
+  }
+}

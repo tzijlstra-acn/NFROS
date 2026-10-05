@@ -1,0 +1,543 @@
+{
+  "version": "v2.4-final",
+  "capturedAt": "2026-10-04T22:27:08.633Z",
+  "commit": "6c2cf46",
+  "worktreeDirty": true,
+  "baseUrl": "http://localhost:3000",
+  "assets": {
+    "or-home": {
+      "file": "or-home.png",
+      "width": 1760,
+      "height": 1628,
+      "deviceScaleFactor": 2,
+      "sha256": "b101ac2d8b9cb22d813a888c3800bac6fc6893512b0613dfbc95f175896dde14",
+      "route": "/workday/rcsa?ui=v3.3",
+      "region": "role-home",
+      "bytes": 154903,
+      "viewport": {
+        "width": 1920,
+        "height": 1080
+      },
+      "background": "#f5f6f8",
+      "subRegions": {
+        "now": {
+          "x": 48,
+          "y": 160,
+          "width": 1664,
+          "height": 466
+        },
+        "ai-partner": {
+          "x": 48,
+          "y": 658,
+          "width": 1664,
+          "height": 137
+        },
+        "next": {
+          "x": 48,
+          "y": 827,
+          "width": 1664,
+          "height": 381
+        },
+        "meetings-actions": {
+          "x": 48,
+          "y": 1240,
+          "width": 1664,
+          "height": 217
+        },
+        "watching": {
+          "x": 48,
+          "y": 1489,
+          "width": 212,
+          "height": 56
+        },
+        "done": {
+          "x": 308,
+          "y": 1489,
+          "width": 367,
+          "height": 56
+        }
+      }
+    },
+    "tprm-home": {
+      "file": "tprm-home.png",
+      "width": 1760,
+      "height": 1586,
+      "deviceScaleFactor": 2,
+      "sha256": "8eb460f5fb3cd5251355cd60e28e62518998757647f37e3829cfdb1243640684",
+      "route": "/workday/tprm?ui=v3.3",
+      "region": "role-home",
+      "bytes": 145185,
+      "viewport": {
+        "width": 1920,
+        "height": 1080
+      },
+      "background": "#f5f6f8",
+      "subRegions": {
+        "now": {
+          "x": 48,
+          "y": 160,
+          "width": 1664,
+          "height": 424
+        },
+        "ai-partner": {
+          "x": 48,
+          "y": 616,
+          "width": 1664,
+          "height": 137
+        },
+        "next": {
+          "x": 48,
+          "y": 785,
+          "width": 1664,
+          "height": 381
+        },
+        "meetings-actions": {
+          "x": 48,
+          "y": 1198,
+          "width": 1664,
+          "height": 217
+        },
+        "watching": {
+          "x": 48,
+          "y": 1447,
+          "width": 212,
+          "height": 56
+        },
+        "done": {
+          "x": 308,
+          "y": 1447,
+          "width": 367,
+          "height": 56
+        }
+      }
+    },
+    "rcsa-process-stage": {
+      "file": "rcsa-process-stage.png",
+      "width": 1664,
+      "height": 1410,
+      "deviceScaleFactor": 2,
+      "sha256": "8049cf9b8572f4ff9eb86ac042791c59c7f2a7cf0d0c73bbb823857e0f80b59b",
+      "route": "/workday/rcsa/processes/rcsa-cycle?stage=evidence-refresh&ui=v3.3",
+      "region": "rcsa-stage-workspace",
+      "bytes": 125893,
+      "viewport": {
+        "width": 1920,
+        "height": 1080
+      },
+      "background": "#f5f6f8",
+      "subRegions": {
+        "heading": {
+          "x": 0,
+          "y": 0,
+          "width": 1664,
+          "height": 49
+        },
+        "ai-prepared": {
+          "x": 0,
+          "y": 97,
+          "width": 1664,
+          "height": 242
+        },
+        "your-task": {
+          "x": 0,
+          "y": 387,
+          "width": 1664,
+          "height": 200
+        },
+        "artifacts": {
+          "x": 0,
+          "y": 635,
+          "width": 1664,
+          "height": 190
+        },
+        "action-form": {
+          "x": 0,
+          "y": 873,
+          "width": 1664,
+          "height": 415
+        },
+        "recent-events": {
+          "x": 0,
+          "y": 1336,
+          "width": 1664,
+          "height": 71
+        }
+      }
+    },
+    "tprm-onboarding-stage": {
+      "file": "tprm-onboarding-stage.png",
+      "width": 1664,
+      "height": 1996,
+      "deviceScaleFactor": 2,
+      "sha256": "2d17226d429e64637e6395f87dfa9c22984f8b083b84042b33bce082f187d00e",
+      "route": "/workday/tprm/processes/third-party-onboarding?stage=evidence-review&ui=v3.3",
+      "region": "tprm-stage-workspace",
+      "bytes": 299651,
+      "viewport": {
+        "width": 1920,
+        "height": 1118
+      },
+      "background": "#e4e7ec",
+      "subRegions": {
+        "heading": {
+          "x": 0,
+          "y": 0,
+          "width": 1664,
+          "height": 46
+        },
+        "ai-prepared": {
+          "x": 0,
+          "y": 94,
+          "width": 1664,
+          "height": 242
+        },
+        "responsibility": {
+          "x": 0,
+          "y": 384,
+          "width": 1664,
+          "height": 170
+        },
+        "evidence-status": {
+          "x": 0,
+          "y": 602,
+          "width": 1664,
+          "height": 893
+        },
+        "decision-form": {
+          "x": 0,
+          "y": 1543,
+          "width": 1664,
+          "height": 452
+        }
+      }
+    },
+    "evidence-review": {
+      "file": "evidence-review.png",
+      "width": 1664,
+      "height": 894,
+      "deviceScaleFactor": 2,
+      "sha256": "4fe878b11580492f99a01cc721b13567048a543d4aac28a94082a7bf79f797a7",
+      "route": "/workday/tprm/processes/third-party-onboarding?stage=evidence-review&ui=v3.3",
+      "region": "tprm-evidence-status",
+      "bytes": 172696,
+      "viewport": {
+        "width": 1920,
+        "height": 1080
+      },
+      "background": "#e4e7ec",
+      "subRegions": {
+        "summary": {
+          "x": 0,
+          "y": 38,
+          "width": 1664,
+          "height": 37
+        },
+        "list": {
+          "x": 0,
+          "y": 99,
+          "width": 1664,
+          "height": 794
+        },
+        "condition-item": {
+          "x": 0,
+          "y": 200,
+          "width": 1664,
+          "height": 85
+        },
+        "missing-penetration-test": {
+          "x": 0,
+          "y": 504,
+          "width": 1664,
+          "height": 85
+        },
+        "missing-bcm-plan": {
+          "x": 0,
+          "y": 605,
+          "width": 1664,
+          "height": 85
+        }
+      }
+    },
+    "decision-approval": {
+      "file": "decision-approval.png",
+      "width": 1760,
+      "height": 1232,
+      "deviceScaleFactor": 2,
+      "sha256": "4fe29a414acc2ebc9fa68f4848422d877d5a323253bb527aa057465e3e352be2",
+      "route": "/workday/rcsa/decisions?ui=v3.3",
+      "region": "decision-queue",
+      "bytes": 144532,
+      "viewport": {
+        "width": 1920,
+        "height": 1080
+      },
+      "background": "#f5f6f8",
+      "subRegions": {
+        "queue": {
+          "x": 48,
+          "y": 205,
+          "width": 1664,
+          "height": 244
+        },
+        "active-decision": {
+          "x": 48,
+          "y": 465,
+          "width": 1664,
+          "height": 725
+        },
+        "steps": {
+          "x": 86,
+          "y": 491,
+          "width": 792,
+          "height": 52
+        },
+        "authority": {
+          "x": 86,
+          "y": 559,
+          "width": 1592,
+          "height": 139
+        },
+        "approver": {
+          "x": 633,
+          "y": 569,
+          "width": 498,
+          "height": 111
+        },
+        "choice": {
+          "x": 86,
+          "y": 714,
+          "width": 1592,
+          "height": 147
+        },
+        "confirm": {
+          "x": 86,
+          "y": 877,
+          "width": 1592,
+          "height": 117
+        },
+        "confirm-action": {
+          "x": 86,
+          "y": 1010,
+          "width": 381,
+          "height": 72
+        }
+      }
+    },
+    "meeting-preparation": {
+      "file": "meeting-preparation.png",
+      "width": 1760,
+      "height": 1148,
+      "deviceScaleFactor": 2,
+      "sha256": "bb9e5f18a4570e4d4f69995027566415b855eb1429157f8bf75939a39f7b9d45",
+      "route": "/workday/rcsa/work?view=meetings&ui=v3.3",
+      "region": "rcsa-work-hub",
+      "bytes": 98923,
+      "viewport": {
+        "width": 1920,
+        "height": 1080
+      },
+      "background": "#f5f6f8",
+      "subRegions": {
+        "tabs": {
+          "x": 48,
+          "y": 176,
+          "width": 1664,
+          "height": 77
+        },
+        "synthetic-label": {
+          "x": 48,
+          "y": 1030,
+          "width": 1664,
+          "height": 37
+        },
+        "upcoming": {
+          "x": 48,
+          "y": 301,
+          "width": 1664,
+          "height": 507
+        },
+        "workshop": {
+          "x": 48,
+          "y": 511,
+          "width": 1664,
+          "height": 141
+        },
+        "minutes-archive": {
+          "x": 48,
+          "y": 872,
+          "width": 1664,
+          "height": 94
+        }
+      }
+    },
+    "actions": {
+      "file": "actions.png",
+      "width": 1760,
+      "height": 1342,
+      "deviceScaleFactor": 2,
+      "sha256": "9b58f55707cbe889c001506f4cf69d18ebe1527474979e03b346ee7dc22f1c71",
+      "route": "/workday/rcsa/work?view=actions&filter=needs-me&ui=v3.3",
+      "region": "rcsa-work-hub",
+      "bytes": 149643,
+      "viewport": {
+        "width": 1920,
+        "height": 1080
+      },
+      "background": "#f5f6f8",
+      "subRegions": {
+        "tabs": {
+          "x": 48,
+          "y": 176,
+          "width": 1664,
+          "height": 77
+        },
+        "synthetic-label": {
+          "x": 48,
+          "y": 1224,
+          "width": 1664,
+          "height": 37
+        },
+        "filters": {
+          "x": 48,
+          "y": 301,
+          "width": 1664,
+          "height": 60
+        },
+        "list": {
+          "x": 48,
+          "y": 393,
+          "width": 1664,
+          "height": 767
+        },
+        "first-action": {
+          "x": 48,
+          "y": 393,
+          "width": 1664,
+          "height": 140
+        }
+      }
+    },
+    "inbox-conversion": {
+      "file": "inbox-conversion.png",
+      "width": 1760,
+      "height": 1092,
+      "deviceScaleFactor": 2,
+      "sha256": "879312605474c101b694fa6dff37e65370266ce370f93008bc17faf25a9e4cc2",
+      "route": "/workday/rcsa/work?view=inbox&ui=v3.3",
+      "region": "rcsa-work-hub",
+      "bytes": 132664,
+      "viewport": {
+        "width": 1920,
+        "height": 1080
+      },
+      "background": "#f5f6f8",
+      "subRegions": {
+        "tabs": {
+          "x": 48,
+          "y": 176,
+          "width": 1664,
+          "height": 77
+        },
+        "synthetic-label": {
+          "x": 48,
+          "y": 975,
+          "width": 1664,
+          "height": 37
+        },
+        "list": {
+          "x": 48,
+          "y": 301,
+          "width": 1664,
+          "height": 610
+        },
+        "first-item": {
+          "x": 48,
+          "y": 301,
+          "width": 1664,
+          "height": 140
+        }
+      }
+    },
+    "ai-partner": {
+      "file": "ai-partner.png",
+      "width": 720,
+      "height": 2064,
+      "deviceScaleFactor": 2,
+      "sha256": "c03f3658e3289408cb9bee95f8b9b6e429be359acafeedba53ef68b5b73ca631",
+      "route": "/workday/rcsa?ui=v3.3",
+      "region": "ai-partner-dock",
+      "bytes": 219810,
+      "viewport": {
+        "width": 1920,
+        "height": 1080
+      },
+      "background": "#ffffff",
+      "subRegions": {
+        "header": {
+          "x": 2,
+          "y": 0,
+          "width": 718,
+          "height": 114
+        },
+        "status": {
+          "x": 4,
+          "y": 114,
+          "width": 716,
+          "height": 191
+        },
+        "tabs": {
+          "x": 4,
+          "y": 305,
+          "width": 716,
+          "height": 70
+        },
+        "suggestion": {
+          "x": 28,
+          "y": 399,
+          "width": 668,
+          "height": 1665
+        }
+      }
+    },
+    "role-app-library": {
+      "file": "role-app-library.png",
+      "width": 1760,
+      "height": 578,
+      "deviceScaleFactor": 2,
+      "sha256": "a8ea1bc9ae651e7171ca5cd597e84fbe30ce7332ef2bf28bfc09e5e492e78f2f",
+      "route": "/workday/rcsa/processes?ui=v3.3",
+      "region": "role-app-library",
+      "bytes": 34724,
+      "viewport": {
+        "width": 1920,
+        "height": 1080
+      },
+      "background": "#f5f6f8",
+      "subRegions": {
+        "tabs": {
+          "x": 48,
+          "y": 112,
+          "width": 1664,
+          "height": 76
+        },
+        "processes": {
+          "x": 48,
+          "y": 236,
+          "width": 1664,
+          "height": 160
+        },
+        "synthetic-label": {
+          "x": 48,
+          "y": 460,
+          "width": 1664,
+          "height": 37
+        }
+      }
+    }
+  },
+  "notCaptured": {
+    "execution-receipt": "The approved seeded day has no executed decisions: execution_receipt_lines is empty and the AI Partner Activity tab renders no AIExecutionReceipt for rcsa or tprm. A receipt only exists after Confirm and execute, which writes to the database and is outside a read-only capture.",
+    "meeting-minutes": "The Minutes archive is empty in the approved seeded day (it reads No minutes in the archive), so there are no minutes to show. The meetings view itself is captured as meeting-preparation.",
+    "operations-status": "The /ops console renders outside the V3.3 shell in dark V2 styling, and at 1920x1080 its System health, Job queue and Failed jobs sections draw over each other, so it is not a truthful current light UI screen."
+  }
+}

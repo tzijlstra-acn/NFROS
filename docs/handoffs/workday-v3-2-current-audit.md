@@ -58,9 +58,9 @@ export const DEFAULT_WORKDAY_UI: WorkdayUiVersion = "v3.1";
 export const CURRENT_WORKDAY_UI: WorkdayUiVersion = "v3.1";
 ```
 
-`?ui=current`, `?ui=v3`, `?ui=latest` all resolve to `"v3.1"` via `UI_ALIASES` (lines 94–99).
+`?ui=current`, `?ui=v3`, `?ui=latest` all resolve to `"v3.1"` via `UI_ALIASES` (lines 94 to 99).
 
-`V3_NATIVE_SEGMENTS` (lines 50–59) lists all eight segments that have V3.1 implementations. The full list as declared:
+`V3_NATIVE_SEGMENTS` (lines 50 to 59) lists all eight segments that have V3.1 implementations. The full list as declared:
 
 ```ts
 export const V3_NATIVE_SEGMENTS: readonly string[] = [
@@ -148,7 +148,7 @@ The current `app/page.tsx` does **not** list all 6 roles. The "Six professional 
 
 No role cards, no `getRoles()` call, no `getUser()` or `getEntity()` call.
 
-**Footer navigation in `app/page.tsx`** (lines 229–248):
+**Footer navigation in `app/page.tsx`** (lines 229 to 248):
 - `/story`  --  Presentation
 - `/workday`  --  Workday (→ `RoleSelector`)
 - `/control-room`  --  Control room
@@ -171,7 +171,7 @@ The root entry page is aware of six footer links but renders none of the six pro
 | `workbench` | `"/workbench"` | `/workday/<role>/workbench` | Stub  --  `SectionStub` |
 | `meetings` | `"/meetings"` | `/workday/<role>/meetings` | Stub  --  `SectionStub` |
 
-Note: The brief called for five primary items. A fifth item (`My work` → `/workday/<role>/my-work`) was removed because the route does not exist. This is documented in a code comment at line 66–76 of `WorkdayNavigation.tsx`.
+Note: The brief called for five primary items. A fifth item (`My work` → `/workday/<role>/my-work`) was removed because the route does not exist. This is documented in a code comment at line 66 to 76 of `WorkdayNavigation.tsx`.
 
 ### Secondary items (behind "More" button, 3 items)
 
@@ -203,14 +203,14 @@ Note: The brief called for five primary items. A fifth item (`My work` → `/wor
 | File | Line | Usage |
 |---|---|---|
 | `app/settings/layout.tsx` | 47 | `className="workday-v2"` on root `<div>`  --  entire settings shell in V2 dark scope |
-| `app/workday/[role]/v2.tsx` | 24–26 | Imports `WorkdayV2Route`, `FocusWorkspace`, `RoleWorkObject` from `workday-v2/` |
-| `app/workday/[role]/decisions/v2.tsx` | 11–12 | Imports `WorkdayV2Route`, `DecisionsSection` from `workday-v2/` |
-| `app/workday/[role]/workbench/v2.tsx` | 31–34 | Imports `WorkdayV2Route`, `RoleWorkObject`, `SourceRow` from `workday-v2/` |
-| `app/workday/[role]/meetings/v2.tsx` | 11–12 | Imports `WorkdayV2Route`, `MeetingsSection` from `workday-v2/` |
-| `app/workday/[role]/mail/v2.tsx` | 11–12 | Imports `WorkdayV2Route`, `MailSection` from `workday-v2/` |
-| `app/workday/[role]/calendar/v2.tsx` | 11–12 | Imports `WorkdayV2Route`, `CalendarSection` from `workday-v2/` |
-| `app/workday/[role]/collaboration/v2.tsx` | 11–12 | Imports `WorkdayV2Route`, `CollaborationSection` from `workday-v2/` |
-| `app/workday/[role]/assistant/v2.tsx` | 11–12 | Imports `WorkdayV2Route`, `AssistantSection` from `workday-v2/` |
+| `app/workday/[role]/v2.tsx` | 24 to 26 | Imports `WorkdayV2Route`, `FocusWorkspace`, `RoleWorkObject` from `workday-v2/` |
+| `app/workday/[role]/decisions/v2.tsx` | 11 to 12 | Imports `WorkdayV2Route`, `DecisionsSection` from `workday-v2/` |
+| `app/workday/[role]/workbench/v2.tsx` | 31 to 34 | Imports `WorkdayV2Route`, `RoleWorkObject`, `SourceRow` from `workday-v2/` |
+| `app/workday/[role]/meetings/v2.tsx` | 11 to 12 | Imports `WorkdayV2Route`, `MeetingsSection` from `workday-v2/` |
+| `app/workday/[role]/mail/v2.tsx` | 11 to 12 | Imports `WorkdayV2Route`, `MailSection` from `workday-v2/` |
+| `app/workday/[role]/calendar/v2.tsx` | 11 to 12 | Imports `WorkdayV2Route`, `CalendarSection` from `workday-v2/` |
+| `app/workday/[role]/collaboration/v2.tsx` | 11 to 12 | Imports `WorkdayV2Route`, `CollaborationSection` from `workday-v2/` |
+| `app/workday/[role]/assistant/v2.tsx` | 11 to 12 | Imports `WorkdayV2Route`, `AssistantSection` from `workday-v2/` |
 | `app/settings/authority/page.tsx` | 46 | Imports primitives from `workday-v2/primitives` |
 | `app/settings/deployment/page.tsx` | 25 | Imports primitives from `workday-v2/primitives` |
 | `app/settings/integrations/page.tsx` | 43 | Imports primitives from `workday-v2/primitives` |
@@ -273,7 +273,7 @@ Full token inventory (all references in the file):
 | `var(--wd-text-muted)` | 40, 50 | Yes  --  `--wd-text-muted: #7b8494` |
 | `var(--wd-8)` | 48 | Yes  --  `--wd-8: 32px` |
 
-CSS class used: `wd-page-title` (line 27). This is declared in `src/styles/workday-v3.css` at lines 483–490.
+CSS class used: `wd-page-title` (line 27). This is declared in `src/styles/workday-v3.css` at lines 483 to 490.
 
 **No undefined token usage in `SectionStub.tsx`.** All six `var(--wd-*)` references resolve to tokens declared in `workday-v3-tokens.css`.
 

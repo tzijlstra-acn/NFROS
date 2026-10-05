@@ -369,23 +369,65 @@ it, and it returns only safe metadata to everything else.
 
 ## Presentation mode
 
-`/story` is a first-class product surface and the source of the exported deck.
-Sixteen scenes in five chapters, budgeted at exactly thirty minutes.
+`/story` opens the Risk Audience Presentation, release V2.4: a thirteen-slide
+core (cover, agenda, eleven content slides), a Q&A close, and a reference
+appendix of twenty topics. It is a first-class product surface and the source
+of the exported PDF and PowerPoint.
 
-Keyboard: arrows, space, page up and down to navigate; `Home` and `End` for
-first and last; `F` full screen; `P` presenter notes; `M` pause motion; `R`
-replay the scene; `?` help; `Escape` to exit full screen.
+| URL | Opens |
+| --- | --- |
+| `/story` | V2.4, slide 1 |
+| `/story?deck=current` or `?deck=v2.4` | V2.4 |
+| `/story?deck=v2.4&core=7` | V2.4, core slide 7 |
+| `/story?deck=v2.4&appendix=app-05&from=core-7` | Appendix topic, with a return to slide 7 |
+| `/story?deck=v2.4&view=appendix-index` | Appendix index, grouped by topic area |
+| `/story?deck=v2.3`, `v2.2`, `legacy` | Earlier releases, unchanged |
 
-`?safe=1` or `?export=1` forces every reveal to its final state, which is what
-makes the screenshot capture deterministic.
+The URL always reflects the current slide, so refresh and the browser back
+button land where you expect.
 
-No scene may overflow at 1920x1080, 1440x900 or 1366x768. That is asserted in
-`tests/e2e/visual.spec.ts` and again during the deck export, which fails if any
-scene overflows.
+Keyboard: `Left` and `Right` to move; `Home` and `End` for first and last; `A`
+appendix index; `C` back to the core slide you came from; `R` replay the current
+slide; `M` pause and resume motion; `D` downloads; `F` full screen; `P` speaker
+notes; `?` help.
+
+`?export=1&safe=1` renders every exhibit in its final state, which is what
+makes capture and export deterministic. Reduced motion does the same.
+
+Product proof on slides 6, 7, 8 and 10 uses real captures of the Role Operating
+Systems, registered in `public/presentation-assets/v2.4-final/`. See
+`docs/PRESENTATION_V2_4_COMPLETION.md` for the full release record.
+
+The legacy sixteen-scene deck remains at `/story?deck=legacy`.
 
 ---
 
 ## Deck export
+
+V2.4, the current release:
+
+```bash
+npm run build
+npm run capture:presentation-assets    # refresh the real product captures
+npm run verify:presentation-assets
+npm run export:presentation-v2-4
+npm run verify:presentation-exports
+```
+
+Produces, and publishes to `public/downloads/` for the in-deck download menu:
+
+```
+exports/NFROS_Risk_Audience_V24_Core.pdf
+exports/NFROS_Risk_Audience_V24_Core_and_Appendix.pdf
+exports/NFROS_Risk_Audience_V24_Core_and_Appendix.pptx
+exports/NFROS_Risk_Audience_V24_Speaker_Notes.md
+```
+
+Appendix references stay clickable in both the PDF and the PowerPoint. The
+export fails if any product proof asset is missing. Details in
+`docs/PRESENTATION_V2_4_EXPORTS.md`.
+
+The legacy deck export:
 
 ```bash
 npm run build

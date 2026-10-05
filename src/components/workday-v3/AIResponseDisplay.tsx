@@ -238,7 +238,7 @@ function RecommendationDisplay({ part }: { part: RecommendationPart }) {
             fontStyle: "italic",
           }}
         >
-          Suggestion limited -- required source unavailable. {part.limitations}
+          Suggestion limited: required source unavailable. {part.limitations}
         </p>
       ) : null}
     </div>

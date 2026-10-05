@@ -154,7 +154,7 @@ export const APP_FACTORY_LIFECYCLE: AppFactoryPhase[] = [
     keyActivities: [
       "Stage-by-stage workflow specification",
       "Output schema design for each stage",
-      "AI manifest drafting -- what AI does and where",
+      "AI manifest drafting: what AI does and where",
       "Evidence specification per stage",
       "Approval and escalation rule definition",
       "Work hub integration design",
@@ -198,7 +198,7 @@ export const APP_FACTORY_LIFECYCLE: AppFactoryPhase[] = [
       "Structured output schema enforcement",
       "Anomaly flagging logic implementation",
       "Evidence linking automation",
-      "Evaluation suite development -- test cases and expected outputs",
+      "Evaluation suite development: test cases and expected outputs",
       "Audit trail event logging for AI interactions",
     ],
     gateCriteria: [
@@ -267,7 +267,7 @@ export const APP_FACTORY_LIFECYCLE: AppFactoryPhase[] = [
       "Incident management and root cause analysis",
     ],
     gateCriteria: [
-      "Ongoing -- no single gate; continuous quality assurance",
+      "Ongoing: no single gate; continuous quality assurance",
     ],
     typicalDuration: "Ongoing",
   },

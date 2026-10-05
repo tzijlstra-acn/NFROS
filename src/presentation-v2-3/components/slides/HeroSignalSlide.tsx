@@ -19,7 +19,7 @@ const STREAMS = [
   { id: "bot", x1: 0, y1: 920, x2: 800, y2: 540 },
 ] as const;
 
-// Packet phases along each stream — 3 packets per stream at different offsets
+// Packet phases along each stream: 3 packets per stream at different offsets
 const PACKET_PHASES = [0.15, 0.45, 0.75] as const;
 
 function streamLength(s: (typeof STREAMS)[number]) {
@@ -133,7 +133,7 @@ export function HeroSignalSlide({ slide, exportMode = false }: Props) {
           ))
         )}
 
-        {/* Focal card — white surface with purple top bar */}
+        {/* Focal card: white surface with purple top bar */}
         <rect x={cardX} y={cardY} width={cardW} height={cardH} fill="var(--pv23-surface)" />
         <rect x={cardX} y={cardY} width={cardW} height={6} fill="var(--pv23-brand-purple)" />
 
@@ -149,7 +149,7 @@ export function HeroSignalSlide({ slide, exportMode = false }: Props) {
         />
       </svg>
 
-      {/* Card HTML content — layered over the SVG card rect */}
+      {/* Card HTML content: layered over the SVG card rect */}
       {skipAnim ? (
         <div
           style={{

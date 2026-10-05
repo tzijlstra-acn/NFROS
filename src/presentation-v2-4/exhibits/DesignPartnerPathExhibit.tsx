@@ -2,7 +2,7 @@
 
 import * as React from "react";
 import { motion, useReducedMotion } from "motion/react";
-import { IconRocket, IconChartLine, IconStack2 } from "@tabler/icons-react";
+import { IconPlugConnected, IconChartLine, IconStack2 } from "@tabler/icons-react";
 import type { DesignPartnerPathData, DesignPartnerStep } from "../data/types";
 
 export type DesignPartnerPathExhibitProps = {
@@ -20,13 +20,13 @@ const CARD_BOUNDS: ReadonlyArray<{ x1: number; x2: number }> = [
   { x1: 1280, x2: 1780 },
 ];
 
-const CARD_Y1 = 52;
-const CARD_Y2 = 558;
-const CARD_HEIGHT = CARD_Y2 - CARD_Y1; // 506
+const CARD_Y1 = 24;
+const CARD_Y2 = 576;
+const CARD_HEIGHT = CARD_Y2 - CARD_Y1;
 
-const ARROW_Y = Math.round((CARD_Y1 + CARD_Y2) / 2); // 305
+const ARROW_Y = Math.round((CARD_Y1 + CARD_Y2) / 2);
 
-const TIMELINE_Y = 578;
+const TIMELINE_Y = 592;
 const TIMELINE_CONTAINER_W = 1700; // 1780 - 80
 const TIMELINE_CONTAINER_LEFT = 80;
 
@@ -53,55 +53,56 @@ type PhaseConfig = {
 
 const PHASE_CONFIGS: PhaseConfig[] = [
   {
-    verb: "DEPLOY",
-    Icon: IconRocket,
+    verb: "CONNECT",
+    Icon: IconPlugConnected,
     borderColor: "var(--pv24-accent)",
     headerBg: "var(--pv24-accent-lightest)",
     badgeColor: "var(--pv24-accent)",
     outcomes: [
       {
-        main: "Deploy TPRM Reviewer to 2 risk managers",
-        subs: [
-          { text: "Wk 1-2: map data sources, configure authority model" },
-          { text: "Wk 3-4: dry run with 10 live TPRM cases, human gates on" },
-          { text: "Wk 5-6: go live with approval-gated execution" },
-        ],
+        main: "One business area, with a current work map",
+        subs: [{ text: "Processes, roles, hand-offs and cycle times" }],
       },
       {
-        main: "Complete one full RCSA cycle with OR Partner OS",
-        subs: [],
+        main: "Source and system map",
+        subs: [{ text: "Where evidence lives and which connectors fit" }],
       },
       {
-        main: "All decisions human-approved; AI prepares, human signs",
-        subs: [],
+        main: "Authority model",
+        subs: [{ text: "Who prepares, who approves, what stays human" }],
+      },
+      {
+        main: "Baseline measures, before any AI assistance",
+        subs: [{ text: "Decision time, evidence completeness, rework" }],
       },
     ],
   },
   {
-    verb: "MEASURE",
+    verb: "PROVE",
     Icon: IconChartLine,
     borderColor: "#9DA1AE",
     headerBg: "#F0F1F4",
     badgeColor: "#5A5E6B",
     outcomes: [
       {
-        main: "Track: decision time, evidence completeness, rework rate",
+        main: "Operational Risk: RCSA Cycle Assistant",
         subs: [],
       },
       {
-        main: "Baseline versus system-assisted comparison",
-        subs: [
-          { text: "Baseline captured in week 1, before go-live" },
-          { text: "Mid-pilot read in month 3, final report in month 4" },
-        ],
-      },
-      {
-        main: "Stakeholder sign-off on observed outcomes",
+        main: "Third-Party Risk: Third-Party Onboarding",
         subs: [],
       },
       {
-        main: "Outcome report produced and reviewed",
-        subs: [],
+        main: "Read-only first",
+        subs: [{ text: "AI prepares evidence and drafts; people decide" }],
+      },
+      {
+        main: "Then approval-gated execution",
+        subs: [{ text: "Nothing is written until a named person approves" }],
+      },
+      {
+        main: "Outcomes measured against the baseline",
+        subs: [{ text: "Outcome report reviewed with stakeholders" }],
       },
     ],
   },
@@ -113,21 +114,24 @@ const PHASE_CONFIGS: PhaseConfig[] = [
     badgeColor: "var(--pv24-accent-dark)",
     outcomes: [
       {
-        main: "Onboard 3 additional roles in months 5-6",
+        main: "Add roles in waves from the preview packs",
         subs: [
-          { text: "Control Assurance, Incident Response, Regulatory Change" },
+          { text: "Control Assurance" },
+          { text: "Incident and Operational Resilience" },
+          { text: "Regulatory Change" },
+          { text: "NFR Governance and Portfolio" },
         ],
       },
       {
-        main: "Activate Function Pack sharing across risk disciplines",
+        main: "Add processes, functions and connectors",
         subs: [],
       },
       {
-        main: "Increase autonomy only where pilot proved it safe",
+        main: "Increase autonomy only where proven safe",
         subs: [],
       },
       {
-        main: "Roadmap governance presented to steering committee",
+        main: "Move to managed operation",
         subs: [],
       },
     ],
@@ -159,9 +163,9 @@ const TIMELINE_SPANS = [
 // PhaseCard
 // ---------------------------------------------------------------------------
 
-const CARD_HEADER_H = 168;
-const CARD_GATE_H = 54;
-const CARD_BODY_H = CARD_HEIGHT - CARD_HEADER_H - CARD_GATE_H; // 284
+const CARD_HEADER_H = 166;
+const CARD_GATE_H = 66;
+const CARD_BODY_H = CARD_HEIGHT - CARD_HEADER_H - CARD_GATE_H;
 
 function PhaseCard({
   step,
@@ -237,12 +241,12 @@ function PhaseCard({
             style={{
               display: "block",
               fontFamily: "var(--pv24-font-mono)",
-              fontSize: 14,
+              fontSize: 16,
               fontWeight: 700,
               letterSpacing: "0.2em",
               textTransform: "uppercase",
               color: badgeColor,
-              marginBottom: 5,
+              marginBottom: 4,
             }}
           >
             {verb}
@@ -251,7 +255,7 @@ function PhaseCard({
             style={{
               display: "block",
               fontWeight: 700,
-              fontSize: 18,
+              fontSize: 20,
               color: "var(--pv24-text)",
               lineHeight: 1.25,
             }}
@@ -266,31 +270,31 @@ function PhaseCard({
         style={{
           height: CARD_BODY_H,
           flex: 1,
-          padding: "14px 18px 10px 18px",
+          padding: "16px 18px 10px 18px",
           display: "flex",
           flexDirection: "column",
-          gap: 9,
+          gap: 13,
           overflow: "hidden",
         }}
       >
         {outcomes.map((outcome, i) => (
           <div key={i}>
-            <div style={{ display: "flex", alignItems: "flex-start", gap: 8 }}>
+            <div style={{ display: "flex", alignItems: "flex-start", gap: 9 }}>
               <div
                 style={{
-                  width: 6,
-                  height: 6,
+                  width: 7,
+                  height: 7,
                   background: borderColor,
                   flexShrink: 0,
-                  marginTop: 5,
+                  marginTop: 8,
                 }}
               />
               <span
                 style={{
-                  fontSize: 15,
+                  fontSize: 17,
                   fontWeight: 600,
                   color: "var(--pv24-text)",
-                  lineHeight: 1.35,
+                  lineHeight: "23px",
                 }}
               >
                 {outcome.main}
@@ -302,27 +306,26 @@ function PhaseCard({
                 style={{
                   display: "flex",
                   alignItems: "flex-start",
-                  gap: 6,
+                  gap: 8,
                   marginTop: 3,
-                  paddingLeft: 14,
+                  paddingLeft: 16,
                 }}
               >
                 <span
                   style={{
-                    color: "var(--pv24-text-secondary)",
-                    fontSize: 14,
-                    marginTop: 2,
+                    display: "block",
+                    width: 5,
+                    height: 5,
+                    marginTop: 8,
                     flexShrink: 0,
-                    lineHeight: 1,
+                    border: "1px solid var(--pv24-text-secondary)",
                   }}
-                >
-                  {"›"}
-                </span>
+                />
                 <span
                   style={{
-                    fontSize: 14,
+                    fontSize: 16,
                     color: "var(--pv24-text-secondary)",
-                    lineHeight: 1.3,
+                    lineHeight: "21px",
                   }}
                 >
                   {sub.text}
@@ -342,16 +345,16 @@ function PhaseCard({
           padding: "0 16px",
           display: "flex",
           alignItems: "center",
-          gap: 8,
+          gap: 10,
           flexShrink: 0,
         }}
       >
         <span
           style={{
             fontFamily: "var(--pv24-font-mono)",
-            fontSize: 13,
+            fontSize: 16,
             fontWeight: 700,
-            letterSpacing: "0.14em",
+            letterSpacing: "0.12em",
             textTransform: "uppercase",
             color: badgeColor,
             flexShrink: 0,
@@ -362,7 +365,7 @@ function PhaseCard({
         <span
           style={{
             fontFamily: "var(--pv24-font-mono)",
-            fontSize: 14,
+            fontSize: 16,
             color: "var(--pv24-text-secondary)",
             lineHeight: 1.3,
             fontStyle: "italic",
@@ -504,7 +507,7 @@ function TimelineBar({ skip, delay }: { skip: boolean; delay: number }) {
           <div
             style={{
               fontFamily: "var(--pv24-font-mono)",
-              fontSize: 14,
+              fontSize: 16,
               fontWeight: 600,
               color: "var(--pv24-text-secondary)",
               marginTop: 5,
@@ -532,9 +535,9 @@ function TimelineBar({ skip, delay }: { skip: boolean; delay: number }) {
               textAlign: "center",
               top: 22,
               fontFamily: "var(--pv24-font-mono)",
-              fontSize: 13,
+              fontSize: 16,
               fontWeight: 700,
-              letterSpacing: "0.18em",
+              letterSpacing: "0.16em",
               textTransform: "uppercase",
               color: span.color,
               opacity: 1,
@@ -621,9 +624,9 @@ export function DesignPartnerPathExhibit({ data, exportMode }: DesignPartnerPath
         <span
           style={{
             fontFamily: "var(--pv24-font-mono)",
-            fontSize: 14,
+            fontSize: 16,
             fontWeight: 700,
-            letterSpacing: "0.18em",
+            letterSpacing: "0.16em",
             textTransform: "uppercase",
             color: "var(--pv24-accent)",
             flexShrink: 0,

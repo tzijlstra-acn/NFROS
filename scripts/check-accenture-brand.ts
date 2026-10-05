@@ -108,27 +108,27 @@ function fail(msg: string) {
 if (logoFull) {
   pass("Accenture logo asset found: " + logoFull);
 } else if (!BRAND_ASSET_DIR) {
-  warn("Logo missing -- ACCENTURE_BRAND_ASSET_DIR not set, development mode only");
+  warn("Logo missing: ACCENTURE_BRAND_ASSET_DIR not set, development mode only");
 } else {
-  warn("Logo missing -- expected accenture-logo-full.svg or accenture-logo.svg in " + BRAND_ASSET_DIR);
+  warn("Logo missing: expected accenture-logo-full.svg or accenture-logo.svg in " + BRAND_ASSET_DIR);
 }
 
 // 2. Greater Than symbol
 if (greaterThan) {
   pass("Greater Than symbol found: " + greaterThan);
 } else if (!BRAND_ASSET_DIR) {
-  warn("Greater Than symbol missing -- ACCENTURE_BRAND_ASSET_DIR not set, development mode only");
+  warn("Greater Than symbol missing: ACCENTURE_BRAND_ASSET_DIR not set, development mode only");
 } else {
-  warn("Greater Than symbol missing -- expected accenture-greater-than.svg or greater-than.svg in " + BRAND_ASSET_DIR);
+  warn("Greater Than symbol missing: expected accenture-greater-than.svg or greater-than.svg in " + BRAND_ASSET_DIR);
 }
 
 // 3. Font check
 if (graphikRegular && graphikSemibold) {
   pass("Graphik font found (Regular + Semibold)");
 } else if (graphikRegular) {
-  warn("Graphik Regular found but Semibold missing -- may affect headings");
+  warn("Graphik Regular found but Semibold missing: may affect headings");
 } else {
-  warn("Graphik font not found -- using Arial fallback (acceptable for development)");
+  warn("Graphik font not found: using Arial fallback (acceptable for development)");
 }
 
 // 4. CSS: circular element check (border-radius: 50% or 9999px)
@@ -167,13 +167,13 @@ if (graphikRegular && graphikSemibold) {
   }
 
   if (circleFound) {
-    fail("Circular image crops prohibited -- border-radius: 50%/9999% found in: " + circleFiles.join(", "));
+    fail("Circular image crops prohibited: border-radius: 50%/9999% found in: " + circleFiles.join(", "));
   } else {
     pass("No circular element crops in CSS");
   }
 
   if (largeRadiusFound) {
-    warn("Large border-radius (> 8px) found on non-product elements in: " + largeRadiusFiles.join(", ") + " -- verify not prohibited rounded-card layout");
+    warn("Large border-radius (> 8px) found on non-product elements in: " + largeRadiusFiles.join(", ") + ": verify not prohibited rounded-card layout");
   }
 }
 
@@ -192,7 +192,7 @@ if (graphikRegular && graphikSemibold) {
   }
 
   if (aquaFiles.length > 0) {
-    fail("Aqua colours prohibited in light mode deck -- found in: " + aquaFiles.join(", "));
+    fail("Aqua colours prohibited in light mode deck, found in: " + aquaFiles.join(", "));
   } else {
     pass("No aqua colours in light deck CSS");
   }
@@ -206,7 +206,7 @@ if (graphikRegular && graphikSemibold) {
     if (/--pv22-radius\s*:\s*0px/.test(content)) {
       pass("brand-tokens.css: --pv22-radius is 0px (angular geometry)");
     } else {
-      fail("brand-tokens.css: --pv22-radius is not 0px -- Accenture uses angular geometry by default");
+      fail("brand-tokens.css: --pv22-radius is not 0px: Accenture uses angular geometry by default");
     }
   } else {
     warn("brand-tokens.css not found at " + tokensFile);
@@ -279,7 +279,7 @@ if (graphikRegular && graphikSemibold) {
       }
     }
     if (matchedFiles.length > 0) {
-      const msg = check.label + " -- found in: " + matchedFiles.join(", ");
+      const msg = check.label + ", found in: " + matchedFiles.join(", ");
       if (check.blocking) {
         fail(msg);
       } else {
@@ -296,6 +296,63 @@ if (graphikRegular && graphikSemibold) {
   if (!anyBlocking) {
     pass("No prohibited campaign copy detected");
   }
+}
+
+// 8. Presentation V2.4 (the current deck)
+{
+  const PV24_SRC = join(process.cwd(), "src", "presentation-v2-4");
+  const pv24Css = walkDir(PV24_SRC, [".css"]);
+  const pv24Ts = walkDir(PV24_SRC, [".ts", ".tsx"]);
+
+  // Circular crops are prohibited for imagery; geometric number badges are not imagery
+  const imageRoundCrop: string[] = [];
+  for (const file of pv24Css) {
+    const content = readFileSync(file, "utf-8");
+    for (const rule of content.split("}")) {
+      const [selector = "", body = ""] = rule.split("{");
+      if (/\b(img|photo|capture|proof|screenshot)\b/i.test(selector) && /border-radius\s*:\s*(?:50%|9999px|100%)/i.test(body)) {
+        imageRoundCrop.push(`${file} (${selector.trim()})`);
+      }
+    }
+  }
+  for (const file of pv24Ts.filter((f) => /product-proof/i.test(f))) {
+    if (/borderRadius\s*:\s*["'](?:50%|100%)["']/.test(readFileSync(file, "utf-8"))) imageRoundCrop.push(file);
+  }
+  if (imageRoundCrop.length > 0) fail("V2.4: circular crops on product imagery: " + imageRoundCrop.join(", "));
+  else pass("V2.4: product imagery uses square frames");
+
+  const AQUA = /#(?:00[Bb][Aa][Ff][Ff]|00[Cc][Cc][Ff][Ff]|00[Ff][Ff][Ff][Ff])\b|\baqua\b|\bcyan\b/i;
+  const aqua = [...pv24Css, ...pv24Ts].filter((f) => AQUA.test(readFileSync(f, "utf-8")));
+  if (aqua.length > 0) fail("V2.4: aqua colours in the light deck: " + aqua.join(", "));
+  else pass("V2.4: no aqua colours");
+
+  const tokens = join(PV24_SRC, "styles", "tokens.css");
+  if (existsSync(tokens) && /--pv24-canvas\s*:\s*#F[0-9A-F]{5}/i.test(readFileSync(tokens, "utf-8"))) pass("V2.4: light canvas token");
+  else fail("V2.4: --pv24-canvas is not a light colour");
+
+  // The licensed brand font (Graphik) must never be distributed; open-licence product fonts are fine
+  const fontFiles = [
+    ...walkDir(join(process.cwd(), "public"), [".woff", ".woff2", ".otf", ".ttf"]),
+    ...walkDir(join(process.cwd(), "src"), [".woff", ".woff2", ".otf", ".ttf"]),
+  ].filter((f) => /graphik/i.test(f));
+  if (fontFiles.length > 0) fail("Licensed Graphik font files must not be distributed: " + fontFiles.join(", "));
+  else pass("No licensed brand font files distributed in the repository");
+
+  // No invented NFROS logo artwork in the deck
+  const logoFiles = [...walkDir(PV24_SRC, [".svg", ".png"]), ...walkDir(join(process.cwd(), "public", "presentation-assets", "v2.4-final"), [".svg"])]
+    .filter((f) => /logo/i.test(f));
+  if (logoFiles.length > 0) fail("V2.4: logo artwork found: " + logoFiles.join(", "));
+  else pass("V2.4: no NFROS or altered Accenture logo artwork");
+
+  const campaign = /reinvented\s+with\s+accenture|let\s+there\s+be\s+change/i;
+  const campaignFiles = pv24Ts.filter((f) => campaign.test(readFileSync(f, "utf-8")));
+  if (campaignFiles.length > 0) fail("V2.4: unapproved campaign copy: " + campaignFiles.join(", "));
+  else pass("V2.4: no unapproved campaign copy");
+
+  const unsupported = /\b(?:best[\s-]in[\s-]class|market[\s-]leading|revolutionary|game[\s-]changing|unprecedented|fully[\s-]compliant|production[\s-]ready|guaranteed)\b/i;
+  const unsupportedFiles = pv24Ts.filter((f) => unsupported.test(readFileSync(f, "utf-8")));
+  if (unsupportedFiles.length > 0) fail("V2.4: unsupported claims: " + unsupportedFiles.join(", "));
+  else pass("V2.4: no unsupported superlatives or compliance claims");
 }
 
 // ---------------------------------------------------------------------------
@@ -335,9 +392,9 @@ for (const result of results) {
 console.log("");
 
 if (hasErrors) {
-  console.log(RED + BOLD + "Brand release status: BLOCKED -- errors must be resolved before external use" + RESET);
+  console.log(RED + BOLD + "Brand release status: BLOCKED, errors must be resolved before external use" + RESET);
 } else if (hasWarnings) {
-  console.log(YELLOW + BOLD + `Brand release status: ${brandMode} (warnings present -- review before external use)` + RESET);
+  console.log(YELLOW + BOLD + `Brand release status: ${brandMode} (warnings present: review before external use)` + RESET);
 } else {
   console.log(GREEN + BOLD + `Brand release status: ${brandMode}` + RESET);
 }

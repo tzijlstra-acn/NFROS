@@ -48,8 +48,8 @@ const LABELS = {
   morningBriefTitle: { en: "Morning Brief", de: "Morgenbriefing" },
   morningBriefTime: { en: "Today 07:45", de: "Heute 07:45" },
   regulatoryNote: {
-    en: "Illustrative regulatory context only -- not legal advice.",
-    de: "Nur illustrativer regulatorischer Kontext -- keine Rechtsberatung.",
+    en: "Illustrative regulatory context, not legal advice.",
+    de: "Nur illustrativer regulatorischer Kontext, keine Rechtsberatung.",
   },
 } as const;
 
@@ -195,7 +195,7 @@ function ProcessAppCard({
 
 function MorningBriefRCSA({ language }: { language: Language }) {
   const isDE = language === "de";
-  const title = isDE ? "Morgenbriefing -- Heute 07:45" : "Morning Brief -- Today 07:45";
+  const title = isDE ? "Morgenbriefing, heute 07:45" : "Morning Brief, today 07:45";
   return (
     <div
       style={{
@@ -238,7 +238,7 @@ function MorningBriefRCSA({ language }: { language: Language }) {
             </p>
             <p style={{ margin: 0 }}>
               <strong style={{ color: "var(--wd-text)" }}>Massnahmen:</strong>{" "}
-              4 offen, 1 ueberfaellig (Q3 KRI-Daten -- faellig 10.10.2026)
+              4 offen, 1 ueberfaellig (Q3 KRI-Daten, faellig 10.10.2026)
             </p>
             <p style={{ margin: 0 }}>
               <strong style={{ color: "var(--wd-text)" }}>Posteingang:</strong>{" "}
@@ -270,7 +270,7 @@ function MorningBriefRCSA({ language }: { language: Language }) {
             </p>
             <p style={{ margin: 0 }}>
               <strong style={{ color: "var(--wd-text)" }}>Actions:</strong>{" "}
-              4 open, 1 overdue (Q3 KRI data -- due 2026-10-10)
+              4 open, 1 overdue (Q3 KRI data, due 2026-10-10)
             </p>
             <p style={{ margin: 0 }}>
               <strong style={{ color: "var(--wd-text)" }}>Inbox:</strong>{" "}
@@ -307,7 +307,7 @@ function MorningBriefRCSA({ language }: { language: Language }) {
 
 function MorningBriefTPRM({ language }: { language: Language }) {
   const isDE = language === "de";
-  const title = isDE ? "Morgenbriefing -- Heute 07:45" : "Morning Brief -- Today 07:45";
+  const title = isDE ? "Morgenbriefing, heute 07:45" : "Morning Brief, today 07:45";
   return (
     <div
       style={{
@@ -350,7 +350,7 @@ function MorningBriefTPRM({ language }: { language: Language }) {
             </p>
             <p style={{ margin: 0 }}>
               <strong style={{ color: "var(--wd-text)" }}>Massnahmen:</strong>{" "}
-              3 offen, 1 ueberfaellig (BCM-Plan -- faellig 07.10.2026)
+              3 offen, 1 ueberfaellig (BCM-Plan, faellig 07.10.2026)
             </p>
             <p style={{ margin: 0 }}>
               <strong style={{ color: "var(--wd-text)" }}>Posteingang:</strong>{" "}
@@ -358,7 +358,7 @@ function MorningBriefTPRM({ language }: { language: Language }) {
             </p>
             <p style={{ margin: 0 }}>
               <strong style={{ color: "var(--wd-text)" }}>Nachweis:</strong>{" "}
-              Penetrationstest-Bericht fehlt noch -- faellig 09.10.2026
+              Penetrationstest-Bericht fehlt noch, faellig 09.10.2026
             </p>
             <p
               style={{
@@ -382,7 +382,7 @@ function MorningBriefTPRM({ language }: { language: Language }) {
             </p>
             <p style={{ margin: 0 }}>
               <strong style={{ color: "var(--wd-text)" }}>Actions:</strong>{" "}
-              3 open, 1 overdue (BCM plan -- due 2026-10-07)
+              3 open, 1 overdue (BCM plan, due 2026-10-07)
             </p>
             <p style={{ margin: 0 }}>
               <strong style={{ color: "var(--wd-text)" }}>Inbox:</strong>{" "}
@@ -390,7 +390,7 @@ function MorningBriefTPRM({ language }: { language: Language }) {
             </p>
             <p style={{ margin: 0 }}>
               <strong style={{ color: "var(--wd-text)" }}>Evidence:</strong>{" "}
-              Penetration test report still missing -- due 2026-10-09
+              Penetration test report still missing, due 2026-10-09
             </p>
             <p
               style={{
@@ -455,9 +455,9 @@ export default async function ProcessesV3({
           const s = currentStageRun.status;
           if (s === "waiting-for-input" || s === "waiting-for-decision") {
             stageStatusSuffix =
-              language === "de" ? " -- Eingabe erforderlich" : " -- Waiting for input";
+              language === "de" ? " (Eingabe erforderlich)" : " (waiting for input)";
           } else if (s === "in-progress" || s === "ai-preparing" || s === "ready-for-review") {
-            stageStatusSuffix = language === "de" ? " -- In Bearbeitung" : " -- In progress";
+            stageStatusSuffix = language === "de" ? " (in Bearbeitung)" : " (in progress)";
           }
         }
       }
@@ -489,7 +489,7 @@ export default async function ProcessesV3({
     const currentStage = process.stages.find((s) => s.id === tprmRun.currentStageId);
     const stageName = language === "de" ? (currentStage?.nameDe ?? "") : (currentStage?.name ?? "");
     const supplierName = "Veridian Document Systems GmbH";
-    const stageLine = `${pick(LABELS.inProgress, language)}, ${pick(LABELS.stage, language)} ${currentStage?.sequence ?? ""}: ${stageName} -- ${supplierName}`;
+    const stageLine = `${pick(LABELS.inProgress, language)}, ${pick(LABELS.stage, language)} ${currentStage?.sequence ?? ""}: ${stageName}, ${supplierName}`;
     const appName = language === "de" ? "Drittanbieter-Onboarding" : "Third-Party Onboarding";
     cards = (
       <ProcessAppCard
@@ -525,7 +525,11 @@ export default async function ProcessesV3({
     showRoutines && rawRoutine === "morning-brief-tprm" && roleId === "tprm";
 
   return (
-    <div className="wd-main-inner">
+    <div
+      className="wd-main-inner"
+      data-presentation-region="role-app-library"
+      data-presentation-ready="true"
+    >
       <h1 className="wd-page-title">{pick(LABELS.title, language)}</h1>
 
       {/* Sub-view tab row */}

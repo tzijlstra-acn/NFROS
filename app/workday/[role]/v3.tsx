@@ -88,7 +88,7 @@ function DailyStrip({
       heading: label("Next meeting", "Naechste Besprechung"),
       value:
         nextMeetingTime && nextMeetingTitle
-          ? `${nextMeetingTime} -- ${nextMeetingTitle}`
+          ? `${nextMeetingTime}, ${nextMeetingTitle}`
           : label("No meetings today", "Keine Besprechungen heute"),
       href: `/workday/${roleId}/work?view=agenda`,
     },

@@ -78,7 +78,7 @@ export const APPENDIX_SLIDES: AppendixSlide[] = [
       ],
     },
     speakerNotes:
-      "Use this table to anchor conversations about what is real and what is roadmap. Implemented means code exists, runs locally, and has been verified in end-to-end testing. Demonstration only means the role shell exists and can be shown but the underlying workflow apps are not built. Planned means design is agreed and build is sequenced. Do not overstate status -- the pilot should begin with Implemented scope only.",
+      "Use this table to anchor conversations about what is real and what is roadmap. Implemented means code exists, runs locally, and has been verified in end-to-end testing. Demonstration only means the role shell exists and can be shown but the underlying workflow apps are not built. Planned means design is agreed and build is sequenced. Do not overstate status; the pilot should begin with Implemented scope only.",
   },
   {
     id: "app-02",
@@ -129,11 +129,11 @@ export const APPENDIX_SLIDES: AppendixSlide[] = [
       ],
     },
     speakerNotes:
-      "The catalogue shows the full ambition alongside honest current status. Implemented apps are in scope for the pilot. Demo apps are executable demonstration shells -- they can be shown but have no entryRoute and are not ready for pilot deployment. Planned apps give clients a sense of the expansion roadmap. Use this to manage expectations and to identify which planned apps are highest priority for a given client.",
+      "The catalogue shows the full ambition alongside honest current status. Implemented apps are in scope for the pilot. Demo apps are executable demonstration shells: they can be shown but have no entryRoute and are not ready for pilot deployment. Planned apps give clients a sense of the expansion roadmap. Use this to manage expectations and to identify which planned apps are highest priority for a given client.",
   },
   {
     id: "app-03",
-    title: "RCSA Cycle Assistant -- six-stage detail",
+    title: "RCSA Cycle Assistant: six-stage detail",
     content: {
       kind: "process-flow",
       steps: [
@@ -164,11 +164,11 @@ export const APPENDIX_SLIDES: AppendixSlide[] = [
       ],
     },
     speakerNotes:
-      "Each stage is a discrete workflow step with a defined output. AI assistance is available at stages 2 and 3 -- drafting risk narratives and flagging rating changes. Stages 4, 5, and 6 are human-driven approval and challenge steps. The professional cannot skip a stage; the system enforces sequencing. This structure produces a complete, auditable RCSA record as a natural output of the workflow.",
+      "Each stage is a discrete workflow step with a defined output. AI assistance is available at stages 2 and 3: drafting risk narratives and flagging rating changes. Stages 4, 5, and 6 are human-driven approval and challenge steps. The professional cannot skip a stage; the system enforces sequencing. This structure produces a complete, auditable RCSA record as a natural output of the workflow.",
   },
   {
     id: "app-04",
-    title: "Third-Party Onboarding -- six-stage detail",
+    title: "Third-Party Onboarding: six-stage detail",
     content: {
       kind: "process-flow",
       steps: [
@@ -199,11 +199,11 @@ export const APPENDIX_SLIDES: AppendixSlide[] = [
       ],
     },
     speakerNotes:
-      "The TPRM onboarding workflow mirrors the OR structure: six stages, AI assistance at the assessment stage, human decision at each gate. The TPRM Manager sees their full third-party portfolio in the work hub and drills into individual suppliers by stage. Evidence -- questionnaire responses, risk ratings, escalation approvals -- is captured at source rather than reconstructed post-hoc.",
+      "The TPRM onboarding workflow mirrors the OR structure: six stages, AI assistance at the assessment stage, human decision at each gate. The TPRM Manager sees their full third-party portfolio in the work hub and drills into individual suppliers by stage. Evidence (questionnaire responses, risk ratings, escalation approvals) is captured at source rather than reconstructed post-hoc.",
   },
   {
     id: "app-05",
-    title: "Demo Role Apps -- capability detail",
+    title: "Demo Role Apps: capability detail",
     content: {
       kind: "text-columns",
       columns: [
@@ -225,11 +225,11 @@ export const APPENDIX_SLIDES: AppendixSlide[] = [
       ],
     },
     speakerNotes:
-      "These five apps are demonstration shells -- they can be shown in a walkthrough but have no entryRoute and cannot be started by a user in the normal product flow. They illustrate the role app pattern and help clients identify which processes they want to prioritise for build. Apps not on this list and not yet Implemented are Planned -- they have not been built in any form. Use the demo session to validate appetite before committing the apps to the build roadmap.",
+      "These five apps are demonstration shells: they can be shown in a walkthrough but have no entryRoute and cannot be started by a user in the normal product flow. They illustrate the role app pattern and help clients identify which processes they want to prioritise for build. Apps not on this list and not yet Implemented are Planned; they have not been built in any form. Use the demo session to validate appetite before committing the apps to the build roadmap.",
   },
   {
     id: "app-06",
-    title: "AI capability layer -- what the AI does",
+    title: "AI capability layer: what the AI does",
     content: {
       kind: "capability-map",
       groups: [
@@ -268,11 +268,11 @@ export const APPENDIX_SLIDES: AppendixSlide[] = [
       ],
     },
     speakerNotes:
-      "This map defines the AI boundary precisely. All four capability groups are support functions -- they reduce administrative burden and improve information quality for the professional. None of these capabilities replaces a risk decision. The model assists; the professional decides. Keep this framing consistent across all client conversations.",
+      "This map defines the AI boundary precisely. All four capability groups are support functions; they reduce administrative burden and improve information quality for the professional. None of these capabilities replaces a risk decision. The model assists; the professional decides. Keep this framing consistent across all client conversations.",
   },
   {
     id: "app-07",
-    title: "AI layer -- model and infrastructure",
+    title: "AI layer: model and infrastructure",
     content: {
       kind: "text-columns",
       columns: [
@@ -282,7 +282,7 @@ export const APPENDIX_SLIDES: AppendixSlide[] = [
             "Claude claude-sonnet-4-6 as primary reasoning model",
             "Prompt templates per workflow stage and role",
             "Structured output schemas for all AI-generated content",
-            "Evaluation harness in place -- not independently verified in production",
+            "Evaluation harness in place, not independently verified in production",
           ],
         },
         {
@@ -335,7 +335,7 @@ export const APPENDIX_SLIDES: AppendixSlide[] = [
       ],
     },
     speakerNotes:
-      "The platform is built on modern, maintainable open-source foundations. The integration layer is the area where client-specific work is required: connecting to existing GRC systems, identity providers, and data sources. Live bank system connectors do not exist -- only demonstration connectors. OIDC identity is designed but not yet implemented. Both items are on the near-term roadmap.",
+      "The platform is built on modern, maintainable open-source foundations. The integration layer is the area where client-specific work is required: connecting to existing GRC systems, identity providers, and data sources. Live bank system connectors do not exist, only demonstration connectors. OIDC identity is designed but not yet implemented. Both items are on the near-term roadmap.",
   },
   {
     id: "app-09",
@@ -355,7 +355,7 @@ export const APPENDIX_SLIDES: AppendixSlide[] = [
         {
           heading: "Planned",
           items: [
-            "OIDC / SSO integration -- designed, not implemented",
+            "OIDC / SSO integration: designed, not implemented",
             "Client identity provider federation",
             "MFA enforcement at platform level",
             "Attribute-based access for data sensitivity",
@@ -364,11 +364,11 @@ export const APPENDIX_SLIDES: AppendixSlide[] = [
       ],
     },
     speakerNotes:
-      "Identity is a gating question for any enterprise deployment. Current state is session-based auth with role-based access control -- sufficient for a pilot with a small cohort and managed user setup. OIDC integration is on the near-term roadmap and is the right answer for enterprise rollout. Be upfront that SSO federation is not yet implemented; this is a known gap and a prioritised build item.",
+      "Identity is a gating question for any enterprise deployment. Current state is session-based auth with role-based access control, which is sufficient for a pilot with a small cohort and managed user setup. OIDC integration is on the near-term roadmap and is the right answer for enterprise rollout. Be upfront that SSO federation is not yet implemented; this is a known gap and a prioritised build item.",
   },
   {
     id: "app-10",
-    title: "AI routines -- implementation status",
+    title: "AI routines: implementation status",
     content: {
       kind: "status-table",
       rows: [
@@ -420,7 +420,7 @@ export const APPENDIX_SLIDES: AppendixSlide[] = [
       ],
     },
     speakerNotes:
-      "AI routines are ambient intelligence features that run on a schedule or trigger -- distinct from the on-demand AI assistance inside role app workflows. Use honest status labels for every routine. Implemented means the routine runs and produces output. Demonstration only means it can be shown but is not connected to live data. Designed means the specification exists but no build has started. Do not conflate routines with role app AI assistance -- they are separate capability layers.",
+      "AI routines are ambient intelligence features that run on a schedule or trigger, distinct from the on-demand AI assistance inside role app workflows. Use honest status labels for every routine. Implemented means the routine runs and produces output. Demonstration only means it can be shown but is not connected to live data. Designed means the specification exists but no build has started. Do not conflate routines with role app AI assistance; they are separate capability layers.",
   },
   {
     id: "app-11",
@@ -456,7 +456,7 @@ export const APPENDIX_SLIDES: AppendixSlide[] = [
       ],
     },
     speakerNotes:
-      "Be honest about testing status. Unit and end-to-end tests run locally and pass. The evaluation harness for AI output quality is configured but has not been run against live model calls in a production environment. Load testing and security review are required before a multi-user pilot -- both are planned and should be scheduled as part of pilot preparation. Do not claim the platform has passed a security review; it has not.",
+      "Be honest about testing status. Unit and end-to-end tests run locally and pass. The evaluation harness for AI output quality is configured but has not been run against live model calls in a production environment. Load testing and security review are required before a multi-user pilot; both are planned and should be scheduled as part of pilot preparation. Do not claim the platform has passed a security review; it has not.",
   },
   {
     id: "app-12",
@@ -489,7 +489,7 @@ export const APPENDIX_SLIDES: AppendixSlide[] = [
   },
   {
     id: "app-13",
-    title: "Service model -- component detail",
+    title: "Service model: component detail",
     content: {
       kind: "service-stack",
       tiers: [
@@ -574,11 +574,11 @@ export const APPENDIX_SLIDES: AppendixSlide[] = [
       ],
     },
     speakerNotes:
-      "Keep the commercial structure simple at this stage. The subscription metric is active role seats -- the number of professionals using NFR OS in a given month. This aligns the commercial model with adoption: the client pays more as they use more, and we are incentivised to drive adoption. One-time items are scoped and priced per engagement. Do not quote specific numbers in the main deck; leave pricing for a separate commercial conversation.",
+      "Keep the commercial structure simple at this stage. The subscription metric is active role seats: the number of professionals using NFR OS in a given month. This aligns the commercial model with adoption: the client pays more as they use more, and we are incentivised to drive adoption. One-time items are scoped and priced per engagement. Do not quote specific numbers in the main deck; leave pricing for a separate commercial conversation.",
   },
   {
     id: "app-15",
-    title: "Pilot design -- detailed specification",
+    title: "Pilot design: detailed specification",
     content: {
       kind: "text-columns",
       columns: [
@@ -597,13 +597,13 @@ export const APPENDIX_SLIDES: AppendixSlide[] = [
             "Week 0-1: Environment setup and user onboarding",
             "Week 2-8: Active RCSA cycle using NFR OS",
             "Week 9-10: Outcome measurement and report",
-            "Week 10: Decision point -- expand, adjust, or stop",
+            "Week 10: Decision point (expand, adjust, or stop)",
           ],
         },
       ],
     },
     speakerNotes:
-      "The pilot design is narrow by intent. One role, one role app, one business unit. This limits the change management burden and keeps the outcome measurement clean. The ten-week window is long enough to complete at least one RCSA cycle -- the natural unit of value measurement for this role app. The decision point at week ten is explicit: the client has data and makes an informed choice about expansion.",
+      "The pilot design is narrow by intent. One role, one role app, one business unit. This limits the change management burden and keeps the outcome measurement clean. The ten-week window is long enough to complete at least one RCSA cycle, the natural unit of value measurement for this role app. The decision point at week ten is explicit: the client has data and makes an informed choice about expansion.",
   },
   {
     id: "app-16",
@@ -634,7 +634,7 @@ export const APPENDIX_SLIDES: AppendixSlide[] = [
       ],
     },
     speakerNotes:
-      "These five metrics form the pilot scorecard. Agree the baseline measurement approach with the client before the pilot starts -- without a baseline, the improvement claim is not credible. Cycle time is the headline metric because it is the most visible and easiest to verify. Evidence completeness and audit trail quality are the risk quality metrics. User adoption and AI utilisation tell us whether the product is being used as designed.",
+      "These five metrics form the pilot scorecard. Agree the baseline measurement approach with the client before the pilot starts; without a baseline, the improvement claim is not credible. Cycle time is the headline metric because it is the most visible and easiest to verify. Evidence completeness and audit trail quality are the risk quality metrics. User adoption and AI utilisation tell us whether the product is being used as designed.",
   },
   {
     id: "app-17",
@@ -665,7 +665,7 @@ export const APPENDIX_SLIDES: AppendixSlide[] = [
       ],
     },
     speakerNotes:
-      "The stakeholder map is a starting point for the pilot mobilisation conversation. The key client relationship is between the pilot sponsor and the engagement lead -- they set the ambition and resolve blockers. The cohort of OR professionals is the user group whose experience determines adoption. The second-line observer role is important: having risk oversight or audit engaged in the pilot from the start builds confidence in the outputs.",
+      "The stakeholder map is a starting point for the pilot mobilisation conversation. The key client relationship is between the pilot sponsor and the engagement lead; they set the ambition and resolve blockers. The cohort of OR professionals is the user group whose experience determines adoption. The second-line observer role is important: having risk oversight or audit engaged in the pilot from the start builds confidence in the outputs.",
   },
   {
     id: "app-18",
@@ -692,7 +692,7 @@ export const APPENDIX_SLIDES: AppendixSlide[] = [
       ],
     },
     speakerNotes:
-      "Change management for a small pilot cohort is lightweight but essential. The four stages mirror standard adoption curves. The key risk is that professionals revert to familiar tools -- spreadsheets, email -- when the new system adds friction. The change management approach focuses on reducing that friction in the first two weeks and demonstrating value through the AI drafting capability by week three at the latest.",
+      "Change management for a small pilot cohort is lightweight but essential. The four stages mirror standard adoption curves. The key risk is that professionals revert to familiar tools (spreadsheets, email) when the new system adds friction. The change management approach focuses on reducing that friction in the first two weeks and demonstrating value through the AI drafting capability by week three at the latest.",
   },
   {
     id: "app-19",
@@ -733,7 +733,7 @@ export const APPENDIX_SLIDES: AppendixSlide[] = [
       ],
     },
     speakerNotes:
-      "Integration is the area of highest client-specific variation. Be clear about what exists and what requires custom build. Live bank system connectors are not supported -- this is a material limitation for clients who need NFR OS to pull data directly from core banking or risk systems. For the pilot, demonstration connectors are sufficient. The integration build is part of the mobilisation scope for full deployment.",
+      "Integration is the area of highest client-specific variation. Be clear about what exists and what requires custom build. Live bank system connectors are not supported; this is a material limitation for clients who need NFR OS to pull data directly from core banking or risk systems. For the pilot, demonstration connectors are sufficient. The integration build is part of the mobilisation scope for full deployment.",
   },
   {
     id: "app-20",
@@ -764,11 +764,11 @@ export const APPENDIX_SLIDES: AppendixSlide[] = [
       ],
     },
     speakerNotes:
-      "The four deployment profiles correspond to increasing levels of client control and data sensitivity. The restricted local demonstration profile is what runs today -- it uses the \"demonstration\" identity mode and is the basis for all current product walkthroughs. The design-partner profile (\"design-partner\" mode) is the right profile for a paid pilot; it is configured but has not been verified in a client environment. Customer-managed and bank private-cloud profiles are designed for clients with strict data residency or infrastructure requirements -- neither is built yet. Always name the mode by its display name (demonstration, design-partner) not by internal code identifiers.",
+      "The four deployment profiles correspond to increasing levels of client control and data sensitivity. The restricted local demonstration profile is what runs today; it uses the \"demonstration\" identity mode and is the basis for all current product walkthroughs. The design-partner profile (\"design-partner\" mode) is the right profile for a paid pilot; it is configured but has not been verified in a client environment. Customer-managed and bank private-cloud profiles are designed for clients with strict data residency or infrastructure requirements; neither is built yet. Always name the mode by its display name (demonstration, design-partner) not by internal code identifiers.",
   },
   {
     id: "app-21",
-    title: "NFR OS -- product roadmap overview",
+    title: "NFR OS: product roadmap overview",
     content: {
       kind: "matrix",
       rows: [
@@ -791,7 +791,7 @@ export const APPENDIX_SLIDES: AppendixSlide[] = [
   },
   {
     id: "app-22",
-    title: "Current limitations -- material and honest",
+    title: "Current limitations: material and honest",
     content: {
       kind: "status-table",
       rows: [
@@ -849,26 +849,26 @@ export const APPENDIX_SLIDES: AppendixSlide[] = [
         {
           heading: "Germany and Austria (DE / AT)",
           items: [
-            "MaRisk: minimum requirements for risk management -- structured evidence and documentation obligations align with NFR OS workflow design",
-            "BAIT / VAIT: IT supervision requirements -- access control, audit logging, and change management are addressed in platform design",
-            "EBA Guidelines on ICT and security risk -- control documentation requirements are consistent with structured workflow outputs",
-            "BaFin oversight: supervisory expectation for explainable AI-assisted processes -- human-in-the-loop design is relevant",
+            "MaRisk: minimum requirements for risk management; structured evidence and documentation obligations align with NFR OS workflow design",
+            "BAIT / VAIT: IT supervision requirements; access control, audit logging, and change management are addressed in platform design",
+            "EBA Guidelines on ICT and security risk: control documentation requirements are consistent with structured workflow outputs",
+            "BaFin oversight: supervisory expectation for explainable AI-assisted processes; human-in-the-loop design is relevant",
             "Illustrative regulatory context, not legal advice",
           ],
         },
         {
           heading: "Switzerland (CH)",
           items: [
-            "FINMA Circular 2023/1 on operational risk -- documentation and evidence requirements are addressed in workflow design",
-            "FINMA Circular 2008/21 on operational risks (banks) -- risk assessment documentation obligations align with RCSA workflow outputs",
-            "nFINIG / FinSA: new financial services framework -- conduct and documentation requirements are consistent with audit trail design",
-            "Swiss Data Act: data localisation considerations for AI model calls -- client-specific configuration required",
+            "FINMA Circular 2023/1 on operational risk: documentation and evidence requirements are addressed in workflow design",
+            "FINMA Circular 2008/21 on operational risks (banks): risk assessment documentation obligations align with RCSA workflow outputs",
+            "nFINIG / FinSA: new financial services framework; conduct and documentation requirements are consistent with audit trail design",
+            "Swiss Data Act: data localisation considerations for AI model calls; client-specific configuration required",
             "Illustrative regulatory context, not legal advice",
           ],
         },
       ],
     },
     speakerNotes:
-      "DACH regulatory context is included for conversations with German, Austrian, and Swiss clients. Keep DE/AT and CH in separate lanes -- the regulatory regimes are distinct. The consistent message is that NFR OS workflow design is aligned with the documentation, evidence, and audit trail expectations common across these frameworks. We are not claiming regulatory compliance -- these are illustrative points of alignment. Clients should validate specific compliance requirements with their legal and compliance functions. Illustrative regulatory context, not legal advice.",
+      "DACH regulatory context is included for conversations with German, Austrian, and Swiss clients. Keep DE/AT and CH in separate lanes; the regulatory regimes are distinct. The consistent message is that NFR OS workflow design is aligned with the documentation, evidence, and audit trail expectations common across these frameworks. We are not claiming regulatory compliance; these are illustrative points of alignment. Clients should validate specific compliance requirements with their legal and compliance functions. Illustrative regulatory context, not legal advice.",
   },
 ];

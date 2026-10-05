@@ -149,7 +149,7 @@ for (const asset of ASSET_REGISTRY) {
     stat.size > 10000,
     stat.size > 10000
       ? `${asset.file}: size ok (${(stat.size / 1024).toFixed(1)} KB)`
-      : `${asset.file}: size too small (${stat.size} bytes < 10 KB) — likely blank or placeholder`
+      : `${asset.file}: size too small (${stat.size} bytes < 10 KB): likely blank or placeholder`
   );
 
   // PNG signature check

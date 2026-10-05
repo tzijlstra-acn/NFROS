@@ -175,6 +175,7 @@ export function StageWorkspace({
   return (
     <div
       data-presentation-region="rcsa-stage-workspace"
+      data-presentation-ready="true"
       style={{
         display: "flex",
         flexDirection: "column",

@@ -14,7 +14,7 @@
  * Run: npx ts-node scripts/check-presentation-headlines.ts
  */
 
-import { CORE_SLIDES_V24 } from "../src/presentation-v2-4/data/core-story";
+import { PRESENTATION_SLIDES_V24 as CORE_SLIDES_V24 } from "../src/presentation-v2-4/data/core-story";
 import { APPENDIX_SLIDES_V24 } from "../src/presentation-v2-4/data/appendix";
 
 type CheckResult = {
@@ -35,8 +35,8 @@ const VERB_INDICATORS = [
   "design", "designs", "define", "defines",
 ];
 
-const EM_DASH = "—";
-const EM_DASH_LOOKALIKE = "–"; // en dash, also a violation
+const EM_DASH = "\u2014";
+const EM_DASH_LOOKALIKE = "\u2013"; // en dash, also a violation
 
 function containsEmDash(text: string): boolean {
   return text.includes(EM_DASH) || text.includes(EM_DASH_LOOKALIKE);
@@ -60,16 +60,19 @@ function isTopicLabelOnly(title: string): boolean {
   return false;
 }
 
+// Product and domain acronyms that are written in capitals inside a sentence-case title
+const KNOWN_ACRONYMS = new Set(["NFR", "NFROS", "RCSA", "TPRM", "DACH", "DORA", "EBA", "FINMA", "API"]);
+
 function isSentenceCase(title: string): boolean {
   // First character must be uppercase; rest of first word must not be ALL CAPS
   if (title.length === 0) return true;
   const firstChar = title[0];
   if (!firstChar || firstChar !== firstChar.toUpperCase()) return false;
-  // No ALL_CAPS word (3+ chars) beyond the first word
+  // No ALL_CAPS word (3+ chars) beyond the first word, other than a known acronym
   const words = title.split(" ").slice(1);
   for (const word of words) {
     const letters = word.replace(/[^a-zA-Z]/g, "");
-    if (letters.length >= 3 && letters === letters.toUpperCase()) return false;
+    if (letters.length >= 3 && letters === letters.toUpperCase() && !KNOWN_ACRONYMS.has(letters)) return false;
   }
   return true;
 }
@@ -160,7 +163,7 @@ function run() {
   let errorCount = 0;
   let warningCount = 0;
 
-  console.log("\nNFROS Presentation V2.4 -- Headline Quality Check\n");
+  console.log("\nNFROS Presentation V2.4: headline quality check\n");
   console.log("=".repeat(60));
 
   for (const result of results) {

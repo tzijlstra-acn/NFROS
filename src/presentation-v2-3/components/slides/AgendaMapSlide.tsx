@@ -137,7 +137,7 @@ export function AgendaMapSlide({ slide, exportMode = false }: Props) {
         })}
       </svg>
 
-      {/* HTML text labels — positioned absolutely relative to slide root */}
+      {/* HTML text labels: positioned absolutely relative to slide root */}
       {Array.from({ length: COUNT }, (_, i) => {
         const cx = nodeX(i);
         const leftPct = `${(cx / VW) * 100}%`;

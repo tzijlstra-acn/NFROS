@@ -287,7 +287,12 @@ function ActiveDecision({
 
   if (result !== null) {
     return (
-      <div className="wd-dq-active" id={id}>
+      <div
+        className="wd-dq-active"
+        id={id}
+        data-presentation-region="decision-result"
+        data-presentation-ready={result.receiptStatements.length > 0 ? "true" : undefined}
+      >
         <ConfirmResult result={result} language={language} />
       </div>
     );

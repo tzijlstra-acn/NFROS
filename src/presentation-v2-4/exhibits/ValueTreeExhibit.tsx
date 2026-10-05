@@ -4,6 +4,7 @@ import * as React from "react";
 import { motion, useReducedMotion } from "motion/react";
 import { IconClock, IconAward, IconShieldCheck, IconRefresh } from "@tabler/icons-react";
 import type { ValueTreeData, ValueBranch } from "../data/types";
+import { useDeckMotion } from "../motion/DeckMotion";
 
 export type ValueTreeExhibitProps = {
   data: ValueTreeData;
@@ -17,7 +18,8 @@ const CARD_W = 440;
 const CARD_H = 262;
 const CENTRE = { x: 960, y: 360 };
 const CENTRE_R = 108;
-const STEP = 0.9;
+// Card spacing; with four branches the whole reveal settles by about 3.75 s
+const STEP = 0.6;
 
 type Corner = {
   x: number;
@@ -100,27 +102,32 @@ function edgePoint(target: { x: number; y: number }): { x: number; y: number } {
 
 function CountUp({ to, prefix, suffix, skip, delay }: { to: number; prefix: string; suffix: string; skip: boolean; delay: number }) {
   const [value, setValue] = React.useState<number>(skip ? to : 0);
+  const { paused } = useDeckMotion();
+  // Running time already spent, so a pause resumes the count where it stopped
+  const elapsedRef = React.useRef(0);
 
   React.useEffect(() => {
     if (skip || to === 0) {
       setValue(to);
       return;
     }
+    if (paused) return;
+    const delayMs = delay * 1000;
+    const base = elapsedRef.current;
+    const resumedAt = performance.now();
     let frame = 0;
-    const timer = window.setTimeout(() => {
-      const start = performance.now();
-      const tick = (now: number) => {
-        const t = Math.min(1, (now - start) / 800);
-        setValue(Math.round(to * (1 - Math.pow(1 - t, 3))));
-        if (t < 1) frame = requestAnimationFrame(tick);
-      };
-      frame = requestAnimationFrame(tick);
-    }, delay * 1000);
+    const tick = () => {
+      const elapsed = base + (performance.now() - resumedAt);
+      elapsedRef.current = elapsed;
+      const t = Math.max(0, Math.min(1, (elapsed - delayMs) / 800));
+      if (elapsed >= delayMs) setValue(Math.round(to * (1 - Math.pow(1 - t, 3))));
+      if (t < 1) frame = requestAnimationFrame(tick);
+    };
+    frame = requestAnimationFrame(tick);
     return () => {
-      window.clearTimeout(timer);
       cancelAnimationFrame(frame);
     };
-  }, [to, skip, delay]);
+  }, [to, skip, delay, paused]);
 
   return (
     <>
@@ -159,7 +166,7 @@ function BranchCard({ branch, corner, skip, delay, pulseDelay }: { branch: Value
           style={{ position: "absolute", inset: -8, border: "2px solid var(--pv24-accent)", pointerEvents: "none" }}
           initial={{ opacity: 0 }}
           animate={{ opacity: [0, 0.6, 0] }}
-          transition={{ duration: 1.2, delay: pulseDelay }}
+          transition={{ duration: 0.8, delay: pulseDelay }}
         />
       )}
       <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
@@ -200,7 +207,7 @@ export function ValueTreeExhibit({ data, exportMode }: ValueTreeExhibitProps) {
   const branches = data.branches.slice(0, CORNERS.length);
   const cardDelay = (i: number) => 0.4 + i * STEP;
   const handoverDelay = (i: number) => cardDelay(i) + 0.45;
-  const loopClosed = handoverDelay(branches.length - 1) + 0.5;
+  const loopClosed = handoverDelay(branches.length - 1) + 0.3;
 
   return (
     <div
@@ -211,6 +218,7 @@ export function ValueTreeExhibit({ data, exportMode }: ValueTreeExhibitProps) {
         fontFamily: "var(--pv24-font-family)",
         overflow: "hidden",
       }}
+      role="group"
       aria-label="Value tree exhibit"
     >
       <svg aria-hidden="true" width={W} height={H} style={{ position: "absolute", left: 0, top: 0, pointerEvents: "none" }}>
@@ -346,7 +354,7 @@ export function ValueTreeExhibit({ data, exportMode }: ValueTreeExhibitProps) {
       <motion.div
         initial={skip ? false : { opacity: 0, y: 8 }}
         animate={{ opacity: 1, y: 0 }}
-        transition={skip ? undefined : { duration: 0.4, delay: loopClosed + 0.6 }}
+        transition={skip ? undefined : { duration: 0.4, delay: loopClosed + 0.3 }}
         style={{
           position: "absolute",
           left: 620,

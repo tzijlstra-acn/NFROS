@@ -3,8 +3,9 @@
 /**
  * RolloutStepsLayout
  *
- * For slide 12 (Rollout). Three numbered step cards parsed from slide.bullets.
- * Each bullet is "Step N: Label -- detail". Cards use .pv21-col-card with a
+ * For slide 12 (Rollout). Three numbered step cards built from slide.cards:
+ * each card's heading is the step label and its detail the support text; the
+ * badge shows the step's 1-based position. Cards use .pv21-col-card with a
  * step number badge. bodyCopy goes above the cards as context.
  */
 
@@ -20,44 +21,15 @@ interface RolloutStepsLayoutProps {
 }
 
 // ---------------------------------------------------------------------------
-// Helper: parse "Step N: Label -- detail"
-// ---------------------------------------------------------------------------
-
-interface Step {
-  number: string;
-  label: string;
-  detail: string;
-}
-
-function parseStep(line: string): Step {
-  // "Step 1: Pilot -- one role, one process, 8-12 weeks"
-  const stepMatch = /^Step\s+(\d+):\s+(.+)$/.exec(line.trim());
-  if (stepMatch == null) {
-    return { number: "?", label: line, detail: "" };
-  }
-  const num = stepMatch[1] ?? "?";
-  const rest = stepMatch[2];
-  if (rest == null) {
-    return { number: num, label: line, detail: "" };
-  }
-  const dashIdx = rest.indexOf(" -- ");
-  if (dashIdx < 0) {
-    return { number: num, label: rest, detail: "" };
-  }
-  return {
-    number: num,
-    label: rest.slice(0, dashIdx).trim(),
-    detail: rest.slice(dashIdx + 4).trim(),
-  };
-}
-
-// ---------------------------------------------------------------------------
 // Component
 // ---------------------------------------------------------------------------
 
 export function RolloutStepsLayout({ slide }: RolloutStepsLayoutProps) {
-  const bullets = slide.bullets ?? [];
-  const steps = bullets.map(parseStep);
+  // One step per card, numbered by position; plain bullets fall back to labels only.
+  const steps = (
+    slide.cards?.map((card) => ({ label: card.heading, detail: card.detail })) ??
+    (slide.bullets ?? []).map((bullet) => ({ label: bullet, detail: "" }))
+  ).map((step, i) => ({ ...step, number: String(i + 1) }));
 
   return (
     <div

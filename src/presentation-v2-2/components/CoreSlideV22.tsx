@@ -116,7 +116,7 @@ function ContentSlide({ slide, exportMode }: { slide: CoreSlide22; exportMode?: 
         </ul>
       )}
 
-      {/* Emphasis lines — purple accent bar */}
+      {/* Emphasis lines: purple accent bar */}
       {emphasisLines.length > 0 && (
         <div
           style={{

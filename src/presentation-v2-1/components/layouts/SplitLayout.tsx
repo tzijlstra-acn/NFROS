@@ -254,9 +254,9 @@ function GenericRightPanel({ slide }: { slide: CoreSlide }) {
       >
         {/* Simulated rows */}
         {[
-          { label: "RCSA Q3 -- OR Partner review", stage: "Review" },
-          { label: "Third-party onboarding -- Vendor A", stage: "Decision" },
-          { label: "Control assurance -- Q4 cycle", stage: "Evidence" },
+          { label: "RCSA Q3: OR Partner review", stage: "Review" },
+          { label: "Third-party onboarding: Vendor A", stage: "Decision" },
+          { label: "Control assurance: Q4 cycle", stage: "Evidence" },
         ].map((row, i) => (
           <div
             key={i}

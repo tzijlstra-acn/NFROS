@@ -14,7 +14,7 @@ export const SERVICE_COMPONENTS: ServiceComponent[] = [
     includes: [
       "Current-state process workshops and role mapping",
       "Platform environment setup in client infrastructure",
-      "Role configuration -- portfolio scoping, user setup, access control",
+      "Role configuration: portfolio scoping, user setup, access control",
       "Data model alignment with client risk taxonomy",
       "Integration scoping and demonstration connector configuration",
       "Pilot cohort training and onboarding programme",
@@ -41,9 +41,9 @@ export const SERVICE_COMPONENTS: ServiceComponent[] = [
     description:
       "Modular capability packs that enable a risk function within the platform. Each pack includes the role operating system and baseline configuration for that function.",
     includes: [
-      "Operational Risk Pack -- OR Partner OS, work hub, base configuration",
-      "TPRM Pack -- TPRM Manager OS, work hub, base configuration",
-      "Control Assurance Pack (planned) -- role shell and workflow foundation",
+      "Operational Risk Pack: OR Partner OS, work hub, base configuration",
+      "TPRM Pack: TPRM Manager OS, work hub, base configuration",
+      "Control Assurance Pack (planned): role shell and workflow foundation",
       "Function pack updates and new role additions",
     ],
   },
@@ -69,7 +69,7 @@ export const SERVICE_COMPONENTS: ServiceComponent[] = [
     includes: [
       "24x5 platform monitoring and alerting",
       "Monthly model performance review and prompt refinement",
-      "New role app releases -- delivery, testing, and release into production",
+      "New role app releases: delivery, testing, and release into production",
       "User adoption coaching and onboarding for new cohort members",
       "Quarterly service review with client sponsor",
       "Regulatory and product update briefings",
@@ -87,19 +87,19 @@ export interface CommercialPackaging {
 export const COMMERCIAL_PACKAGING: CommercialPackaging = {
   subscriptionMetric: "Active role seats (number of professionals actively using NFR OS per month)",
   recurringComponents: [
-    "Platform subscription -- per month, regardless of seat count",
-    "Function pack licence -- per function enabled, per month",
-    "Managed operations -- per month, scales with number of active apps",
-    "Subscription seats -- per active user per month above base threshold",
+    "Platform subscription: per month, regardless of seat count",
+    "Function pack licence: per function enabled, per month",
+    "Managed operations: per month, scales with number of active apps",
+    "Subscription seats: per active user per month above base threshold",
   ],
   oneTimeComponents: [
-    "Design and mobilisation engagement -- scoped per client",
-    "Role App build -- per app, scoped at design stage",
-    "Integration connector development -- per connector, varies by system",
-    "Cohort training and onboarding -- included in mobilisation or per expansion",
+    "Design and mobilisation engagement: scoped per client",
+    "Role App build: per app, scoped at design stage",
+    "Integration connector development: per connector, varies by system",
+    "Cohort training and onboarding: included in mobilisation or per expansion",
   ],
   pricingNote:
-    "Specific pricing is subject to commercial negotiation. The model above represents the structure, not quoted rates. Pilot commercial terms are typically simplified -- a fixed mobilisation fee plus a platform subscription for the pilot duration.",
+    "Specific pricing is subject to commercial negotiation. The model above represents the structure, not quoted rates. Pilot commercial terms are typically simplified: a fixed mobilisation fee plus a platform subscription for the pilot duration.",
 };
 
 export interface RolloutStep {
@@ -204,35 +204,35 @@ export const CORE_QUESTIONS: CoreQuestion[] = [
     id: "q-01",
     question: "Is this replacing our GRC system?",
     answer:
-      "No. NFR OS sits above existing GRC systems as an orchestration layer. It connects to what you already have and organises the work for the professional -- it does not replace the data store or the system of record. In the pilot phase, it may run alongside existing systems without any integration required.",
+      "No. NFR OS sits above existing GRC systems as an orchestration layer. It connects to what you already have and organises the work for the professional; it does not replace the data store or the system of record. In the pilot phase, it may run alongside existing systems without any integration required.",
     audience: "executive",
   },
   {
     id: "q-02",
     question: "What does the AI actually do?",
     answer:
-      "The AI aggregates data from multiple sources, drafts narrative outputs for professional review, flags anomalies and rating changes, and links evidence to the relevant workflow stage. It does not make risk decisions -- every rating, approval, and escalation remains with the professional. The AI does the groundwork; the professional does the judgment.",
+      "The AI aggregates data from multiple sources, drafts narrative outputs for professional review, flags anomalies and rating changes, and links evidence to the relevant workflow stage. It does not make risk decisions; every rating, approval, and escalation remains with the professional. The AI does the groundwork; the professional does the judgment.",
     audience: "risk-professional",
   },
   {
     id: "q-03",
     question: "Where does our data go?",
     answer:
-      "For the pilot, data stays in a client-controlled deployment. NFR OS is deployed in the client's infrastructure or a dedicated tenant -- not a shared multi-client environment. AI model calls use the Anthropic API; data sent to the model is governed by the Anthropic API terms and can be configured to exclude personally identifiable information.",
+      "For the pilot, data stays in a client-controlled deployment. NFR OS is deployed in the client's infrastructure or a dedicated tenant, not a shared multi-client environment. AI model calls use the Anthropic API; data sent to the model is governed by the Anthropic API terms and can be configured to exclude personally identifiable information.",
     audience: "technical",
   },
   {
     id: "q-04",
     question: "How long before we see value?",
     answer:
-      "The pilot is designed to produce measurable outcomes by week ten -- at least one complete RCSA cycle with verified cycle time and evidence quality data. Most pilot cohort members report reduced coordination overhead within the first two weeks of active use. The outcome report at week ten provides the evidence base for the expansion decision.",
+      "The pilot is designed to produce measurable outcomes by week ten: at least one complete RCSA cycle with verified cycle time and evidence quality data. Most pilot cohort members report reduced coordination overhead within the first two weeks of active use. The outcome report at week ten provides the evidence base for the expansion decision.",
     audience: "executive",
   },
   {
     id: "q-05",
     question: "Can it connect to our internal systems?",
     answer:
-      "Integration is possible but requires custom connector development. Live connections to core banking, GRC platforms, or data warehouses are not pre-built -- they are scoped and built per client as part of the mobilisation engagement. The pilot typically uses demonstration connectors with anonymised or synthetic data to avoid integration dependency on the critical path.",
+      "Integration is possible but requires custom connector development. Live connections to core banking, GRC platforms, or data warehouses are not pre-built; they are scoped and built per client as part of the mobilisation engagement. The pilot typically uses demonstration connectors with anonymised or synthetic data to avoid integration dependency on the critical path.",
     audience: "technical",
   },
   {
@@ -246,7 +246,7 @@ export const CORE_QUESTIONS: CoreQuestion[] = [
     id: "q-07",
     question: "Does this meet our regulatory requirements?",
     answer:
-      "NFR OS is designed to support the documentation, evidence, and audit trail expectations common across major NFR regulatory frameworks in the UK, EU, and DACH. We do not claim regulatory compliance -- that determination requires your legal and compliance teams to review the specific requirements against the platform design. Illustrative regulatory context, not legal advice.",
+      "NFR OS is designed to support the documentation, evidence, and audit trail expectations common across major NFR regulatory frameworks in the UK, EU, and DACH. We do not claim regulatory compliance; that determination requires your legal and compliance teams to review the specific requirements against the platform design. Illustrative regulatory context, not legal advice.",
     audience: "executive",
   },
   {
@@ -260,7 +260,7 @@ export const CORE_QUESTIONS: CoreQuestion[] = [
     id: "q-09",
     question: "What is the commitment after the pilot?",
     answer:
-      "The pilot ends with a decision point -- not an automatic commitment to scale. The outcome report at week ten gives the client the evidence to decide: expand the scope, adjust the approach, or stop. There is no lock-in after the pilot. If the client decides to proceed to programme, the commercial structure is agreed at that point based on the expanded scope.",
+      "The pilot ends with a decision point, not an automatic commitment to scale. The outcome report at week ten gives the client the evidence to decide: expand the scope, adjust the approach, or stop. There is no lock-in after the pilot. If the client decides to proceed to programme, the commercial structure is agreed at that point based on the expanded scope.",
     audience: "executive",
   },
 ];

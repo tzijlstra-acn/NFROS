@@ -72,7 +72,7 @@ const STRING_CONTENT_RE = /(?:"([^"\\]*(?:\\.[^"\\]*)*)"|'([^'\\]*(?:\\.[^'\\]*)
 const DOUBLE_HYPHEN_RE = /--(?![a-zA-Z0-9])/g;
 
 // Em dash U+2014
-const EM_DASH = "—";
+const EM_DASH = "\u2014";
 
 // ---------------------------------------------------------------------------
 // Violation type

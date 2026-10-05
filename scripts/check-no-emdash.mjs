@@ -40,8 +40,8 @@ const SKIP_DIRS = new Set([
 /** This file necessarily contains the characters it looks for. */
 const SELF = join("scripts", "check-no-emdash.mjs");
 
-const EM_DASH = "—";
-const EN_DASH = "–";
+const EM_DASH = "\u2014";
+const EN_DASH = "\u2013";
 
 const RULES = [
   {

@@ -2,7 +2,7 @@
  * generate-placeholder-assets.ts
  *
  * Creates placeholder PNG files for every asset in the V2.3 asset registry.
- * Uses pure Node.js (zlib) — no canvas or sharp dependency required.
+ * Uses pure Node.js (zlib): no canvas or sharp dependency required.
  *
  * Usage: npm run generate:placeholder-assets
  */

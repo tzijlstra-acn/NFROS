@@ -210,6 +210,8 @@ export function WorkdayPartnerDock({
       role="dialog"
       aria-modal="false"
       aria-label={pick(COPY.title, language)}
+      data-presentation-region="ai-partner-dock"
+      data-presentation-ready={payload ? "true" : undefined}
       /*
        * Hidden rather than removed when closed. `hidden` takes it out of the
        * accessibility tree and out of the tab order, which is what a closed

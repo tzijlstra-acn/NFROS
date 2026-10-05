@@ -49,7 +49,7 @@ export const dynamic = "force-dynamic";
 export const metadata: Metadata = {
   title: "Live the NFR Day: presentation",
   description:
-    "NFROS Risk Audience Presentation V2.3. Synthetic institution and data. Illustrative regulatory context, not legal advice.",
+    "NFROS Risk Audience Presentation, release V2.4: a thirteen-slide risk-audience core with a reference appendix. Synthetic institution and data. Illustrative regulatory context, not legal advice.",
   robots: { index: false, follow: false },
 };
 
@@ -79,26 +79,34 @@ export default async function StoryPage({
   // Deck version routing.
   //
   // Route matrix:
-  //   No param, ?deck=current, ?deck=v2.3  -> PresentationV23 (current default)
+  //   No param, ?deck=current, ?deck=v2.4  -> PresentationV24 (current default)
+  //   ?deck=v2.3                            -> PresentationV23 (kept for comparison)
   //   ?deck=v2.2                            -> PresentationV22 (kept for comparison)
   //   ?deck=v2.1                            -> PresentationV21 (V2.1 design system)
   //   ?deck=legacy, ?deck=v1, ?deck=v2      -> original 16-scene StoryDeck
   const deckVersion = firstValue(params, "deck") ?? "current";
 
-  if (deckVersion === "v2.4") {
-    const coreParam = firstValue(params, "core") ?? "1";
-    const initialCoreSlide = Math.max(1, Math.floor(Number(coreParam)));
+  if (deckVersion === "v2.4" || deckVersion === "current") {
+    // V2.4 URL scheme: core=N (1-based play order), appendix=app-XX, from=core-N, view=appendix-index
+    const corePosition = Math.floor(Number(firstValue(params, "core") ?? "1"));
+    const appendixId = firstValue(params, "appendix") ?? null;
+    const fromMatch = /^(?:core|slide)-0*(\d+)$/.exec(firstValue(params, "from") ?? "");
+    const view = firstValue(params, "view") === "appendix-index" ? "appendix-index" : appendixId ? "appendix" : "core";
     return (
       <Suspense fallback={SLIDE_LOADING_FALLBACK}>
         <PresentationV24
-          initialCoreSlide={initialCoreSlide}
+          initialCoreSlide={Number.isFinite(corePosition) && corePosition >= 1 ? corePosition : 1}
+          initialAppendixId={appendixId}
+          initialFrom={fromMatch?.[1] ? Number(fromMatch[1]) : null}
+          initialView={view}
           exportMode={exportMode}
+          safeMode={exportMode || isOn(params, "safe")}
         />
       </Suspense>
     );
   }
 
-  if (deckVersion === "v2.3" || deckVersion === "current") {
+  if (deckVersion === "v2.3") {
     // V2.3 URL scheme: core=N (1-based), appendix=app-XX, from=slide-XX
     // Backward compat: slide=N still works (used by export scripts)
     const coreParam = firstValue(params, "core") ?? firstValue(params, "slide") ?? "1";

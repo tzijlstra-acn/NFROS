@@ -22,6 +22,7 @@ export function ClosingExhibit({ data, title, subtitle, exportMode = false }: Pr
   return (
     <div
       style={{ position: "absolute", inset: 0, background: BG, overflow: "hidden", fontFamily: "var(--pv24-font-family)", color: "#FFFFFF" }}
+      role="group"
       aria-label="Questions and discussion"
     >
       {/* Echo of the cover orbits, bottom right */}

@@ -1,4 +1,4 @@
-# Presentation V2.2 — Accenture Brand Handoff
+# Presentation V2.2: Accenture Brand Handoff
 
 ## Brand asset discovery
 
@@ -18,11 +18,11 @@ To provide licensed assets, set `ACCENTURE_BRAND_ASSET_DIR` in `.env.local` poin
 
 ## Font in use
 
-**Arial (fallback)** — Graphik is not available. The CSS token `--pv22-font-family` defaults to `Arial, sans-serif`. When `ACCENTURE_BRAND_ASSET_DIR` is set and Graphik files are present, `src/presentation-v2-2/brand/config.ts` will switch `FONT_IN_USE` to `"Graphik"` automatically.
+**Arial (fallback)**: Graphik is not available. The CSS token `--pv22-font-family` defaults to `Arial, sans-serif`. When `ACCENTURE_BRAND_ASSET_DIR` is set and Graphik files are present, `src/presentation-v2-2/brand/config.ts` will switch `FONT_IN_USE` to `"Graphik"` automatically.
 
 ## Brand mode
 
-**Development only** — neither the Accenture logo nor the Greater Than symbol is available. This means exports are for internal development review only and must not be distributed externally.
+**Development only**: neither the Accenture logo nor the Greater Than symbol is available. This means exports are for internal development review only and must not be distributed externally.
 
 When both `accenture-logo-full.svg` (or `accenture-logo.svg`) and `accenture-greater-than.svg` (or `greater-than.svg`) are present in `ACCENTURE_BRAND_ASSET_DIR`, the mode will automatically upgrade to **Brand preflight passed**.
 
@@ -32,7 +32,7 @@ When both `accenture-logo-full.svg` (or `accenture-logo.svg`) and `accenture-gre
 
 | Token | Value | Purpose |
 |---|---|---|
-| `--pv22-brand-purple` | `#A100FF` | Core accent — principal brand colour |
+| `--pv22-brand-purple` | `#A100FF` | Core accent: principal brand colour |
 | `--pv22-brand-purple-dark` | `#7500C0` | Human layer, interactive states |
 | `--pv22-brand-purple-darkest` | `#460073` | Deep brand contrast |
 | `--pv22-brand-purple-light` | `#C2A3FF` | Tints, secondary accent |
@@ -73,7 +73,7 @@ ACCENTURE_BRAND_ASSET_DIR=/path/to/approved/assets npm run check:accenture-brand
 
 ## Files created
 
-- `src/presentation-v2-2/brand/config.ts` — brand mode resolution, asset paths, colour constants
-- `src/presentation-v2-2/styles/brand-tokens.css` — CSS custom properties for the full Accenture colour system
-- `scripts/check-accenture-brand.ts` — brand preflight runner
-- `docs/PRESENTATION_V2_2_BRAND_SIGN_OFF.md` — human sign-off checklist
+- `src/presentation-v2-2/brand/config.ts`: brand mode resolution, asset paths, colour constants
+- `src/presentation-v2-2/styles/brand-tokens.css`: CSS custom properties for the full Accenture colour system
+- `scripts/check-accenture-brand.ts`: brand preflight runner
+- `docs/PRESENTATION_V2_2_BRAND_SIGN_OFF.md`: human sign-off checklist

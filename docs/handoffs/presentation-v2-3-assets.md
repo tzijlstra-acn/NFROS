@@ -1,4 +1,4 @@
-# Presentation V2.3 — Asset Infrastructure Handoff
+# Presentation V2.3: Asset Infrastructure Handoff
 
 ## Asset Registry
 
@@ -22,7 +22,7 @@ This is the **single source of truth** for all V2.3 presentation assets. It defi
 ### Placeholder mode
 Run `npm run generate:placeholder-assets` to create grey 1920x1080 PNG files for every registry asset. These are valid PNGs but contain no product content. The manifest will have `placeholder: true` on each entry.
 
-`ProductProofFrame` shows a branded fallback UI (not an error) when the image 404s in development — showing the asset description and a prompt to run the refresh script.
+`ProductProofFrame` shows a branded fallback UI (not an error) when the image 404s in development: showing the asset description and a prompt to run the refresh script.
 
 ### Real capture mode
 Run `npm run presentation:refresh-assets` (requires the app running at `http://localhost:3000` or `NFR_CAPTURE_BASE` env var). This runs the Playwright capture script, which:
@@ -56,10 +56,10 @@ The V2.3 capture script exits immediately (non-zero) on any of these conditions:
 
 | Condition | Behavior |
 |---|---|
-| Page redirects to a login URL | Fatal — stops the entire run |
-| `data-presentation-region` not found on page | Fatal — stops the entire run |
-| File size < 10 KB after capture | Fatal — stops the entire run |
-| Region element disappears after wait | Fatal — stops the entire run |
+| Page redirects to a login URL | Fatal: stops the entire run |
+| `data-presentation-region` not found on page | Fatal: stops the entire run |
+| File size < 10 KB after capture | Fatal: stops the entire run |
+| Region element disappears after wait | Fatal: stops the entire run |
 
 These are intentional: silent partial captures were the root cause of V2.2 bugs where login-screen PNGs were written as OK.
 

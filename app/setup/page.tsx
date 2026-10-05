@@ -459,10 +459,10 @@ function StepWelcome() {
           }}
         >
           {[
-            "Organisation -- confirm institution name and jurisdiction",
-            "Roles -- which function roles are active vs. demo",
-            "Identity mode -- the current product deployment mode",
-            "Done -- links to the workday and the pilot readiness settings",
+            "Organisation: confirm institution name and jurisdiction",
+            "Roles: which function roles are active vs. demo",
+            "Identity mode: the current product deployment mode",
+            "Done: links to the workday and the pilot readiness settings",
           ].map((item) => (
             <li
               key={item}
@@ -729,7 +729,7 @@ function StepIdentityMode({ productMode }: { productMode: string }) {
           }}
         >
           The PRODUCT_MODE environment variable controls how identity and sessions work. This is
-          display-only -- change it in your environment configuration, not here.
+          display-only; change it in your environment configuration, not here.
         </p>
       </div>
 
