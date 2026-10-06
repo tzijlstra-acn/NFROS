@@ -887,11 +887,11 @@ html:has(.wd-frame) .ambient {
 .wd-btn-primary {
   background: var(--wd-accent);
   border-color: var(--wd-accent);
-  color: #ffffff;
+  color: var(--wd-on-accent);
 }
 
 .wd-btn-primary:hover:not(:disabled) {
-  background: #4c40e0;
+  background: var(--wd-accent-hover);
 }
 
 .wd-btn-secondary {

@@ -9,11 +9,12 @@
  * platform disagrees with a recorded control rating, the rating does not move
  * and the disagreement is flagged instead.
  *
- * This is the only simulator with a write capability, and it has exactly four:
- * an assessment, a control rating, a finding and an action. Those are the four
- * external objects the seeded decisions actually produce. A fifth would be a
- * capability with no caller, which is how a capability list stops describing
- * the product.
+ * This is the only simulator with a write capability, and it has exactly six:
+ * an assessment, a control rating, a finding and an action, which the seeded
+ * decisions produce, and a supplier and a service record, which the
+ * third-party onboarding writes when a candidate is registered, approved and
+ * handed over to monitoring. A capability with no caller is how a capability
+ * list stops describing the product, so each one here has one.
  */
 
 import type { ConnectorCapabilities, OutboundCommandEnvelope } from "@/integrations/core/Connector";
@@ -44,7 +45,7 @@ export const GRC_SIMULATOR_CAPABILITIES: ConnectorCapabilities = {
   search: ["grc.control", "grc.assessment", "grc.finding", "grc.supplier"],
   events: ["grc.assessment.updated", "grc.finding.raised", "grc.control.rating.changed"],
   draft: ["grc.assessment", "grc.finding"],
-  write: ["grc.assessment", "grc.control", "grc.finding", "grc.action"],
+  write: ["grc.assessment", "grc.control", "grc.finding", "grc.action", "grc.supplier", "grc.service"],
   attachments: true,
   deepLinks: true,
   deltaSync: true,
@@ -82,6 +83,16 @@ function statement(
       return {
         en: `Action created in the GRC platform as ${externalId}.`,
         de: `Massnahme im GRC System als ${externalId} erstellt.`,
+      };
+    case "grc.supplier":
+      return {
+        en: `Supplier record written to the GRC third-party register as ${externalId}.`,
+        de: `Lieferantendatensatz im GRC Drittparteienregister als ${externalId} geschrieben.`,
+      };
+    case "grc.service":
+      return {
+        en: `Service record written to the GRC platform as ${externalId}.`,
+        de: `Leistungsdatensatz im GRC System als ${externalId} geschrieben.`,
       };
     default:
       return {

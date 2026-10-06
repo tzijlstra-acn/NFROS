@@ -1,12 +1,15 @@
 /**
- * Release status model for the six WorkOS roles.
+ * Release status model for the six NFROS roles.
  *
  * This module owns the single source of truth for which roles are released,
  * which are in preview, and what copy each entry shows in the role selector.
  * Nothing is derived from the database; the selector renders from this data
  * alone so it works before and after the scenario is seeded.
  *
- * V3.3 release: two available roles (rcsa, tprm), two demo roles, two planned roles.
+ * Part of the product release registry (`src/product/release/index.ts`),
+ * which reads these states rather than copying them. The current release has
+ * two available roles (rcsa, tprm), two demo roles and two planned roles, and
+ * `tests/unit/product-release.test.ts` fails if that changes unnoticed.
  */
 
 export type RoleReleaseStatus = "available" | "demo" | "planned" | "hidden";

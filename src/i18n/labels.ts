@@ -14,6 +14,8 @@
  * docs/ASSUMPTIONS.md.
  */
 
+import { PRODUCT_IDENTITY } from "@/product/release/identity";
+
 export type Language = "en" | "de";
 
 export const LANGUAGES: Language[] = ["en", "de"];
@@ -162,7 +164,8 @@ export const PROVENANCE_GLYPHS: Record<string, string> = {
 
 /** Key product copy that appears in both the application and the deck. */
 export const PRODUCT_COPY: Dict = {
-  productName: { en: "NFR WorkOS", de: "NFR WorkOS" },
+  /* Read from the release registry, so the report shell names the same product. */
+  productName: { en: PRODUCT_IDENTITY.name, de: PRODUCT_IDENTITY.name },
   experienceName: { en: "Live the NFR Day", de: "Den NFR-Tag erleben" },
   syntheticLabel: { en: "Synthetic institution and data", de: "Synthetische Institution und Daten" },
   regulatoryNote: {

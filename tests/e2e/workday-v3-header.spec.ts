@@ -40,24 +40,25 @@
 
 import { expect, test, type Locator, type Page } from "@playwright/test";
 import { ROLE_IDS } from "@/db/schema/core";
+import { gateForRole } from "@/workday/role-gate";
+
+/*
+ * The roles whose workday routes render a frame at all. A Planned role is
+ * refused by the release gate on every route and redirected to the role
+ * selector (`src/workday/role-gate.ts`), so it has no workday header to test.
+ */
+const FRAMED_ROLES = ROLE_IDS.filter((role) => gateForRole(role).kind !== "planned");
 
 /**
- * The eight route segments the brief counts, in rail order.
+ * The route segments the V3.3 rail links to, in rail order.
  *
- * `/my-work` is listed because `src/components/workday-v3/WorkdayNavigation.tsx`
- * puts it in the primary rail. Whether the route exists is the test's business,
- * not the test list's.
+ * The rail is Home, Work, Processes and Decisions
+ * (`src/components/workday-v3/WorkdayNavigation.tsx`). The list used to name
+ * the eight V3.1 segments, including `/my-work`, which no longer exists and
+ * answered 404, and the V2 routes the flagship roles now redirect to the Work
+ * Hub; those failures were the list's, not the header's.
  */
-const SEGMENTS = [
-  "",
-  "/my-work",
-  "/decisions",
-  "/workbench",
-  "/meetings",
-  "/mail",
-  "/calendar",
-  "/collaboration",
-] as const;
+const SEGMENTS = ["", "/work", "/processes", "/decisions"] as const;
 
 /** The interface under test, requested explicitly on every navigation. */
 const V31 = "ui=v3.1";
@@ -167,7 +168,7 @@ async function assertHeaderContract(page: Page, where: string): Promise<void> {
    ========================================================================== */
 
 test.describe("the workday header on every route", () => {
-  for (const role of ROLE_IDS) {
+  for (const role of FRAMED_ROLES) {
     test(`${role}: a header is on screen on all eight segments and survives a refresh`, async ({
       page,
     }) => {
@@ -245,7 +246,7 @@ test.describe("the workday header across client side navigation", () => {
    * previous target, because a route that downgrades to V2 replaces the rail
    * with the V2 one and the walk would then be testing a different control.
    */
-  for (const role of ROLE_IDS) {
+  for (const role of FRAMED_ROLES) {
     test(`${role}: the header survives a click in the rail to every other segment`, async ({
       page,
     }) => {
@@ -581,7 +582,7 @@ test("the header is on screen, with a product label, when the scenario is unavai
    ========================================================================== */
 
 test.describe("the header never renders twice", () => {
-  for (const role of ROLE_IDS) {
+  for (const role of FRAMED_ROLES) {
     test(`${role}: exactly one application header on every segment`, async ({ page }) => {
       await openV3(page, role, "");
       await requireSeeded(page);

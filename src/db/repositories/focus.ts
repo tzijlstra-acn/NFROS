@@ -315,28 +315,117 @@ const SEVERITY_RANK: Record<LiveEventSeverity, number> = {
 };
 
 /**
+ * The attention order, as named keys in the order they are applied.
+ *
+ * Plan section 4.3 states the order for Next in four words: materiality,
+ * deadline, dependency, readiness. Each one is read from a field the item
+ * already carries, so the order is a function of the row and nothing else:
+ *
+ *   materiality  `severity`. Derived upstream from the decision's priority
+ *                rank, the suggestion's priority or the event's severity,
+ *                and critical for anything raised by the shared event.
+ *   deadline     `dueMoment`. An item with a due time comes before one
+ *                without, and the earlier time first. Nothing is given a
+ *                deadline it does not have.
+ *   dependency   `section`. Work in `needs-you` is blocked on this person;
+ *                work in `prepared` is ready for review and blocks nobody
+ *                yet. So, at equal materiality and deadline, what is waiting
+ *                on the reader comes first.
+ *   readiness    `aiStatus`. An item whose preparation is finished (ready,
+ *                needs the user, completed) can be acted on now, ahead of one
+ *                the partner is still checking or only monitoring.
+ *
+ * Then two tie breaks that are not product rules but keep the order honest:
+ * the item waiting longest first, and the identifier, so two renders of the
+ * same queue agree and a test can assert the result.
+ */
+export const ATTENTION_ORDER = [
+  "materiality",
+  "deadline",
+  "dependency",
+  "readiness",
+  "age",
+  "identifier",
+] as const;
+
+export type AttentionKey = (typeof ATTENTION_ORDER)[number];
+
+/** Lower is more demanding. `needs-you` blocks on the person, `prepared` does not. */
+const DEPENDENCY_RANK: Record<FocusSection, number> = {
+  "needs-you": 0,
+  prepared: 1,
+  handled: 2,
+  watching: 3,
+};
+
+/** Preparation that is finished can be acted on; the rest is still in hand. */
+const READY_AI_STATUSES: ReadonlySet<FocusItemView["aiStatus"]> = new Set([
+  "ready",
+  "needs-user",
+  "completed",
+]);
+
+/**
+ * Compares two items on one attention key.
+ *
+ * Exported with the key list so the test can check each key in isolation
+ * rather than inferring them from a sorted result.
+ */
+export function compareOnAttentionKey(key: AttentionKey, a: FocusItemView, b: FocusItemView): number {
+  switch (key) {
+    case "materiality":
+      return SEVERITY_RANK[a.severity] - SEVERITY_RANK[b.severity];
+    case "deadline": {
+      const aDue = a.dueMoment === null ? Number.MAX_SAFE_INTEGER : momentMinutesSafe(a.dueMoment);
+      const bDue = b.dueMoment === null ? Number.MAX_SAFE_INTEGER : momentMinutesSafe(b.dueMoment);
+      return aDue === bDue ? 0 : aDue < bDue ? -1 : 1;
+    }
+    case "dependency":
+      return DEPENDENCY_RANK[a.section] - DEPENDENCY_RANK[b.section];
+    case "readiness":
+      return Number(!READY_AI_STATUSES.has(a.aiStatus)) - Number(!READY_AI_STATUSES.has(b.aiStatus));
+    case "age": {
+      const aAge = momentMinutesSafe(a.arrivedAtMoment);
+      const bAge = momentMinutesSafe(b.arrivedAtMoment);
+      return aAge === bAge ? 0 : aAge < bAge ? -1 : 1;
+    }
+    case "identifier":
+      return a.id.localeCompare(b.id);
+  }
+}
+
+/** The full attention comparator: the keys in `ATTENTION_ORDER`, first difference wins. */
+export function compareForAttention(a: FocusItemView, b: FocusItemView): number {
+  for (const key of ATTENTION_ORDER) {
+    const result = compareOnAttentionKey(key, a, b);
+    if (result !== 0) return result;
+  }
+  return 0;
+}
+
+/**
+ * Orders the active queue, Now first and then Next.
+ *
+ * This is the order the reader sees across sections. Within one section the
+ * dependency key is equal for every item, so `orderFocusItems` below and this
+ * function agree on any list drawn from a single section.
+ */
+export function orderForAttention(items: FocusItemView[]): FocusItemView[] {
+  return [...items].sort(compareForAttention);
+}
+
+/**
  * Order within a section.
  *
- * Severity first, then anything with a due time ahead of anything without one,
- * then the oldest item, because an item that has been waiting since 07:45 is
- * more urgent than one that arrived two minutes ago at the same severity. The
- * identifier is the final tie break so the order is stable between renders and
- * a test can assert it.
+ * The attention order applied to one section: severity first, then anything
+ * with a due time ahead of anything without one, then finished preparation
+ * ahead of preparation still in hand, then the oldest item, because an item
+ * that has been waiting since 07:45 is more urgent than one that arrived two
+ * minutes ago at the same severity. The identifier is the final tie break so
+ * the order is stable between renders and a test can assert it.
  */
 export function orderFocusItems(items: FocusItemView[]): FocusItemView[] {
-  return [...items].sort((a, b) => {
-    const bySeverity = SEVERITY_RANK[a.severity] - SEVERITY_RANK[b.severity];
-    if (bySeverity !== 0) return bySeverity;
-
-    const aDue = a.dueMoment === null ? Number.MAX_SAFE_INTEGER : momentMinutesSafe(a.dueMoment);
-    const bDue = b.dueMoment === null ? Number.MAX_SAFE_INTEGER : momentMinutesSafe(b.dueMoment);
-    if (aDue !== bDue) return aDue - bDue;
-
-    const byAge = momentMinutesSafe(a.arrivedAtMoment) - momentMinutesSafe(b.arrivedAtMoment);
-    if (byAge !== 0) return byAge;
-
-    return a.id.localeCompare(b.id);
-  });
+  return orderForAttention(items);
 }
 
 /** Minutes for a moment that may not be a clock value. */
@@ -412,12 +501,16 @@ export function assembleFocusQueue(
   /*
    * Now is the most demanding single item, and Next is what follows it.
    *
-   * Prepared work is eligible for Now only when nothing needs the user, which
-   * is the honest ordering: a prepared suggestion is the main object of the
-   * screen on a morning with no open decision, and it is not the main object on
-   * a morning with three.
+   * The two active sections are merged and ordered by the attention order:
+   * materiality, then deadline, then dependency, then readiness. Dependency is
+   * the section, so at equal materiality and deadline work waiting on the
+   * reader still comes before work prepared for review, which keeps the old
+   * rule that a prepared suggestion does not displace an equally serious open
+   * decision. What changed is that a critical item prepared for review (the
+   * shared event reaching the role's own objects) is no longer ranked below a
+   * medium decision merely because of the section it sits in.
    */
-  const queue = [...sections["needs-you"], ...sections.prepared];
+  const queue = orderForAttention([...sections["needs-you"], ...sections.prepared]);
   const now = queue[0] ?? null;
   const next = queue.slice(1, 1 + nextLimit);
 
@@ -756,11 +849,29 @@ function suggestionCandidates(
     .where(and(eq(aiSuggestions.runId, runId), eq(aiSuggestions.roleId, roleId)))
     .all()
     .filter((row) => momentMinutesSafe(row.atMoment) <= now)
-    .filter((row) => row.dismissedAt === null);
+    .filter((row) => row.dismissedAt === null)
+    // An answered suggestion (accepted, modified, rejected, executed, expired) no longer asks anything of the person.
+    .filter((row) => row.disposition === "new" || row.disposition === "reviewed");
+
+  /*
+   * A suggestion that prepared a decision is spent once the decision is made.
+   *
+   * Without this, recording a decision moved the decision out of "Needs you"
+   * and the suggestion that prepared it moved straight back in: Home put the
+   * question the person had just answered in front of them again, as "Review
+   * and accept or change it". The decision's own row is what Home reports
+   * from then on (under Done, and in the Partner update through its receipt).
+   */
+  const settled = new Set(
+    getDecisions(roleId, atMoment, runId)
+      .filter((entry) => entry.decision.status !== "open")
+      .map((entry) => entry.decision.id),
+  );
 
   const out: FocusCandidate[] = [];
 
   for (const row of rows) {
+    if (row.decisionId !== null && settled.has(row.decisionId)) continue;
     const relatedObjectKey = `${row.objectType}:${row.objectId}`;
     /*
      * A suggestion that names a decision is about that decision, so it is

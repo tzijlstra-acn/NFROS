@@ -2,7 +2,7 @@
 /**
  * scripts/backup.ts [create|verify|restore]
  *
- * Manages point-in-time backups of the NFR WorkOS SQLite database.
+ * Manages point-in-time backups of the NFROS SQLite database.
  *
  * create  -- copies the database to ./backups/ with a timestamped name and
  *            writes a manifest containing the SHA-256 hash.
@@ -19,11 +19,13 @@ import { existsSync, copyFileSync, readFileSync, writeFileSync, mkdirSync } from
 import { readdirSync } from "node:fs";
 import { join } from "node:path";
 import { createHash } from "node:crypto";
+import { PRODUCT_RELEASE } from "../src/product/release/product-release";
 
 const DB_PATH = join(process.cwd(), "data", "nfr-workos.db");
 const BACKUP_DIR = join(process.cwd(), "backups");
 const SCHEMA_VERSION = "V3+runtime";
-const RELEASE_VERSION = "4.0.0";
+/** Read from the release registry, so a backup manifest names the real release. */
+const RELEASE_VERSION = PRODUCT_RELEASE.version;
 
 interface BackupManifest {
   timestamp: string;

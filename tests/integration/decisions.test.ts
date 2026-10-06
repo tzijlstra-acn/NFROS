@@ -1011,11 +1011,14 @@ describe("reset", () => {
 /**
  * Who the trail says approved it.
  *
- * The acting user and the approver were derived from two different places:
- * `recordDecisionAndExecute` from the decision's own role, `grantApproval`
- * from whichever role the scenario was pointed at. They agree whenever those
- * are the same, which is the normal case and is why this went unnoticed. This
- * drives them apart on purpose.
+ * The acting user and the approver used to be derived from two different
+ * places: `recordDecisionAndExecute` from the decision's own role,
+ * `grantApproval` from whichever role the scenario was pointed at. When they
+ * disagreed, which the V3.3 shell made the normal case because it never
+ * switches the active role, the gate refused every consequence after the
+ * decision had been written (J20). The product's reading is now settled: the
+ * holder of the decision's own role approves. This drives the two apart on
+ * purpose and asserts that it no longer matters.
  */
 describe("approval attribution when the active role is not the decision's role", () => {
   beforeEach(() => {
@@ -1023,19 +1026,7 @@ describe("approval attribution when the active role is not the decision's role",
     setMoment("11:45");
   });
 
-  it("blocks all consequences when the active role does not hold the decision", async () => {
-    /*
-     * When the scenario is pointed at a different role (as browsing another
-     * role's workday does), grantApproval attributes the approval to the
-     * ACTIVE role holder. The authority gate then detects the mismatch and
-     * blocks all consequences with `approval-role-mismatch`, protecting the
-     * audit trail from cross-role attribution.
-     *
-     * This is the documented gate-protection behaviour. The open design
-     * question -- whether recordDecisionAndExecute should derive the approver
-     * from the decision's own role instead -- is noted in decide.ts and
-     * tracked separately. Until resolved, the gate blocks rather than corrupts.
-     */
+  it("executes every consequence and attributes every approval to the decision role's holder", async () => {
     switchRole("tprm");
     expect(requireScenarioState().activeRoleId).toBe("tprm");
 
@@ -1046,28 +1037,32 @@ describe("approval attribution when the active role is not the decision's role",
       rationaleConfirmed: true,
     });
 
-    expect(result.ok).toBe(false);
-    expect(result.blockedReasons.length).toBeGreaterThan(0);
-    for (const reason of result.blockedReasons) {
-      expect(reason).toContain("granted under a different role");
-    }
+    expect(result.blockedReasons, result.blockedReasons.join("; ")).toStrictEqual([]);
+    expect(result.ok).toBe(true);
 
     const approvers = getSqlite()
       .prepare(
-        "SELECT DISTINCT approved_by_user_id AS approver FROM approvals WHERE decision_id = ?",
+        "SELECT DISTINCT approved_by_user_id AS approver, role_id AS role FROM approvals WHERE decision_id = ?",
       )
-      .all(RCSA_DECISION_ID) as Array<{ approver: string }>;
+      .all(RCSA_DECISION_ID) as Array<{ approver: string; role: string }>;
 
-    /*
-     * Approvals ARE written -- `grantApproval` runs before the gate checks.
-     * But they are all attributed to the TPRM holder (P-002), not the RCSA
-     * holder (P-003), which is exactly what the gate detects and blocks.
-     */
-    const TPRM_HOLDER = "P-002";
-    for (const row of approvers) {
-      expect(row.approver).toBe(TPRM_HOLDER);
-      expect(row.approver).not.toBe(RCSA_HOLDER);
-    }
+    // The RCSA holder (P-003), never the holder of the role the shell happened to point at.
+    expect(approvers).toStrictEqual([{ approver: RCSA_HOLDER, role: "rcsa" }]);
+  });
+
+  it("refuses, before writing anything, a caller that acts as another role", async () => {
+    const before = fingerprintDatabase();
+    const result = await recordDecisionAndExecute({
+      decisionId: RCSA_DECISION_ID,
+      optionId: RCSA_FULL_CHAIN_OPTION_ID,
+      rationale: RATIONALE,
+      rationaleConfirmed: true,
+      actingRoleId: "tprm",
+    });
+
+    expect(result.recorded).toBe(false);
+    expect(result.refusal).toBe("role-mismatch");
+    expect(fingerprintDatabase()).toStrictEqual(before);
   });
 });
 

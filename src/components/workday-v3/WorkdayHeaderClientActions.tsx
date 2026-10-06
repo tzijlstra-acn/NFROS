@@ -1,7 +1,7 @@
 "use client";
 
 /**
- * The four interactive controls in the header.
+ * The interactive controls in the header.
  *
  * Split from the header so that the identity, the role and the counts are
  * plain server HTML and only these wait for hydration. The brief lists search,
@@ -10,7 +10,19 @@
  *
  * None of these fetches anything on mount. A header button that issued a
  * request to decide what to display would reintroduce exactly the dependency
- * the header was taken out of the page to escape.
+ * the header was taken out of the page to escape. Search and Updates fetch
+ * when they are opened, in `src/components/shell/`.
+ *
+ * Every number here is the number of its destination (audit T06, T07):
+ *
+ *   Updates     the updates the panel opens on, after the notification budget,
+ *               shown as a count on the bell and in its accessible name.
+ *   AI Partner  the suggestions the dock marks as needing the person. It used
+ *               to read "1 suggestion" whatever the number.
+ *
+ * A Demo role's header carries none of the work controls: its routes show the
+ * release page, and a search, an updates list or a partner for a role the
+ * release does not include would be interactive work by another route.
  */
 
 import { useEffect, useState } from "react";
@@ -29,18 +41,39 @@ import {
 import type { Language } from "@/i18n/labels";
 import { useWorkdayChrome } from "./ChromeContext";
 
+const LABELS = {
+  search: { en: "Search", de: "Suchen" },
+  searchName: { en: "Search and commands, Control K", de: "Suchen und Befehle, Strg K" },
+  updates: { en: "Updates", de: "Aktualisierungen" },
+  updatesOne: { en: "Updates, 1 needs you", de: "Aktualisierungen, 1 erfordert Sie" },
+  updatesMany: { en: "Updates, {count} need you", de: "Aktualisierungen, {count} erfordern Sie" },
+  partner: { en: "AI Partner", de: "KI Partner" },
+  monitoring: { en: "Monitoring", de: "Beobachtet" },
+  working: { en: "Working", de: "Arbeitet" },
+  offline: { en: "Offline", de: "Offline" },
+  suggestionOne: { en: "1 suggestion needs you", de: "1 Vorschlag erfordert Sie" },
+  suggestionMany: { en: "{count} suggestions need you", de: "{count} Vorschlaege erfordern Sie" },
+} as const;
+
+function pick(pair: { en: string; de: string }, language: Language): string {
+  return language === "de" ? pair.de : pair.en;
+}
+
 export function WorkdayHeaderClientActions({
   language,
   updatesCount,
+  suggestionsNeedingYou,
   aiState,
   userLabel,
-  roleId,
+  gated,
 }: {
   language: Language;
   updatesCount: number;
+  suggestionsNeedingYou: number;
   aiState: "idle" | "working" | "ready" | "offline";
   userLabel: string | null;
-  roleId: string | null;
+  /** True for a role the release gate does not open: no work controls. */
+  gated: boolean;
 }) {
   const chrome = useWorkdayChrome();
   const [userOpen, setUserOpen] = useState(false);
@@ -66,73 +99,89 @@ export function WorkdayHeaderClientActions({
   const effectiveAiState = chrome.aiRunning ? "working" : aiState;
 
   const aiLabel = (() => {
-    const labels = {
-      idle: { en: "Monitoring", de: "Beobachtet" },
-      working: { en: "Working", de: "Arbeitet" },
-      ready: { en: "1 suggestion", de: "1 Vorschlag" },
-      offline: { en: "Offline", de: "Offline" },
-    } as const;
-    const pair = labels[effectiveAiState];
-    return language === "de" ? pair.de : pair.en;
+    if (effectiveAiState === "working") return pick(LABELS.working, language);
+    if (effectiveAiState === "offline") return pick(LABELS.offline, language);
+    if (effectiveAiState === "ready" && suggestionsNeedingYou > 0) {
+      return suggestionsNeedingYou === 1
+        ? pick(LABELS.suggestionOne, language)
+        : pick(LABELS.suggestionMany, language).replace("{count}", String(suggestionsNeedingYou));
+    }
+    return pick(LABELS.monitoring, language);
   })();
+
+  const updatesName =
+    updatesCount === 0
+      ? pick(LABELS.updates, language)
+      : updatesCount === 1
+        ? pick(LABELS.updatesOne, language)
+        : pick(LABELS.updatesMany, language).replace("{count}", String(updatesCount));
 
   return (
     <div className="wd-header-actions">
-      <button
-        type="button"
-        className="wd-btn wd-btn-quiet wd-btn-sm"
-        onClick={() => chrome.setCommandOpen(true)}
-        aria-label={
-          language === "de" ? "Suchen und Befehle, Strg K" : "Search and commands, Control K"
-        }
-      >
-        <IconSearch size={16} stroke={1.8} aria-hidden="true" />
-        <span className="wd-search-label">{language === "de" ? "Suchen" : "Search"}</span>
-      </button>
+      {gated ? null : (
+        <>
+          <button
+            type="button"
+            className="wd-btn wd-btn-quiet wd-btn-sm"
+            onClick={() => chrome.setCommandOpen(true)}
+            aria-haspopup="dialog"
+            aria-expanded={chrome.commandOpen}
+            aria-keyshortcuts="Control+K Meta+K"
+            aria-label={pick(LABELS.searchName, language)}
+            data-testid="header-search"
+          >
+            <IconSearch size={16} stroke={1.8} aria-hidden="true" />
+            <span className="wd-search-label">{pick(LABELS.search, language)}</span>
+          </button>
 
-      <button
-        type="button"
-        className="wd-icon-btn"
-        onClick={() => chrome.toggleUpdates()}
-        aria-label={
-          updatesCount > 0
-            ? language === "de"
-              ? `${updatesCount} Aktualisierungen`
-              : `${updatesCount} updates`
-            : language === "de"
-              ? "Aktualisierungen"
-              : "Updates"
-        }
-        style={{ position: "relative" }}
-      >
-        <IconBell size={18} stroke={1.8} aria-hidden="true" />
-        {updatesCount > 0 ? <span className="wd-nav-dot" aria-hidden="true" /> : null}
-      </button>
+          <button
+            type="button"
+            className="wd-icon-btn"
+            onClick={() => chrome.toggleUpdates()}
+            aria-haspopup="dialog"
+            aria-expanded={chrome.updatesOpen}
+            aria-label={updatesName}
+            style={{ position: "relative" }}
+            data-updates-trigger=""
+            data-testid="header-updates"
+            data-count={updatesCount}
+          >
+            <IconBell size={18} stroke={1.8} aria-hidden="true" />
+            {updatesCount > 0 ? (
+              <span className="wd-header-count" aria-hidden="true">
+                {updatesCount > 9 ? "9+" : updatesCount}
+              </span>
+            ) : null}
+          </button>
 
-      <button
-        type="button"
-        className="wd-btn wd-btn-quiet wd-btn-sm"
-        onClick={() => chrome.toggleDock()}
-        aria-expanded={chrome.dockOpen}
-        aria-label={`${language === "de" ? "KI Partner" : "AI Partner"}, ${aiLabel}`}
-      >
-        <IconSparkles size={16} stroke={1.8} aria-hidden="true" />
-        <span
-          className="wd-dot"
-          data-tone={
-            effectiveAiState === "ready"
-              ? "warning"
-              : effectiveAiState === "working"
-                ? "accent"
-                : effectiveAiState === "offline"
-                  ? undefined
-                  : "success"
-          }
-          aria-hidden="true"
-        />
-      </button>
+          <button
+            type="button"
+            className="wd-btn wd-btn-quiet wd-btn-sm"
+            onClick={() => chrome.toggleDock()}
+            aria-expanded={chrome.dockOpen}
+            aria-label={`${pick(LABELS.partner, language)}, ${aiLabel}`}
+            data-testid="header-ai"
+            data-count={suggestionsNeedingYou}
+          >
+            <IconSparkles size={16} stroke={1.8} aria-hidden="true" />
+            <span
+              className="wd-dot"
+              data-tone={
+                effectiveAiState === "ready"
+                  ? "warning"
+                  : effectiveAiState === "working"
+                    ? "accent"
+                    : effectiveAiState === "offline"
+                      ? undefined
+                      : "success"
+              }
+              aria-hidden="true"
+            />
+          </button>
+        </>
+      )}
 
-      {/* The demonstration controls, collapsed into one menu. */}
+      {/* The display and demonstration controls, collapsed into one menu. */}
       <div style={{ position: "relative" }}>
         <button
           type="button"
@@ -192,11 +241,15 @@ export function WorkdayHeaderClientActions({
 
             <div className="wd-menu-sep" />
 
+            {/*
+              * "Previous interface" used to sit here and linked to `?ui=current`,
+              * which resolves to this interface: a control that reloaded the page
+              * it was on (audit R09). It is removed rather than repointed,
+              * because whether the earlier interfaces stay reachable at all is a
+              * release decision, not a header one.
+              */}
             <Link className="wd-menu-item" href="/story">
               {language === "de" ? "Praesentation" : "Presentation"}
-            </Link>
-            <Link className="wd-menu-item" href={`/workday/${roleId ?? "rcsa"}?ui=current`}>
-              {language === "de" ? "Vorherige Oberflaeche" : "Previous interface"}
             </Link>
           </Menu>
         ) : null}

@@ -32,13 +32,16 @@ import {
   monitoringActivations,
   portfolioThemes,
 } from "@/db/schema/decisions";
-import { collaborationMessages } from "@/db/schema/work";
+import { collaborationMessages, COLLABORATION_MESSAGE_KINDS, type CollaborationMessageKind } from "@/db/schema/work";
+import { PRODUCT_IDENTITY } from "@/product/release/identity";
 import { registerToolHandler, type ToolContext, type ToolHandlerResult } from "./runtime";
 import {
+  appetitePositionFor,
   calculateRiskMatrixPosition,
   ratingFor,
   type ControlEffectiveness,
 } from "@/domain/nfr/calculators";
+import { APPETITE_CEILING } from "@/role-apps/rcsa/matrix";
 
 const db = () => getDb();
 
@@ -268,11 +271,19 @@ registerToolHandler("updateAssessment", (payload, context): ToolHandlerResult =>
   };
 });
 
+/**
+ * Records a residual position on an assessment line. The rating and the
+ * appetite position are computed here by the group matrix's deterministic
+ * rule (`ratingFor`, then `appetitePositionFor` against the group ceiling the
+ * RCSA matrix uses), never taken from the payload, so a line never carries an
+ * appetite position its residual does not give and no model can set one.
+ */
 registerToolHandler("proposeAndRecordResidualRisk", (payload, context): ToolHandlerResult => {
   const lineId = requireStr(payload, "assessmentLineId");
   const likelihood = Number(payload.residualLikelihood ?? 0);
   const impact = Number(payload.residualImpact ?? 0);
   const rating = ratingFor(likelihood, impact);
+  const appetitePosition = appetitePositionFor(rating, APPETITE_CEILING);
 
   const line = db()
     .select()
@@ -287,17 +298,18 @@ registerToolHandler("proposeAndRecordResidualRisk", (payload, context): ToolHand
       residualLikelihood: likelihood,
       residualImpact: impact,
       residualRating: rating,
+      appetitePosition,
       commentary: str(payload, "commentary", line.commentary),
     })
     .where(and(eq(assessmentLines.runId, context.runId), eq(assessmentLines.id, lineId)))
     .run();
 
   return {
-    summary: `Residual risk on line ${lineId} recorded as ${rating} at likelihood ${likelihood} and impact ${impact}.`,
+    summary: `Residual risk on line ${lineId} recorded as ${rating} at likelihood ${likelihood} and impact ${impact}, ${appetitePosition} appetite.`,
     objectKind: "assessment-line",
     objectId: lineId,
-    data: { lineId, rating },
-    receiptStatements: [`Residual risk recorded: ${rating}`],
+    data: { lineId, rating, appetitePosition },
+    receiptStatements: [`Residual risk recorded: ${rating}, appetite position ${appetitePosition}`],
   };
 });
 
@@ -373,6 +385,13 @@ registerToolHandler("createAction", (payload, context): ToolHandlerResult => {
       sourceDecisionId: str(payload, "decisionId") || null,
       createdBySession: true,
       progressNote: "",
+      /* Lineage, when the caller knows it (migration 0005). Part of the payload, so the approval covers it. */
+      sourceMeetingId: str(payload, "sourceMeetingId") || null,
+      sourceMinutesId: str(payload, "sourceMinutesId") || null,
+      sourceProcessRunId: str(payload, "sourceProcessRunId") || null,
+      sourceStageId: str(payload, "sourceStageId") || null,
+      sourceStageRunId: str(payload, "sourceStageRunId") || null,
+      sourceMessageId: str(payload, "sourceMessageId") || null,
     })
     .run();
 
@@ -959,10 +978,19 @@ registerToolHandler("setPortfolioMateriality", (payload, context): ToolHandlerRe
  * `simulatedOnly` is written as true on the row rather than merely implied by
  * the absence of a transport, so the trust page can prove from the data that
  * nothing left the machine.
+ *
+ * A caller may say what the message is (`kind`, one of
+ * `COLLABORATION_MESSAGE_KINDS`, for example `follow-up` for an action
+ * reminder); anything else is recorded as a plain `message`. The channel name
+ * stays the label.
  */
 registerToolHandler("sendSimulatedCollaborationMessage", (payload, context): ToolHandlerResult => {
   const id = newId("COL");
   const subject = requireStr(payload, "subject");
+  const requestedKind = str(payload, "kind");
+  const kind: CollaborationMessageKind = (COLLABORATION_MESSAGE_KINDS as readonly string[]).includes(requestedKind)
+    ? (requestedKind as CollaborationMessageKind)
+    : "message";
 
   db()
     .insert(collaborationMessages)
@@ -971,7 +999,8 @@ registerToolHandler("sendSimulatedCollaborationMessage", (payload, context): Too
       runId: context.runId,
       fromRoleId: context.roleId,
       toUserIds: Array.isArray(payload.toUserIds) ? (payload.toUserIds as string[]) : [],
-      channelName: str(payload, "channelName", "NFR WorkOS"),
+      kind,
+      channelName: str(payload, "channelName", PRODUCT_IDENTITY.name),
       subject,
       body: str(payload, "body", subject),
       sentAtMoment: context.atMoment,
@@ -1006,6 +1035,7 @@ registerToolHandler("requestFactualValidation", (payload, context): ToolHandlerR
       runId: context.runId,
       fromRoleId: context.roleId,
       toUserIds: Array.isArray(payload.toUserIds) ? (payload.toUserIds as string[]) : [],
+      kind: "validation-request",
       channelName: "Factual validation",
       subject: `Factual validation requested: ${str(payload, "topic", "open point")}`,
       body: question,

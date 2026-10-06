@@ -479,6 +479,8 @@ export const decisions: NewDecision[] = [
     relatedObjectId: RCSA_PAYOPS_Q4,
     fromSharedEvent: false,
     sharedThreadId: null,
+    /* The sequence is needed when the workshop opens: MTG-2026-0005 at 10:30. */
+    dueAt: "2026-10-06T10:30:00.000Z",
     ...OPEN,
   },
 
@@ -510,6 +512,8 @@ export const decisions: NewDecision[] = [
     relatedObjectId: CTL_FOUR_EYES,
     fromSharedEvent: false,
     sharedThreadId: THREAD_OVERRIDE,
+    /* "The workshop closes in fifteen minutes", asked at 11:45. */
+    dueAt: "2026-10-06T12:00:00.000Z",
     ...OPEN,
   },
 
@@ -541,6 +545,8 @@ export const decisions: NewDecision[] = [
     relatedObjectId: RCSA_PAYOPS_Q4,
     fromSharedEvent: true,
     sharedThreadId: THREAD_OVERRIDE,
+    /* "Before the committee paper": committee papers close 08.10.2026 at 12:00. */
+    dueAt: "2026-10-08T12:00:00.000Z",
     ...OPEN,
   },
 

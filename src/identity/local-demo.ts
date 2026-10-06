@@ -15,6 +15,7 @@ import { randomUUID } from "crypto";
 import type { IdentityProvider, ProductSession } from "./types";
 import { signValue, verifyAndExtract } from "./session";
 import { DEMO_SESSION_COOKIE } from "./cookies";
+import { PRODUCT_PERSONAS, isProductPersonaId, type ProductPersonaId } from "@/features/product/permissions";
 
 export { DEMO_SESSION_COOKIE };
 
@@ -24,41 +25,64 @@ const SESSION_TTL_MS = 8 * 60 * 60 * 1000;
 /**
  * The supported demonstration personas.
  *
- * Each persona maps to a fixed synthetic user. Display names, role IDs and
- * administrator flags are seeded values only -- no real people are referenced.
+ * Each persona maps to a fixed synthetic user. The two analyst personas carry
+ * the names of the seeded role holders (P-003 rcsa, P-002 tprm); the
+ * administrator persona names no person. No real people are referenced.
  */
 const PERSONAS = {
   "rcsa-analyst": {
     userId: "DEMO-RCSA-001",
-    displayName: "Thomas Zijlstra",
-    email: "thomas.zijlstra@arcadia.demo",
+    displayName: "Marlene Aigner",
+    email: "marlene.aigner@arcadia.example",
     roleIds: ["rcsa"],
     isAdministrator: false,
   },
   "tprm-analyst": {
     userId: "DEMO-TPRM-001",
-    displayName: "Anna Mueller",
-    email: "anna.mueller@arcadia.demo",
+    displayName: "Stefan Brunner",
+    email: "stefan.brunner@arcadia.example",
     roleIds: ["tprm"],
     isAdministrator: false,
   },
   administrator: {
     userId: "DEMO-ADM-001",
-    displayName: "Max Weber",
-    email: "max.weber@arcadia.demo",
+    displayName: "Demonstration administrator",
+    email: "administrator@arcadia.example",
     roleIds: [],
     isAdministrator: true,
   },
 } as const;
 
-export type DemoPersonaId = keyof typeof PERSONAS;
+/**
+ * The eight product-owner personas of the Product Owner Console (plan 6.1).
+ *
+ * Defined in `src/features/product/permissions.ts`, with the console
+ * authority scopes each one holds; the session carries those scopes as its
+ * `authorityScopes`, which is what every console action checks. They name a
+ * responsibility, not a person, and hold no workday role.
+ */
+function productOwnerPersona(id: ProductPersonaId) {
+  const persona = PRODUCT_PERSONAS[id];
+  return {
+    userId: persona.demoUserId,
+    displayName: persona.label.en,
+    email: `${id}@arcadia.example`,
+    roleIds: [] as string[],
+    isAdministrator: id === "tenant-administrator",
+    authorityScopes: [...persona.scopes] as string[],
+  };
+}
+
+export type DemoPersonaId = keyof typeof PERSONAS | ProductPersonaId;
 
 export function isDemoPersonaId(value: unknown): value is DemoPersonaId {
-  return typeof value === "string" && value in PERSONAS;
+  return typeof value === "string" && (value in PERSONAS || isProductPersonaId(value));
 }
 
 function buildSession(personaId: DemoPersonaId, mode: "demonstration" | "offline-evaluation"): ProductSession {
-  const persona = PERSONAS[personaId];
+  const persona = isProductPersonaId(personaId)
+    ? productOwnerPersona(personaId)
+    : { ...PERSONAS[personaId], authorityScopes: [] as string[] };
   const now = new Date();
   const expires = new Date(now.getTime() + SESSION_TTL_MS);
   return {
@@ -69,7 +93,7 @@ function buildSession(personaId: DemoPersonaId, mode: "demonstration" | "offline
     organisationId: "ORG-DEMO",
     legalEntityIds: ["LE-001"],
     roleIds: [...persona.roleIds],
-    authorityScopes: [],
+    authorityScopes: [...persona.authorityScopes],
     isAdministrator: persona.isAdministrator,
     productMode: mode,
     issuedAt: now.toISOString(),

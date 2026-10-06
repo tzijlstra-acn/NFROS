@@ -91,10 +91,38 @@ export const actions = sqliteTable(
     sourceDecisionId: text("source_decision_id"),
     createdBySession: integer("created_by_session", { mode: "boolean" }).notNull().default(false),
     progressNote: text("progress_note").notNull().default(""),
+    /**
+     * The measurable condition that closes the action, as a person agreed it.
+     * Null until one is agreed. The agreeing entry is still appended to
+     * `action_updates`, so the history shows who agreed it and when; this
+     * column is the current value every reader can rely on.
+     */
+    completionCondition: text("completion_condition"),
+    completionConditionBy: text("completion_condition_by"),
+    completionConditionAt: text("completion_condition_at"),
+    /**
+     * The structured blocked state. Set, with the person's statement of what
+     * blocks the action, by the entry that records the blocker, and cleared by
+     * the entry that lifts it. `status` is left alone, so every reader of the
+     * status words is unaffected; a blocked action is still open.
+     */
+    blockedReason: text("blocked_reason"),
+    blockedSince: text("blocked_since"),
+    /** Lineage: the meeting, and the confirmed minutes, the action was raised in. */
+    sourceMeetingId: text("source_meeting_id"),
+    sourceMinutesId: text("source_minutes_id"),
+    /** Lineage: the process run and stage the action was raised from. */
+    sourceProcessRunId: text("source_process_run_id"),
+    sourceStageId: text("source_stage_id"),
+    sourceStageRunId: text("source_stage_run_id"),
+    /** Lineage: the inbox message the action was converted from. */
+    sourceMessageId: text("source_message_id"),
   },
   (table) => [
     index("actions_run_idx").on(table.runId, table.status),
     index("actions_role_idx").on(table.runId, table.raisedByRoleId),
+    index("actions_source_meeting_idx").on(table.runId, table.sourceMeetingId),
+    index("actions_source_process_idx").on(table.runId, table.sourceProcessRunId),
   ],
 );
 
@@ -156,11 +184,35 @@ export const decisions = sqliteTable(
     fromSharedEvent: integer("from_shared_event", { mode: "boolean" }).notNull().default(false),
     /** Identifier of the same underlying matter seen by another role. */
     sharedThreadId: text("shared_thread_id"),
+    /**
+     * By when the judgment is needed, ISO, as the decision's own record states
+     * it (migration 0006). Null when the record states no time, and then no
+     * time is invented: `deadlineFor` in `src/features/decisions/queue.ts`
+     * falls back to a response time on the subject's inbox, and the Home Now
+     * card says "No due time recorded". The seed sets it only where the
+     * decision text names the moment it must be taken by.
+     */
+    dueAt: text("due_at"),
+    /**
+     * The process run and stage this decision belongs to (migration 0007).
+     *
+     * A stage contract binds a seeded decision by id, so before this column a
+     * second run of the same Role App (an event-driven reassessment) could not
+     * have judgments of its own: it found the Q4 cycle's. A decision created
+     * for a run names the run here, and the stage that waits for it. Null for
+     * a decision no process waits on. The seed and the migration link the
+     * five Q4 RCSA decisions the RCSA stage contract binds to the Q4 run;
+     * `createDecisionForRun` (src/db/repositories/process-decisions.ts) is
+     * how a later run gets its own.
+     */
+    processRunId: text("process_run_id"),
+    processStageId: text("process_stage_id"),
   },
   (table) => [
     index("dec_run_role_idx").on(table.runId, table.roleId, table.priorityRank),
     index("dec_thread_idx").on(table.runId, table.sharedThreadId),
     index("dec_status_idx").on(table.runId, table.status),
+    index("dec_process_idx").on(table.runId, table.processRunId, table.processStageId),
   ],
 );
 
@@ -207,7 +259,18 @@ export const approvals = sqliteTable(
   {
     id: text("id").primaryKey(),
     runId: text("run_id").notNull(),
+    /** The decision the approval belongs to, when it belongs to one. */
     decisionId: text("decision_id"),
+    /**
+     * What the approval is about, whatever kind of object that is: a
+     * decision, an action, a meeting, a set of minutes. An approval for a
+     * Work Hub change names its object here rather than leaving
+     * `decisionId` empty with nothing in its place. When both are set on a
+     * request and on the approval, the authority gate refuses an approval
+     * whose target is not the request's.
+     */
+    targetKind: text("target_kind"),
+    targetId: text("target_id"),
     /** The tool the approval authorises. */
     toolName: text("tool_name").notNull(),
     authorityClass: text("authority_class").$type<AuthorityClass>().notNull(),
@@ -227,7 +290,10 @@ export const approvals = sqliteTable(
     /** Payload hash, binding the approval to a specific proposed change. */
     payloadFingerprint: text("payload_fingerprint").notNull(),
   },
-  (table) => [index("appr_run_idx").on(table.runId, table.decisionId)],
+  (table) => [
+    index("appr_run_idx").on(table.runId, table.decisionId),
+    index("appr_target_idx").on(table.runId, table.targetKind, table.targetId),
+  ],
 );
 
 /** One line of a real execution receipt, written after a mutation succeeds. */

@@ -1,0 +1,443 @@
+/*
+ * Landing page styles.
+ *
+ * Scoped under `.nfr-landing`, which always sits inside `.workday-v3`, so every
+ * colour, size and font here resolves to a V3.3 token. The page borrows three
+ * things from the V2.4 presentation so the two read as one family: a light
+ * canvas, a single purple accent, and square geometry. No radius anywhere on
+ * this page, which is the presentation's rule and the clearest signal of kin.
+ *
+ * Calm is a constraint, not a mood. One accent colour, one filled button, one
+ * border weight, and the only moving part is the focus ring.
+ */
+
+/* The root layout paints a dark ambient wash for the presentation. A light
+   landing has no use for it, and the canvas must reach the window edge. The
+   literal matches --wd-canvas, which is scoped and cannot resolve at <html>. */
+html:has(.nfr-landing),
+html:has(.nfr-landing) body {
+  background: #f5f6f8;
+}
+
+html:has(.nfr-landing) .ambient {
+  display: none;
+}
+
+.nfr-landing {
+  min-height: 100dvh;
+  display: grid;
+  grid-template-rows: auto minmax(0, 1fr) auto auto;
+  background: var(--wd-canvas);
+  color: var(--wd-text);
+}
+
+/* One container rule for every band, so the header, the hero, the trust strip
+   and the footer share a left edge at every width. */
+.nfr-landing-inner {
+  width: 100%;
+  max-width: 1600px;
+  margin-inline: auto;
+  padding-inline: clamp(24px, 5vw, 96px);
+}
+
+/* ==========================================================================
+   Header
+   ========================================================================== */
+
+.nfr-landing-header {
+  background: var(--wd-surface);
+  border-bottom: 1px solid var(--wd-border);
+}
+
+.nfr-landing-header .nfr-landing-inner {
+  height: 56px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--wd-4);
+}
+
+.nfr-landing-wordmark {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  font-size: var(--wd-text-lg);
+  font-weight: var(--wd-weight-strong);
+  letter-spacing: 0.02em;
+  color: var(--wd-text);
+  text-decoration: none;
+}
+
+/* The square mark. Geometry, not a logo. */
+.nfr-landing-wordmark::before {
+  content: "";
+  width: 12px;
+  height: 12px;
+  background: var(--wd-accent);
+}
+
+.nfr-landing-synthetic {
+  font-size: var(--wd-text-xs);
+  color: var(--wd-text-muted);
+  white-space: nowrap;
+}
+
+/* ==========================================================================
+   Hero and proof
+   ========================================================================== */
+
+.nfr-landing-main {
+  display: flex;
+  align-items: center;
+  min-height: 0;
+}
+
+.nfr-landing-main .nfr-landing-inner {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1.05fr);
+  gap: clamp(32px, 5vw, 96px);
+  align-items: center;
+  padding-block: clamp(24px, 4.5vh, 64px);
+}
+
+.nfr-landing-eyebrow {
+  margin: 0;
+  font-size: var(--wd-text-xs);
+  font-weight: var(--wd-weight-strong);
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--wd-accent);
+}
+
+.nfr-landing-rule {
+  width: 48px;
+  height: 3px;
+  margin: 14px 0 clamp(16px, 2.6vh, 28px);
+  background: var(--wd-accent);
+  border: 0;
+}
+
+.nfr-landing-headline {
+  margin: 0;
+  max-width: 17ch;
+  font-size: clamp(34px, 3.4vw, 62px);
+  font-weight: var(--wd-weight-strong);
+  line-height: 1.08;
+  letter-spacing: -0.02em;
+  color: var(--wd-text);
+}
+
+.nfr-landing-supporting {
+  margin: clamp(14px, 2.4vh, 24px) 0 0;
+  max-width: 42ch;
+  font-size: clamp(16px, 1.25vw, 21px);
+  line-height: 1.45;
+  color: var(--wd-text-secondary);
+}
+
+.nfr-landing-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--wd-3);
+  margin-top: clamp(20px, 4vh, 40px);
+}
+
+.nfr-landing-secondary-action {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--wd-3);
+  margin-top: var(--wd-3);
+}
+
+.nfr-landing-reason {
+  font-size: var(--wd-text-xs);
+  color: var(--wd-text-muted);
+}
+
+/* ---- Buttons. Square, one filled, never more. ---- */
+
+.nfr-btn {
+  display: inline-flex;
+  align-items: center;
+  height: 44px;
+  padding: 0 20px;
+  border: 1px solid transparent;
+  border-radius: 0;
+  font: inherit;
+  font-size: var(--wd-text-md);
+  font-weight: var(--wd-weight-medium);
+  text-decoration: none;
+  white-space: nowrap;
+  cursor: pointer;
+}
+
+.nfr-btn:focus-visible {
+  outline: 2px solid var(--wd-accent);
+  outline-offset: 2px;
+}
+
+.nfr-btn-primary {
+  background: var(--wd-accent);
+  color: #ffffff;
+}
+
+.nfr-btn-primary:hover {
+  background: #4a3fe0;
+}
+
+.nfr-btn-secondary {
+  background: var(--wd-surface);
+  color: var(--wd-text);
+  border-color: var(--wd-border-strong);
+}
+
+.nfr-btn-secondary:hover {
+  border-color: var(--wd-accent);
+  color: var(--wd-accent);
+}
+
+/* Honestly disabled: visibly a control, visibly not available. */
+.nfr-btn-quiet {
+  height: 36px;
+  padding: 0 14px;
+  font-size: var(--wd-text-sm);
+  background: transparent;
+  color: var(--wd-text-disabled);
+  border: 1px dashed var(--wd-border-strong);
+  cursor: not-allowed;
+}
+
+/* ==========================================================================
+   Product proof
+   ========================================================================== */
+
+.nfr-proof {
+  display: flex;
+  flex-direction: column;
+  gap: var(--wd-3);
+  min-width: 0;
+}
+
+.nfr-proof-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--wd-1) var(--wd-4);
+}
+
+.nfr-proof-label {
+  margin: 0;
+  font-size: var(--wd-text-xs);
+  font-weight: var(--wd-weight-strong);
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--wd-text-muted);
+}
+
+.nfr-proof-source {
+  font-size: var(--wd-text-xs);
+  color: var(--wd-text-muted);
+  font-variant-numeric: tabular-nums;
+}
+
+.nfr-preview {
+  display: grid;
+  gap: var(--wd-3);
+  padding: clamp(14px, 2vh, 20px) 20px;
+  background: var(--wd-surface);
+  border: 1px solid var(--wd-border);
+  border-left: 3px solid var(--wd-accent);
+  min-width: 0;
+}
+
+.nfr-preview-head {
+  display: flex;
+  align-items: center;
+  gap: var(--wd-3);
+  min-width: 0;
+}
+
+.nfr-preview-title {
+  flex: 1;
+  min-width: 0;
+  margin: 0;
+  font-size: var(--wd-text-lg);
+  font-weight: var(--wd-weight-strong);
+  line-height: var(--wd-leading-tight);
+  color: var(--wd-text);
+}
+
+.nfr-preview-status {
+  flex-shrink: 0;
+  padding: 3px 8px;
+  font-size: 11px;
+  font-weight: var(--wd-weight-strong);
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--wd-success);
+  background: var(--wd-success-soft);
+}
+
+.nfr-preview-open {
+  flex-shrink: 0;
+  font-size: var(--wd-text-sm);
+  font-weight: var(--wd-weight-medium);
+  color: var(--wd-accent);
+  text-decoration: none;
+  white-space: nowrap;
+}
+
+.nfr-preview-open:hover {
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+.nfr-preview-open:focus-visible {
+  outline: 2px solid var(--wd-accent);
+  outline-offset: 2px;
+}
+
+.nfr-preview-rows {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: var(--wd-3);
+  margin: 0;
+}
+
+.nfr-preview-row {
+  display: grid;
+  align-content: start;
+  gap: var(--wd-1);
+  min-width: 0;
+}
+
+.nfr-preview-label {
+  font-size: var(--wd-text-xs);
+  font-weight: var(--wd-weight-medium);
+  color: var(--wd-text-muted);
+}
+
+.nfr-preview-value {
+  margin: 0;
+  font-size: var(--wd-text-base);
+  line-height: var(--wd-leading-snug);
+  color: var(--wd-text);
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.nfr-preview-value[data-state="empty"],
+.nfr-preview-value[data-state="unavailable"] {
+  color: var(--wd-text-muted);
+}
+
+.nfr-preview-detail {
+  font-size: var(--wd-text-xs);
+  color: var(--wd-text-secondary);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* The stage track. One square cell per stage, filled from stage run rows. */
+.nfr-stages {
+  display: grid;
+  gap: 3px;
+  margin-top: 6px;
+}
+
+.nfr-stage {
+  height: 6px;
+  background: var(--wd-border);
+}
+
+.nfr-stage[data-progress="completed"] {
+  background: var(--wd-accent);
+}
+
+.nfr-stage[data-progress="current"] {
+  background: var(--wd-accent-border);
+  box-shadow: inset 0 0 0 1px var(--wd-accent);
+}
+
+/* ==========================================================================
+   Trust strip and footer
+   ========================================================================== */
+
+.nfr-trust {
+  background: var(--wd-surface);
+  border-top: 1px solid var(--wd-border);
+  border-bottom: 1px solid var(--wd-border);
+}
+
+.nfr-trust ul {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: var(--wd-4);
+  margin-block: 0;
+  list-style: none;
+}
+
+.nfr-trust li {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding-block: 16px;
+  font-size: var(--wd-text-base);
+  font-weight: var(--wd-weight-medium);
+  color: var(--wd-text);
+}
+
+.nfr-trust li::before {
+  content: "";
+  flex-shrink: 0;
+  width: 8px;
+  height: 8px;
+  background: var(--wd-accent);
+}
+
+.nfr-landing-footer .nfr-landing-inner {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--wd-2) var(--wd-6);
+  padding-block: 14px;
+  font-size: var(--wd-text-xs);
+  color: var(--wd-text-muted);
+}
+
+.nfr-landing-footer p {
+  margin: 0;
+  max-width: 110ch;
+}
+
+.nfr-landing-footer a {
+  color: var(--wd-text-muted);
+  text-decoration: underline;
+  text-decoration-color: var(--wd-border-strong);
+  text-underline-offset: 2px;
+}
+
+.nfr-landing-footer a:hover {
+  color: var(--wd-accent);
+}
+
+/* ==========================================================================
+   Narrow widths. The three target viewports never reach this; a laptop
+   window snapped to half the screen does.
+   ========================================================================== */
+
+@media (max-width: 1080px) {
+  .nfr-landing-main .nfr-landing-inner {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .nfr-trust ul {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}

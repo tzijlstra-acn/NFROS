@@ -16,3 +16,8 @@ export * from "./live";
 export * from "./role-app-runtime";
 export * from "./audit-chain";
 export * from "./background-jobs";
+export * from "./os-events";
+export * from "./ai-partner";
+export * from "./product-console";
+export * from "./personalisation";
+export * from "./process-inputs";

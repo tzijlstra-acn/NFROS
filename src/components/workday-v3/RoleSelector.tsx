@@ -6,27 +6,102 @@
  * under `.workday-v3` so all V3 tokens resolve; it does not use the frame
  * layout because no role has been chosen yet.
  *
- * Data comes from the static release definitions, not the database. The
- * selector is therefore usable before the scenario is seeded and renders
- * identically on every request.
+ * Two sources, and only two:
+ *
+ * - Role status, names and summaries come from the release registry. Which
+ *   roles are Available, Demo or Planned is never decided here, and the
+ *   selector states no product claim of its own.
+ * - Each Available role carries one live professional signal, read from the
+ *   database through `src/features/role-signals`: the current focus (the top
+ *   Now item), the active process and its stage, and the next meeting with its
+ *   time. A signal with no data says so in words; nothing is substituted.
+ *
+ * Demo roles stay labelled Demo and open their explanatory page. Planned
+ * roles are listed without a link, because there is nothing to enter.
  *
  * Server component. No client-side state needed.
  */
 
 import Link from "next/link";
+import type { Language } from "@/i18n/labels";
 import {
-  ROLE_RELEASE_DEFINITIONS,
+  PRODUCT_IDENTITY,
+  ROLE_RELEASE_STATUS_LABELS,
   type RoleReleaseDefinition,
-} from "@/product/release/role-release";
+} from "@/product/release";
+import {
+  formatScenarioDate,
+  signalRowLabels,
+  type AvailableRoleView,
+  type RoleSignalOverview,
+  type SignalState,
+} from "@/features/role-signals";
 
-const available = ROLE_RELEASE_DEFINITIONS.filter((r) => r.status === "available");
-const demo = ROLE_RELEASE_DEFINITIONS.filter((r) => r.status === "demo");
-const planned = ROLE_RELEASE_DEFINITIONS.filter((r) => r.status === "planned");
+/*
+ * Interface words only. The product name and the release status words
+ * (Available, Demo, Planned) come from the release registry.
+ */
+const LABELS = {
+  synthetic: { en: "Synthetic institution and data", de: "Synthetische Institution und Daten" },
+  title: { en: "Choose your role", de: "Waehlen Sie Ihre Rolle" },
+  scenario: { en: "Synthetic scenario, {date}, {moment}", de: "Synthetisches Szenario, {date}, {moment}" },
+  scenarioUnavailable: {
+    en: "Unavailable: the scenario has not been seeded",
+    de: "Nicht verfuegbar: das Szenario wurde nicht geladen",
+  },
+  available: { en: "Available now", de: "Jetzt verfuegbar" },
+  openWorkday: { en: "Open workday", de: "Arbeitstag oeffnen" },
+  viewDemo: { en: "View demo", de: "Demo ansehen" },
+  noneAvailable: {
+    en: "No role is marked Available in the release registry.",
+    de: "Im Release-Verzeichnis ist keine Rolle als verfuegbar markiert.",
+  },
+  refused: {
+    en: "{role} is Planned. It is not part of this release, so it cannot be opened. Choose an available role below.",
+    de: "{role} ist geplant. Die Rolle gehoert nicht zu diesem Release und kann nicht geoeffnet werden. Waehlen Sie unten eine verfuegbare Rolle.",
+  },
+} as const;
 
-export function RoleSelector() {
+function pick(pair: { en: string; de: string }, language: Language): string {
+  return language === "de" ? pair.de : pair.en;
+}
+
+const sectionLabelStyle: React.CSSProperties = {
+  fontSize: "var(--wd-text-xs)",
+  fontWeight: "var(--wd-weight-medium)",
+  color: "var(--wd-text-muted)",
+  letterSpacing: "0.01em",
+  margin: "0 0 var(--wd-3)",
+};
+
+const listFrameStyle: React.CSSProperties = {
+  display: "flex",
+  flexDirection: "column",
+  background: "var(--wd-surface)",
+  border: "1px solid var(--wd-border)",
+  borderRadius: "var(--wd-radius-lg)",
+  overflow: "hidden",
+};
+
+export function RoleSelector({
+  overview,
+  refusedRole = null,
+}: {
+  overview: RoleSignalOverview;
+  /** A Planned role the release gate refused, named by the redirect. */
+  refusedRole?: RoleReleaseDefinition | null;
+}) {
+  const { language } = overview;
+  const scenarioLine = overview.scenario
+    ? pick(LABELS.scenario, language)
+        .replace("{date}", formatScenarioDate(overview.scenario.date))
+        .replace("{moment}", overview.scenario.moment)
+    : pick(LABELS.scenarioUnavailable, language);
+
   return (
     <div
       className="workday-v3"
+      lang={language}
       style={{
         minHeight: "100dvh",
         background: "var(--wd-canvas)",
@@ -52,14 +127,19 @@ export function RoleSelector() {
         <Link
           href="/"
           style={{
+            display: "inline-flex",
+            alignItems: "center",
+            gap: 8,
             fontSize: "var(--wd-text-base)",
             fontWeight: "var(--wd-weight-strong)",
-            letterSpacing: "-0.01em",
+            letterSpacing: "0.02em",
             color: "var(--wd-text)",
             textDecoration: "none",
           }}
         >
-          NFR WorkOS
+          {/* The same square mark as the entry page, so the two read as one product. */}
+          <span aria-hidden="true" style={{ width: 10, height: 10, background: "var(--wd-accent)" }} />
+          {PRODUCT_IDENTITY.name}
         </Link>
         <span
           style={{
@@ -67,7 +147,7 @@ export function RoleSelector() {
             color: "var(--wd-text-muted)",
           }}
         >
-          Synthetic institution and data
+          {pick(LABELS.synthetic, language)}
         </span>
       </header>
 
@@ -76,20 +156,28 @@ export function RoleSelector() {
         id="main"
         style={{
           flex: 1,
-          padding: "var(--wd-10) var(--wd-6)",
+          padding: "var(--wd-6) var(--wd-6) var(--wd-8)",
         }}
       >
         <div
           style={{
-            maxWidth: 1040,
+            maxWidth: 1080,
             marginInline: "auto",
             display: "flex",
             flexDirection: "column",
-            gap: "var(--wd-8)",
+            gap: "var(--wd-6)",
           }}
         >
-          {/* Page title */}
-          <div>
+          {/* Page title and the clock the signals were read at */}
+          <div
+            style={{
+              display: "flex",
+              alignItems: "baseline",
+              justifyContent: "space-between",
+              flexWrap: "wrap",
+              gap: "var(--wd-2) var(--wd-6)",
+            }}
+          >
             <h1
               style={{
                 fontSize: "var(--wd-text-2xl)",
@@ -100,193 +188,278 @@ export function RoleSelector() {
                 color: "var(--wd-text)",
               }}
             >
-              Choose your role
+              {pick(LABELS.title, language)}
             </h1>
+            <span
+              data-testid="selector-scenario"
+              style={{
+                fontSize: "var(--wd-text-xs)",
+                color: "var(--wd-text-muted)",
+                fontVariantNumeric: "tabular-nums",
+              }}
+            >
+              {scenarioLine}
+            </span>
           </div>
 
+          {/* Why a Planned role's link brought the reader here, when it did. */}
+          {refusedRole ? (
+            <p className="wd-notice" role="status" data-testid="role-refused-notice" style={{ margin: 0 }}>
+              {pick(LABELS.refused, language).replace("{role}", refusedRole.releaseLabel)}
+            </p>
+          ) : null}
+
           {/* Available roles */}
-          <section>
-            <p
-              style={{
-                fontSize: "var(--wd-text-xs)",
-                fontWeight: "var(--wd-weight-medium)",
-                color: "var(--wd-text-muted)",
-                letterSpacing: "0.01em",
-                marginBottom: "var(--wd-3)",
-              }}
-            >
-              Available now
-            </p>
-            <div
-              style={{
-                display: "flex",
-                flexDirection: "column",
-                gap: "var(--wd-3)",
-              }}
-            >
-              {available.map((role) => (
-                <FlagshipRow key={role.roleId} role={role} />
-              ))}
-            </div>
+          <section aria-labelledby="selector-available">
+            <h2 id="selector-available" style={sectionLabelStyle}>
+              {pick(LABELS.available, language)}
+            </h2>
+            {overview.available.length === 0 ? (
+              <p style={{ fontSize: "var(--wd-text-sm)", color: "var(--wd-text-muted)", margin: 0 }}>
+                {pick(LABELS.noneAvailable, language)}
+              </p>
+            ) : (
+              <div style={{ display: "flex", flexDirection: "column", gap: "var(--wd-3)" }}>
+                {overview.available.map((role) => (
+                  <FlagshipRow key={role.release.roleId} role={role} language={language} />
+                ))}
+              </div>
+            )}
           </section>
 
-          {/* Demo roles */}
-          <section>
-            <p
-              style={{
-                fontSize: "var(--wd-text-xs)",
-                fontWeight: "var(--wd-weight-medium)",
-                color: "var(--wd-text-muted)",
-                letterSpacing: "0.01em",
-                marginBottom: "var(--wd-3)",
-              }}
-            >
-              Demo
-            </p>
-            <div
-              style={{
-                display: "flex",
-                flexDirection: "column",
-                background: "var(--wd-surface)",
-                border: "1px solid var(--wd-border)",
-                borderRadius: "var(--wd-radius-lg)",
-                overflow: "hidden",
-              }}
-            >
-              {demo.map((role, index) => (
-                <DemoRow key={role.roleId} role={role} isFirst={index === 0} />
-              ))}
-            </div>
-          </section>
+          {/* Demo and Planned side by side: both are short lists, and stacking
+              them pushed the second below the fold at 1366x768. */}
+          <div
+            style={{
+              display: "grid",
+              gridTemplateColumns: "repeat(auto-fit, minmax(min(100%, 420px), 1fr))",
+              gap: "var(--wd-6)",
+              alignItems: "start",
+            }}
+          >
+            {overview.demo.length > 0 ? (
+              <section aria-labelledby="selector-demo">
+                <h2 id="selector-demo" style={sectionLabelStyle}>
+                  {pick(ROLE_RELEASE_STATUS_LABELS.demo, language)}
+                </h2>
+                <div style={listFrameStyle}>
+                  {overview.demo.map((role, index) => (
+                    <DemoRow key={role.roleId} role={role} isFirst={index === 0} language={language} />
+                  ))}
+                </div>
+              </section>
+            ) : null}
 
-          {/* Planned roles */}
-          <section>
-            <p
-              style={{
-                fontSize: "var(--wd-text-xs)",
-                fontWeight: "var(--wd-weight-medium)",
-                color: "var(--wd-text-muted)",
-                letterSpacing: "0.01em",
-                marginBottom: "var(--wd-3)",
-              }}
-            >
-              Planned
-            </p>
-            <div
-              style={{
-                display: "flex",
-                flexDirection: "column",
-                background: "var(--wd-surface)",
-                border: "1px solid var(--wd-border)",
-                borderRadius: "var(--wd-radius-lg)",
-                overflow: "hidden",
-              }}
-            >
-              {planned.map((role, index) => (
-                <PlannedRow key={role.roleId} role={role} isFirst={index === 0} />
-              ))}
-            </div>
-          </section>
+            {overview.planned.length > 0 ? (
+              <section aria-labelledby="selector-planned">
+                <h2 id="selector-planned" style={sectionLabelStyle}>
+                  {pick(ROLE_RELEASE_STATUS_LABELS.planned, language)}
+                </h2>
+                <div style={listFrameStyle}>
+                  {overview.planned.map((role, index) => (
+                    <PlannedRow key={role.roleId} role={role} isFirst={index === 0} language={language} />
+                  ))}
+                </div>
+              </section>
+            ) : null}
+          </div>
         </div>
       </main>
     </div>
   );
 }
 
-function FlagshipRow({ role }: { role: RoleReleaseDefinition }) {
+function summaryOf(role: RoleReleaseDefinition, language: Language): string {
+  return language === "de" && role.summaryDe.length > 0 ? role.summaryDe : role.summary;
+}
+
+function FlagshipRow({ role, language }: { role: AvailableRoleView; language: Language }) {
+  const { release, signals } = role;
+  const rows = signalRowLabels(language);
+  const processDetail = [signals.process.stageName, signals.process.stageStatus]
+    .filter(Boolean)
+    .join(", ");
+
   return (
-    <div
+    <article
+      aria-labelledby={`role-${release.roleId}`}
+      data-testid={`flagship-${release.roleId}`}
       style={{
         background: "var(--wd-surface)",
         border: "1px solid var(--wd-border)",
         borderRadius: "var(--wd-radius-lg)",
         padding: "var(--wd-5) var(--wd-6)",
         display: "flex",
-        alignItems: "flex-start",
-        justifyContent: "space-between",
-        gap: "var(--wd-6)",
+        flexDirection: "column",
+        gap: "var(--wd-4)",
       }}
     >
       <div
         style={{
-          flex: 1,
-          minWidth: 0,
           display: "flex",
-          flexDirection: "column",
-          gap: "var(--wd-2)",
+          alignItems: "flex-start",
+          justifyContent: "space-between",
+          gap: "var(--wd-6)",
         }}
       >
-        <span
-          style={{
-            fontSize: "var(--wd-text-md)",
-            fontWeight: "var(--wd-weight-strong)",
-            color: "var(--wd-text)",
-            lineHeight: "var(--wd-leading-tight)",
-          }}
-        >
-          {role.releaseLabel}
-        </span>
-        <p
-          style={{
-            fontSize: "var(--wd-text-sm)",
-            color: "var(--wd-text-secondary)",
-            lineHeight: "var(--wd-leading-snug)",
-            margin: 0,
-          }}
-        >
-          {role.summary}
-        </p>
-        {role.primaryProcesses.length > 0 ? (
-          <div
+        <div style={{ flex: 1, minWidth: 0, display: "flex", flexDirection: "column", gap: "var(--wd-1)" }}>
+          <h3
+            id={`role-${release.roleId}`}
             style={{
-              display: "flex",
-              gap: "var(--wd-2)",
-              flexWrap: "wrap",
-              marginTop: "var(--wd-1)",
+              fontSize: "var(--wd-text-md)",
+              fontWeight: "var(--wd-weight-strong)",
+              color: "var(--wd-text)",
+              lineHeight: "var(--wd-leading-tight)",
+              margin: 0,
             }}
           >
-            {role.primaryProcesses.map((process) => (
-              <span
-                key={process}
-                style={{
-                  fontSize: "var(--wd-text-xs)",
-                  color: "var(--wd-text-muted)",
-                  background: "var(--wd-surface-hover)",
-                  borderRadius: "var(--wd-radius-sm)",
-                  padding: "2px var(--wd-2)",
-                  lineHeight: 1.4,
-                }}
-              >
-                {process}
-              </span>
-            ))}
-          </div>
-        ) : null}
+            {release.releaseLabel}
+          </h3>
+          <p
+            style={{
+              fontSize: "var(--wd-text-sm)",
+              color: "var(--wd-text-secondary)",
+              lineHeight: "var(--wd-leading-snug)",
+              margin: 0,
+            }}
+          >
+            {summaryOf(release, language)}
+          </p>
+        </div>
+        <Link
+          href={release.defaultRoute ?? `/workday/${release.roleId}`}
+          style={{
+            display: "inline-flex",
+            alignItems: "center",
+            height: 32,
+            padding: "0 var(--wd-4)",
+            borderRadius: "var(--wd-radius)",
+            background: "var(--wd-accent)",
+            color: "#ffffff",
+            fontSize: "var(--wd-text-sm)",
+            fontWeight: "var(--wd-weight-medium)",
+            textDecoration: "none",
+            whiteSpace: "nowrap",
+            flexShrink: 0,
+          }}
+        >
+          {pick(LABELS.openWorkday, language)}
+        </Link>
       </div>
-      <Link
-        href={`/workday/${role.roleId}`}
+
+      {/* The live signal, three facts read from the database */}
+      <dl
+        data-testid={`signals-${release.roleId}`}
         style={{
-          display: "inline-flex",
-          alignItems: "center",
-          height: 32,
-          padding: "0 var(--wd-4)",
-          borderRadius: "var(--wd-radius)",
-          background: "var(--wd-accent)",
-          color: "#ffffff",
-          fontSize: "var(--wd-text-sm)",
-          fontWeight: "var(--wd-weight-medium)",
-          textDecoration: "none",
-          whiteSpace: "nowrap",
-          flexShrink: 0,
+          display: "grid",
+          gridTemplateColumns: "repeat(3, minmax(0, 1fr))",
+          gap: "var(--wd-5)",
+          margin: 0,
+          paddingTop: "var(--wd-4)",
+          borderTop: "1px solid var(--wd-border)",
         }}
       >
-        Open workday
-      </Link>
+        <Signal label={rows.focus} state={signals.focus.state} testId="signal-focus">
+          {signals.focus.value}
+        </Signal>
+        <Signal
+          label={rows.process}
+          state={signals.process.state}
+          testId="signal-process"
+          detail={processDetail.length > 0 ? processDetail : null}
+        >
+          {signals.process.value}
+        </Signal>
+        <Signal label={rows.meeting} state={signals.meeting.state} testId="signal-meeting">
+          {signals.meeting.time !== null ? (
+            <>
+              <span
+                style={{
+                  fontFamily: "var(--wd-font-mono)",
+                  fontVariantNumeric: "tabular-nums",
+                  color: "var(--wd-text)",
+                  marginRight: "var(--wd-2)",
+                }}
+              >
+                {signals.meeting.time}
+              </span>
+              {signals.meeting.value}
+            </>
+          ) : (
+            signals.meeting.value
+          )}
+        </Signal>
+      </dl>
+    </article>
+  );
+}
+
+/** One labelled signal. Empty and Unavailable read muted, never as data. */
+function Signal({
+  label,
+  state,
+  testId,
+  detail = null,
+  children,
+}: {
+  label: string;
+  state: SignalState;
+  testId: string;
+  detail?: string | null;
+  children: React.ReactNode;
+}) {
+  return (
+    <div data-testid={testId} data-state={state} style={{ minWidth: 0, display: "flex", flexDirection: "column", gap: 2 }}>
+      <dt
+        style={{
+          fontSize: "var(--wd-text-xs)",
+          fontWeight: "var(--wd-weight-medium)",
+          color: "var(--wd-text-muted)",
+        }}
+      >
+        {label}
+      </dt>
+      <dd
+        style={{
+          margin: 0,
+          fontSize: "var(--wd-text-sm)",
+          lineHeight: "var(--wd-leading-snug)",
+          color: state === "present" ? "var(--wd-text)" : "var(--wd-text-muted)",
+          display: "-webkit-box",
+          WebkitLineClamp: 2,
+          WebkitBoxOrient: "vertical",
+          overflow: "hidden",
+        }}
+      >
+        {children}
+      </dd>
+      {detail !== null ? (
+        <dd
+          style={{
+            margin: 0,
+            fontSize: "var(--wd-text-xs)",
+            color: "var(--wd-text-secondary)",
+            whiteSpace: "nowrap",
+            overflow: "hidden",
+            textOverflow: "ellipsis",
+          }}
+        >
+          {detail}
+        </dd>
+      ) : null}
     </div>
   );
 }
 
-function DemoRow({ role, isFirst }: { role: RoleReleaseDefinition; isFirst: boolean }) {
+function DemoRow({
+  role,
+  isFirst,
+  language,
+}: {
+  role: RoleReleaseDefinition;
+  isFirst: boolean;
+  language: Language;
+}) {
   return (
     <div
       style={{
@@ -321,7 +494,7 @@ function DemoRow({ role, isFirst }: { role: RoleReleaseDefinition; isFirst: bool
             color: "var(--wd-text-muted)",
           }}
         >
-          {role.summary}
+          {summaryOf(role, language)}
         </span>
       </div>
       <span
@@ -339,10 +512,11 @@ function DemoRow({ role, isFirst }: { role: RoleReleaseDefinition; isFirst: bool
           flexShrink: 0,
         }}
       >
-        Demo
+        {pick(ROLE_RELEASE_STATUS_LABELS[role.status], language)}
       </span>
       <Link
-        href={`/workday/${role.roleId}`}
+        href={role.defaultRoute ?? `/workday/${role.roleId}`}
+        aria-label={`${pick(LABELS.viewDemo, language)}: ${role.releaseLabel}`}
         style={{
           fontSize: "var(--wd-text-xs)",
           color: "var(--wd-text-muted)",
@@ -353,22 +527,35 @@ function DemoRow({ role, isFirst }: { role: RoleReleaseDefinition; isFirst: bool
           flexShrink: 0,
         }}
       >
-        View demo
+        {pick(LABELS.viewDemo, language)}
       </Link>
     </div>
   );
 }
 
-function PlannedRow({ role, isFirst }: { role: RoleReleaseDefinition; isFirst: boolean }) {
+function PlannedRow({
+  role,
+  isFirst,
+  language,
+}: {
+  role: RoleReleaseDefinition;
+  isFirst: boolean;
+  language: Language;
+}) {
   return (
     <div
+      data-testid={`planned-${role.roleId}`}
       style={{
         display: "flex",
         alignItems: "center",
         gap: "var(--wd-4)",
         padding: "var(--wd-3) var(--wd-4)",
         borderTop: isFirst ? undefined : "1px solid var(--wd-border)",
-        opacity: 0.6,
+        /*
+         * No opacity. Muted text at 60 percent opacity measured 2.59:1 and
+         * failed WCAG AA; the row reads as not enterable from its muted text,
+         * its Planned label and the absence of a link.
+         */
       }}
     >
       <div
@@ -395,7 +582,7 @@ function PlannedRow({ role, isFirst }: { role: RoleReleaseDefinition; isFirst: b
             color: "var(--wd-text-muted)",
           }}
         >
-          {role.summary}
+          {summaryOf(role, language)}
         </span>
       </div>
       <span
@@ -413,7 +600,7 @@ function PlannedRow({ role, isFirst }: { role: RoleReleaseDefinition; isFirst: b
           flexShrink: 0,
         }}
       >
-        Planned
+        {pick(ROLE_RELEASE_STATUS_LABELS[role.status], language)}
       </span>
     </div>
   );

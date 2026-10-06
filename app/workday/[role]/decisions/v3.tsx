@@ -1,14 +1,18 @@
 /**
- * Decisions, V3.1.
+ * Decisions, V3.3.
  *
- * Thin, like the other V3.1 routes. The frame, the header, the navigation, the
+ * Thin, like the other V3.3 routes. The frame, the header, the navigation, the
  * updates bar and the contextual drawer come from `layout.tsx` and are already
  * on screen before this renders. This supplies the main region only: the
- * location line, the page label, one line of counted context, and the queue.
+ * location line, the page label, one line of counted context, and the queue
+ * with its five-part workspace.
  *
  * Nothing about the domain is computed here. `buildDecisionQueueView` reads
- * the decisions, their options, the execution receipt, the accountable person
- * and the authority gate's verdict, all through things that already existed.
+ * the decisions, the decision engine's plan for each option, the receipt and
+ * outcome of recorded decisions, the process stage and meeting each decision
+ * belongs to, the accountable person and the authority gate's verdict. The
+ * route role is the acting role: the workspace sends it with every confirm,
+ * and the engine refuses a decision that belongs to another role.
  */
 
 import { notFound } from "next/navigation";

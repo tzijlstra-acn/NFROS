@@ -358,6 +358,16 @@ export {
 } from "./DeadLetterStore";
 
 export {
+  /* Paused writes. The dispatcher holds a paused connector's commands in the outbox. */
+  isWritePaused,
+  getWritePause,
+  listWritePauses,
+  recordWritePause,
+  WRITE_PAUSE_AREA,
+  type WritePauseState,
+} from "./WritePause";
+
+export {
   buildIdempotencyKey,
   findCommandById,
   findCommandByIdempotencyKey,

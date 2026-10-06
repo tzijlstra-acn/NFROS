@@ -1,11 +1,12 @@
 /* ==========================================================================
-   The V3.1 decision queue
+   The V3.3 decision workspace
    ==========================================================================
 
-   One queue, one expanded decision, one visible stage. Everything here is
-   `wd-dq-*`, so it is obvious at a glance which rules belong to this feature
-   and which are the shared V3.1 vocabulary it builds on. The row itself is
-   `.wd-queue-row` from `workday-v3.css`; this file only gives it a grid.
+   One queue, one expanded decision, one visible part of five. Everything here
+   is `wd-dq-*`, so it is obvious at a glance which rules belong to this
+   feature and which are the shared V3.3 vocabulary it builds on. The row
+   itself is `.wd-queue-row` from `workday-v3.css`; this file only gives it a
+   grid.
 
    No colour value is declared anywhere below. Every colour is a `--wd-*`
    token, which is what keeps light and dark correct without a second set of
@@ -13,16 +14,18 @@
 
    The information budget is the reason for the measurements rather than a note
    about them. At 1366x768 the main region has 680px below the header and above
-   the updates bar. The page block takes about 96px, three collapsed rows take
-   120px, the selected row takes 40px, and the stage panel is sized to the
-   remainder: `--wd-dq-stage-h` is the floor that stops the panel from jumping
-   as the reader moves between a short stage and a long one, and it is set so
-   that the queue and the active stage are both on screen at once.
+   the updates bar. The page block takes about 96px, three or four collapsed
+   rows take 120 to 160px, and the panel is sized to the remainder:
+   `--wd-dq-stage-h` is the floor that stops the panel from jumping as the
+   reader moves between a short part and a long one. Every part is laid out in
+   two columns at the reading width, because two columns of three short facts
+   are shorter than one column of six, and the forward control has to stay on
+   screen.
    ========================================================================== */
 
 .workday-v3 {
-  /* The stage body's minimum height. Prevents a reflow between stages. */
-  --wd-dq-stage-h: 168px;
+  /* The part body's minimum height. Prevents a reflow between parts. */
+  --wd-dq-stage-h: 196px;
 }
 
 /* ==========================================================================
@@ -31,21 +34,11 @@
 
 /*
  * Four cells on one line: what distinguishes the decision, the kind of
- * judgment, the authority class, and when it arrived.
- *
- * The headline takes the free space and truncates. The other three are content
- * sized, because a reader scanning down the column for "Approval required"
- * needs the chips to line up, and a percentage split would move them as the
- * headlines changed length.
+ * judgment, the authority class, and when it arrived. The compact row height,
+ * because a queued row is one line of text.
  */
-/*
- * The compact row height, not the standard one.
- *
- * A queued row here is one line of text, so 34px is the right token for it,
- * and the 6px a standard row would add four times over is 24px of the stage
- * panel's budget. `--wd-row-h-compact` already exists for exactly this case.
- */
-.wd-dq-row {
+.wd-dq-row,
+.wd-dq-stage-row {
   grid-template-columns: minmax(0, 1fr) auto auto auto;
   min-height: var(--wd-row-h-compact);
 }
@@ -54,25 +47,46 @@
   font-weight: var(--wd-weight-medium);
 }
 
+/* A stage row is a link to the stage; it reads as a row, not as underlined text. */
+.wd-dq-stage-row,
+.wd-dq-stage-row:hover {
+  text-decoration: none;
+}
+
 .wd-dq-row[data-selected="true"] .wd-dq-row-headline {
   color: var(--wd-text);
 }
 
-/*
- * The judgment kind is the first thing to go when the column narrows.
- *
- * It is a useful secondary, not a necessary one: the headline already says
- * what the decision turns on. Dropping it below 1100px keeps the row one line
- * rather than letting it wrap, which is the property the brief asks for.
- */
+/* The judgment kind is the first thing to go when the column narrows. */
 @media (max-width: 1100px) {
   .wd-dq-row-kind {
     display: none;
   }
 
-  .wd-dq-row {
+  .wd-dq-row,
+  .wd-dq-stage-row {
     grid-template-columns: minmax(0, 1fr) auto auto;
   }
+}
+
+/* A recorded row is a button that opens its receipt. */
+.wd-dq-recorded-row {
+  width: 100%;
+  border: 0;
+  background: transparent;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+  padding-inline: var(--wd-2);
+  border-radius: var(--wd-radius);
+}
+
+.wd-dq-recorded-row:hover {
+  background: var(--wd-surface-hover);
+}
+
+.wd-dq-recorded-row[data-selected="true"] {
+  background: var(--wd-surface-selected);
 }
 
 /* ==========================================================================
@@ -80,11 +94,8 @@
    ========================================================================== */
 
 /*
- * The expanded panel sits inside the queue, directly under its own row.
- *
- * An accent edge on the left ties it to the selected row above it, which
- * carries the same edge from `.wd-queue-row[data-selected="true"]`. A full
- * border would draw a second container inside the one the queue already has.
+ * The expanded panel sits inside the queue, directly under it. An accent edge
+ * on the left ties it to the selected row, which carries the same edge.
  */
 .wd-dq-active {
   display: flex;
@@ -96,16 +107,10 @@
   border-left: 3px solid var(--wd-accent);
   border-radius: var(--wd-radius-lg);
   background: var(--wd-surface);
+  min-width: 0;
 }
 
-/*
- * The page's own bottom padding, reclaimed on this route only.
- *
- * `.wd-main-inner` ends every V3.1 page with 40px, which is right for a page
- * that finishes in a disclosure and wrong for one that finishes in a bordered
- * panel holding the confirm action. Scoped with `:has` so it applies to this
- * queue and to nothing else, rather than by changing the shared rule.
- */
+/* The page's own bottom padding, reclaimed on this route only. */
 .wd-main-inner:has(.wd-dq-row) {
   padding-bottom: var(--wd-5);
 }
@@ -114,13 +119,6 @@
    The stage indicator
    ========================================================================== */
 
-/*
- * Four steps, with the current one the only one carrying weight.
- *
- * A completed step is a button so the reader can go back without stepping
- * through, and a step ahead is inert text. The numbers are there because
- * "Explain" on its own does not say that two stages come before it.
- */
 .wd-dq-steps {
   display: flex;
   flex-wrap: wrap;
@@ -139,7 +137,7 @@
 
 .wd-dq-step + .wd-dq-step::before {
   content: "";
-  width: 12px;
+  width: 10px;
   height: 1px;
   background: var(--wd-border-strong);
   flex-shrink: 0;
@@ -201,16 +199,10 @@
 }
 
 /* ==========================================================================
-   Stage bodies
+   Shared part vocabulary
    ========================================================================== */
 
-/*
- * The stepper and the stage brief on one row.
- *
- * `baseline` rather than `center` so the hint sits on the same text line as
- * the step labels, and `wrap` so a narrow column drops it under the stepper
- * instead of compressing either.
- */
+/* The stepper and the part brief on one row; a narrow column drops the brief under it. */
 .wd-dq-stage-head {
   display: flex;
   align-items: baseline;
@@ -219,7 +211,6 @@
   flex-wrap: wrap;
 }
 
-/* What this stage asks for. One line, quiet, beside the stepper. */
 .wd-dq-hint {
   text-align: right;
   min-width: 0;
@@ -230,6 +221,7 @@
 
 .wd-dq-stage {
   min-height: var(--wd-dq-stage-h);
+  min-width: 0;
 }
 
 .wd-dq-body {
@@ -237,6 +229,12 @@
   line-height: var(--wd-leading-snug);
   color: var(--wd-text-secondary);
   margin: 0;
+  overflow-wrap: anywhere;
+}
+
+.wd-dq-strongish {
+  color: var(--wd-text);
+  font-weight: var(--wd-weight-medium);
 }
 
 .wd-dq-label {
@@ -257,25 +255,245 @@
   font-size: var(--wd-text-xs);
   line-height: var(--wd-leading-snug);
   color: var(--wd-text-muted);
+  overflow-wrap: anywhere;
+}
+
+.wd-dq-micro[data-tone="warning"] {
+  color: var(--wd-warning);
+}
+
+/* An honest empty statement: no process, no meeting, no deadline. */
+.wd-dq-muted-line {
+  display: block;
+  font-size: var(--wd-text-sm);
+  line-height: var(--wd-leading-snug);
+  color: var(--wd-text-muted);
+}
+
+.wd-dq-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: var(--wd-text-sm);
+  line-height: var(--wd-leading-snug);
+  color: var(--wd-accent);
+  text-decoration: underline;
+  text-decoration-thickness: 1px;
+  text-underline-offset: 3px;
+  text-decoration-color: color-mix(in srgb, var(--wd-accent) 40%, transparent);
+  min-width: 0;
+}
+
+.wd-dq-link:hover {
+  text-decoration-color: currentcolor;
+}
+
+.wd-dq-clamp-2,
+.wd-dq-clamp-3 {
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.wd-dq-clamp-2 {
+  -webkit-line-clamp: 2;
+  line-clamp: 2;
+}
+
+.wd-dq-clamp-3 {
+  -webkit-line-clamp: 3;
+  line-clamp: 3;
+}
+
+.wd-dq-truncate {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  min-width: 0;
+}
+
+/*
+ * A definition list of short facts, two across. Used for the four authority
+ * facts on the Question, and for the rationale and approvals on the receipt.
+ */
+.wd-dq-facts {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+  gap: var(--wd-2) var(--wd-4);
+  margin: 0;
+  padding: var(--wd-2) var(--wd-3);
+  border: 1px solid var(--wd-border);
+  border-radius: var(--wd-radius);
+}
+
+.wd-dq-facts dt {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: var(--wd-text-xs);
+  color: var(--wd-text-muted);
+  margin-bottom: 2px;
+}
+
+.wd-dq-facts dd {
+  margin: 0;
+  font-size: var(--wd-text-sm);
+  line-height: var(--wd-leading-snug);
+  color: var(--wd-text);
+  overflow-wrap: anywhere;
+}
+
+.wd-dq-facts-wide {
+  grid-column: 1 / -1;
 }
 
 /* ==========================================================================
-   Compare
+   1. Question
+   ========================================================================== */
+
+/* One professional question, with the weight of the screen on it. */
+.wd-dq-question {
+  margin: 0;
+  font-size: var(--wd-text-md);
+  font-weight: var(--wd-weight-medium);
+  line-height: var(--wd-leading-snug);
+  color: var(--wd-text);
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  line-clamp: 3;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+/* ==========================================================================
+   2. Context
    ========================================================================== */
 
 /*
- * Options side by side, two across.
- *
- * The floor is 320px rather than 240px, which at the 880px reading column
- * means two per row rather than three. Three fitted and read badly: a seeded
- * option label such as "Material gap: raise a reassessment finding and
- * require a dated remediation plan" took three of the card's lines at 240px
- * and left one for what the option implies, which is the field a reader is
- * actually comparing. Two per row gives the label two lines and the
- * implication two, and four options still make two rows rather than four.
- *
- * `auto-fit` rather than a fixed two, so a narrow viewport collapses to one
- * column without a breakpoint per option count.
+ * Six facts in a two column grid: the trigger across the top, then process,
+ * meeting, affected object and deadline, then the current position across the
+ * bottom.
+ */
+.wd-dq-context {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--wd-2) var(--wd-4);
+}
+
+.wd-dq-context > div {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.wd-dq-context-wide {
+  grid-column: 1 / -1;
+}
+
+.wd-dq-body[data-passed="true"] {
+  color: var(--wd-warning);
+}
+
+@media (max-width: 900px) {
+  .wd-dq-context {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+/* ==========================================================================
+   3. Evidence
+   ========================================================================== */
+
+/* The strongest case each way, side by side, because the point is to weigh them. */
+.wd-dq-evidence-pair {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: var(--wd-2);
+}
+
+.wd-dq-evidence-card {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 2px;
+  padding: var(--wd-2) var(--wd-3);
+  border: 1px solid var(--wd-border);
+  border-left-width: 3px;
+  border-radius: var(--wd-radius);
+  min-width: 0;
+}
+
+.wd-dq-evidence-card[data-tone="for"] {
+  border-left-color: var(--wd-success);
+}
+
+.wd-dq-evidence-card[data-tone="against"] {
+  border-left-color: var(--wd-warning);
+}
+
+.wd-dq-evidence-card > .wd-dq-micro {
+  max-width: 100%;
+}
+
+/* Conflict, stale source and uncertainty: three facts on one row where the width allows. */
+.wd-dq-evidence-facts {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: var(--wd-2) var(--wd-4);
+  margin: 0;
+}
+
+.wd-dq-evidence-facts dt {
+  font-size: var(--wd-text-xs);
+  color: var(--wd-text-muted);
+  margin-bottom: 2px;
+}
+
+.wd-dq-evidence-facts dd {
+  margin: 0;
+  font-size: var(--wd-text-xs);
+  line-height: var(--wd-leading-snug);
+  color: var(--wd-text-secondary);
+  overflow-wrap: anywhere;
+}
+
+.wd-dq-evidence-list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--wd-1);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.wd-dq-evidence-list li {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  align-items: center;
+  gap: var(--wd-2);
+  font-size: var(--wd-text-xs);
+  color: var(--wd-text-secondary);
+}
+
+/* The AI block carries the accent tint it carries everywhere else. */
+.wd-dq-prepared {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: var(--wd-1) var(--wd-3);
+  border-radius: var(--wd-radius);
+  background: var(--wd-accent-soft);
+}
+
+/* ==========================================================================
+   4. Options
+   ========================================================================== */
+
+/*
+ * Options side by side, two across. The floor is 320px, which at the reading
+ * column means two per row: three fitted and read badly, with the label taking
+ * the card and leaving no room for what the option implies.
  */
 .wd-dq-options {
   display: grid;
@@ -296,6 +514,7 @@
   line-height: var(--wd-leading-snug);
   text-align: left;
   cursor: pointer;
+  min-width: 0;
   transition:
     border-color var(--wd-t-fast) var(--wd-ease),
     background var(--wd-t-fast) var(--wd-ease);
@@ -311,29 +530,14 @@
   background: var(--wd-accent-soft);
 }
 
-/*
- * The label, then the recommendation marker under it.
- *
- * A row with the chip pushed right was the first attempt, and the rendered
- * card showed why it is wrong: the chip does not shrink, so on a 240px card
- * the label was squeezed into a five word column while the chip kept its full
- * width. Stacked, the label gets the whole card and the marker reads as an
- * annotation on it, which is what it is.
- */
 .wd-dq-option-head {
   display: flex;
-  flex-direction: column;
   align-items: flex-start;
-  gap: var(--wd-1);
+  justify-content: space-between;
+  gap: var(--wd-2);
+  min-width: 0;
 }
 
-/*
- * Clamped to two lines, like the implication under it.
- *
- * Four options at 1366 give two rows of two cards, and an unclamped label on
- * one seeded option ran to three lines and set the height of both rows. The
- * full label is read back at Confirm, where there is room for it.
- */
 .wd-dq-option-label {
   display: -webkit-box;
   -webkit-line-clamp: 2;
@@ -344,16 +548,10 @@
   font-weight: var(--wd-weight-medium);
   color: var(--wd-text);
   line-height: var(--wd-leading-snug);
+  min-width: 0;
 }
 
-/*
- * What the option implies, clamped to two lines.
- *
- * The seeded implications run to three or four sentences, and an unclamped
- * card grid makes the tallest option set the height of every row. Two lines
- * carry the consequence and keep two rows of cards inside the stage panel at
- * 1366x768, which is the measurement the budget is set by.
- */
+/* What the option implies, clamped so the tallest option does not set every row. */
 .wd-dq-option-implication {
   display: -webkit-box;
   -webkit-line-clamp: 2;
@@ -365,33 +563,48 @@
   color: var(--wd-text-secondary);
 }
 
+/* What it changes, where, and the approval it needs. One line each. */
+.wd-dq-option-meta {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-size: var(--wd-text-xs);
+  line-height: var(--wd-leading-snug);
+  color: var(--wd-text-muted);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  min-width: 0;
+}
+
+.wd-dq-option-meta[data-tone="warning"] {
+  color: var(--wd-warning);
+}
+
 /* ==========================================================================
-   Explain
+   5. Confirm and execute
    ========================================================================== */
 
 /*
- * The reader's words and the preparation, side by side and never merged.
- *
- * Two columns rather than one stacked pair, because the point of the stage is
- * that the two are separable. Stacked, the preparation reads as context for
- * the field above it; beside it, the two are peers with different owners, and
- * the labels say which is which.
+ * The reader's choice and words on the left, the exact changes and the one
+ * action on the right. Two columns, because stacked they put the confirm
+ * action below the fold at 1366x768.
  */
-.wd-dq-explain {
+.wd-dq-confirm-grid {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1.1fr);
   gap: var(--wd-4);
 }
 
-@media (max-width: 900px) {
-  .wd-dq-explain {
+@media (max-width: 1000px) {
+  .wd-dq-confirm-grid {
     grid-template-columns: minmax(0, 1fr);
   }
 }
 
 .wd-dq-textarea {
   width: 100%;
-  min-height: 92px;
+  min-height: 84px;
   padding: var(--wd-2);
   border: 1px solid var(--wd-border-strong);
   border-radius: var(--wd-radius);
@@ -407,82 +620,9 @@
   color: var(--wd-text-disabled);
 }
 
-/* The AI block carries the accent tint it carries everywhere else. */
-.wd-dq-prepared {
-  display: flex;
-  flex-direction: column;
-  gap: var(--wd-1);
-  padding: var(--wd-2) var(--wd-3);
-  border-radius: var(--wd-radius);
-  background: var(--wd-accent-soft);
-}
-
 /*
- * The preparation is clamped as well as shortened server side.
- *
- * The builder already cuts at a sentence boundary, so in normal use this does
- * nothing. It is here because this text can come from a live model response,
- * and a model that returns six sentences must not be able to push the queue
- * it is commenting on off the screen.
- */
-.wd-dq-prepared .wd-dq-body {
-  display: -webkit-box;
-  -webkit-line-clamp: 5;
-  line-clamp: 5;
-  -webkit-box-orient: vertical;
-  overflow: hidden;
-}
-
-/* ==========================================================================
-   Confirm
-   ========================================================================== */
-
-/*
- * The authority position as a three term definition list.
- *
- * A list rather than prose because the three terms are read in any order: a
- * reader checks the class, then who is named, then the level in force. The
- * semantics matter as much as the layout, which is why it is a `dl`.
- */
-.wd-dq-authority {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
-  gap: var(--wd-3);
-  margin: 0;
-  padding: var(--wd-1) var(--wd-3) var(--wd-2);
-  border-radius: var(--wd-radius);
-  background: var(--wd-surface);
-  border: 1px solid var(--wd-border);
-}
-
-.wd-dq-authority dt {
-  font-size: var(--wd-text-xs);
-  color: var(--wd-text-muted);
-  margin-bottom: 2px;
-}
-
-.wd-dq-authority dd {
-  font-size: var(--wd-text-sm);
-  line-height: var(--wd-leading-snug);
-  color: var(--wd-text);
-  margin: 0;
-}
-
-.wd-dq-changes {
-  margin: 0;
-  padding-left: var(--wd-4);
-  font-size: var(--wd-text-xs);
-  line-height: var(--wd-leading-snug);
-  color: var(--wd-text-secondary);
-}
-
-/*
- * The confirmation.
- *
- * Deliberately a separate act from choosing the option and a separate act from
- * pressing the button. The authority gate refuses every material change
- * without it, and the engine checks it a second time, so this control is the
- * interface's half of a rule that is enforced twice behind it.
+ * The rationale ownership confirmation. Deliberately a separate act from
+ * choosing, from approving each change and from pressing the button.
  */
 .wd-dq-confirm {
   display: flex;
@@ -494,12 +634,147 @@
   cursor: pointer;
 }
 
-.wd-dq-confirm input {
+.wd-dq-confirm input,
+.wd-dq-change-head input {
   width: 16px;
   height: 16px;
   margin-top: 2px;
   flex-shrink: 0;
   accent-color: var(--wd-accent);
+}
+
+.wd-dq-changes-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--wd-2);
+  flex-wrap: wrap;
+}
+
+/* The changes, one approval each, in a bounded list so seven of them do not push the action off screen. */
+.wd-dq-change-list {
+  display: flex;
+  flex-direction: column;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  border: 1px solid var(--wd-border);
+  border-radius: var(--wd-radius);
+  max-height: 232px;
+  overflow-y: auto;
+}
+
+/* A tall screen has room for an open payload and the change under it. */
+@media (min-height: 1000px) {
+  .wd-dq-change-list {
+    max-height: 420px;
+  }
+}
+
+.wd-dq-change {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: 6px var(--wd-2);
+  min-width: 0;
+}
+
+.wd-dq-change + .wd-dq-change {
+  border-top: 1px solid var(--wd-border);
+}
+
+.wd-dq-change[data-approved="true"] {
+  background: var(--wd-accent-soft);
+}
+
+.wd-dq-change-head {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--wd-2);
+  min-width: 0;
+}
+
+.wd-dq-change-main {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+.wd-dq-change-label {
+  font-size: var(--wd-text-sm);
+  line-height: var(--wd-leading-snug);
+  color: var(--wd-text);
+  cursor: pointer;
+}
+
+.wd-dq-change-auto {
+  margin-top: 3px;
+  color: var(--wd-success);
+  flex-shrink: 0;
+}
+
+.wd-dq-change-refused {
+  margin-top: 3px;
+  color: var(--wd-warning);
+  flex-shrink: 0;
+}
+
+.wd-dq-change-toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+  flex-shrink: 0;
+  height: 22px;
+  padding: 0 var(--wd-1);
+  border: 0;
+  border-radius: var(--wd-radius-sm);
+  background: transparent;
+  color: var(--wd-accent);
+  font: inherit;
+  font-size: var(--wd-text-xs);
+  cursor: pointer;
+}
+
+.wd-dq-change-toggle:hover {
+  background: var(--wd-surface-hover);
+}
+
+.wd-dq-change-toggle svg[data-open="true"] {
+  transform: rotate(180deg);
+}
+
+/* The exact payload the approval binds to. Every field, nothing summarised. */
+.wd-dq-payload {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  margin: 2px 0 0 24px;
+  padding: var(--wd-1) var(--wd-2);
+  border-radius: var(--wd-radius-sm);
+  background: var(--wd-surface-subtle);
+}
+
+.wd-dq-payload dl {
+  display: grid;
+  grid-template-columns: minmax(96px, auto) minmax(0, 1fr);
+  gap: 2px var(--wd-2);
+  margin: 0;
+}
+
+.wd-dq-payload dl > div {
+  display: contents;
+}
+
+.wd-dq-payload dt {
+  font-size: var(--wd-text-xs);
+  color: var(--wd-text-muted);
+}
+
+.wd-dq-payload dd {
+  margin: 0;
+  font-size: var(--wd-text-xs);
+  line-height: var(--wd-leading-snug);
+  color: var(--wd-text-secondary);
+  overflow-wrap: anywhere;
 }
 
 /* ==========================================================================
@@ -523,15 +798,92 @@
    The receipt
    ========================================================================== */
 
-.wd-dq-receipt {
+/* The outcome, with its tone. Never a success mark over a partial result. */
+.wd-dq-outcome {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--wd-2);
   margin: 0;
-  padding-left: var(--wd-4);
+  padding: var(--wd-2) var(--wd-3);
+  border-radius: var(--wd-radius);
+  font-size: var(--wd-text-sm);
+  line-height: var(--wd-leading-snug);
+  background: var(--wd-surface-subtle);
+  color: var(--wd-text-secondary);
+}
+
+.wd-dq-outcome[data-tone="success"] {
+  background: var(--wd-success-soft);
+  color: var(--wd-success);
+}
+
+.wd-dq-outcome[data-tone="warning"] {
+  background: var(--wd-warning-soft);
+  color: var(--wd-warning);
+}
+
+/* Executed and not executed side by side: two lists, two counts. */
+.wd-dq-receipt-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--wd-4);
+}
+
+.wd-dq-receipt-grid > section {
+  display: flex;
+  flex-direction: column;
+  gap: var(--wd-1);
+  min-width: 0;
+}
+
+@media (max-width: 900px) {
+  .wd-dq-receipt-grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+.wd-dq-receipt-list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--wd-1);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  max-height: 220px;
+  overflow-y: auto;
+}
+
+.wd-dq-receipt-list li {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--wd-2);
+  min-width: 0;
+}
+
+.wd-dq-receipt-ok {
+  margin-top: 3px;
+  color: var(--wd-success);
+  flex-shrink: 0;
+}
+
+.wd-dq-receipt-fail {
+  margin-top: 3px;
+  color: var(--wd-warning);
+  flex-shrink: 0;
+}
+
+.wd-dq-receipt-statement {
   font-family: var(--wd-font-mono);
   font-size: var(--wd-text-xs);
   line-height: var(--wd-leading-snug);
   color: var(--wd-text-secondary);
+  overflow-wrap: anywhere;
 }
 
-.wd-dq-receipt[data-tone="warning"] {
+.wd-dq-receipt-list[data-tone="warning"] .wd-dq-receipt-statement {
   color: var(--wd-warning);
+}
+
+.wd-dq-facts-receipt dd {
+  color: var(--wd-text-secondary);
 }

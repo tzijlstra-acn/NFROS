@@ -1,0 +1,650 @@
+/*
+ * The Work Hub: a shared capability shell with master and detail.
+ *
+ * Scoped under `.workday-v3`, like the rest of the V3 layer, and built from
+ * its tokens. The queue reuses `.wd-queue` for its one bordered container;
+ * this file only lays out the two panes and the rows inside them.
+ *
+ * The page is wider than the 880px reading column the other V3 pages use,
+ * because it holds two panes side by side: the queue, its saved views and its
+ * filters on the left, the selected item on the right. At 1366 with the rail
+ * expanded the main region is 1170px, which fits a 400px queue and a 680px
+ * detail. Below 1180px of viewport the panes stack and the detail opens as a
+ * drawer over the queue, so a narrow window never squeezes either pane into
+ * a column too thin to read.
+ */
+
+.workday-v3 .wd-work {
+  padding: var(--wd-5) var(--wd-6) var(--wd-8);
+  max-width: 1440px;
+  margin-inline: auto;
+  min-width: 0;
+}
+
+.workday-v3 .wd-work-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--wd-4);
+  flex-wrap: wrap;
+  margin-bottom: var(--wd-3);
+}
+
+.workday-v3 .wd-work-head .wd-context-line {
+  margin-top: var(--wd-1);
+}
+
+/* ---- Tabs ---------------------------------------------------------------- */
+
+.workday-v3 .wd-work-tabs {
+  display: flex;
+  gap: var(--wd-1);
+  border-bottom: 1px solid var(--wd-border);
+  margin-bottom: var(--wd-4);
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+
+.workday-v3 .wd-work-tab {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--wd-2);
+  padding: var(--wd-2) var(--wd-3);
+  margin-bottom: -1px;
+  border-bottom: 2px solid transparent;
+  color: var(--wd-text-secondary);
+  font-size: var(--wd-text-sm);
+  font-weight: var(--wd-weight-medium);
+  text-decoration: none;
+  white-space: nowrap;
+}
+
+.workday-v3 .wd-work-tab:hover {
+  color: var(--wd-text);
+}
+
+.workday-v3 .wd-work-tab[aria-current="page"] {
+  color: var(--wd-accent);
+  border-bottom-color: var(--wd-accent);
+}
+
+.workday-v3 .wd-work-count {
+  min-width: 18px;
+  height: 18px;
+  padding: 0 5px;
+  border-radius: var(--wd-radius-pill);
+  background: var(--wd-surface-hover);
+  color: var(--wd-text-secondary);
+  font-size: 11px;
+  line-height: 18px;
+  text-align: center;
+  font-variant-numeric: tabular-nums;
+}
+
+.workday-v3 .wd-work-tab[aria-current="page"] .wd-work-count {
+  background: var(--wd-accent-soft);
+  color: var(--wd-accent);
+}
+
+/* ---- Master and detail --------------------------------------------------- */
+
+.workday-v3 .wd-work-md {
+  display: grid;
+  grid-template-columns: minmax(340px, 420px) minmax(0, 1fr);
+  gap: var(--wd-5);
+  align-items: start;
+  min-width: 0;
+}
+
+.workday-v3 .wd-work-pane {
+  min-width: 0;
+}
+
+.workday-v3 .wd-work-detail {
+  position: sticky;
+  top: var(--wd-4);
+  max-height: calc(100dvh - var(--wd-header-h) - var(--wd-updates-h) - var(--wd-8));
+  overflow-y: auto;
+  overflow-x: hidden;
+  scrollbar-width: thin;
+  background: var(--wd-surface);
+  border: 1px solid var(--wd-border);
+  border-radius: var(--wd-radius-lg);
+  padding: var(--wd-4) var(--wd-5) var(--wd-5);
+  min-width: 0;
+}
+
+.workday-v3 .wd-work-detail-close {
+  display: none;
+}
+
+/*
+ * Below 1180px the detail is a drawer over the queue. It is only rendered as
+ * one when something is selected; with nothing selected the queue has the
+ * whole width and the empty detail is not shown at all.
+ */
+@media (max-width: 1180px) {
+  .workday-v3 .wd-work-md {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .workday-v3 .wd-work-detail[data-has-item="false"] {
+    display: none;
+  }
+
+  .workday-v3 .wd-work-detail[data-has-item="true"] {
+    position: fixed;
+    top: var(--wd-header-h);
+    right: 0;
+    bottom: 0;
+    z-index: 55;
+    width: min(600px, 94vw);
+    max-height: none;
+    border-radius: 0;
+    border-width: 0 0 0 1px;
+    box-shadow: var(--wd-shadow-md);
+  }
+
+  .workday-v3 .wd-work-detail-close {
+    display: inline-flex;
+  }
+}
+
+/* ---- The queue pane ------------------------------------------------------ */
+
+.workday-v3 .wd-work-views,
+.workday-v3 .wd-work-filters {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--wd-1);
+  margin-bottom: var(--wd-2);
+}
+
+.workday-v3 .wd-work-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  height: 28px;
+  padding: 0 var(--wd-3);
+  border: 1px solid var(--wd-border);
+  border-radius: var(--wd-radius-pill);
+  background: var(--wd-surface);
+  color: var(--wd-text-secondary);
+  font-size: var(--wd-text-sm);
+  text-decoration: none;
+  white-space: nowrap;
+}
+
+.workday-v3 .wd-work-pill:hover {
+  background: var(--wd-surface-hover);
+  color: var(--wd-text);
+}
+
+.workday-v3 .wd-work-pill[aria-current="true"] {
+  background: var(--wd-accent-soft);
+  border-color: var(--wd-accent-border);
+  color: var(--wd-accent);
+  font-weight: var(--wd-weight-medium);
+}
+
+.workday-v3 .wd-work-filter {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  height: 22px;
+  padding: 0 var(--wd-2);
+  border-radius: var(--wd-radius-sm);
+  color: var(--wd-text-muted);
+  font-size: var(--wd-text-xs);
+  text-decoration: none;
+  white-space: nowrap;
+}
+
+.workday-v3 .wd-work-filter:hover {
+  background: var(--wd-surface-hover);
+  color: var(--wd-text);
+}
+
+.workday-v3 .wd-work-filter[aria-current="true"] {
+  background: var(--wd-surface-selected);
+  color: var(--wd-text);
+  font-weight: var(--wd-weight-medium);
+}
+
+.workday-v3 .wd-work-summary {
+  font-size: var(--wd-text-xs);
+  color: var(--wd-text-muted);
+  margin: 0 0 var(--wd-3);
+}
+
+.workday-v3 .wd-work-group + .wd-work-group {
+  margin-top: var(--wd-3);
+}
+
+.workday-v3 .wd-work-group-label {
+  display: block;
+  font-size: var(--wd-text-xs);
+  font-weight: var(--wd-weight-medium);
+  color: var(--wd-text-muted);
+  margin: 0 0 var(--wd-1);
+}
+
+.workday-v3 .wd-work-group-empty {
+  padding: var(--wd-2) var(--wd-3);
+  font-size: var(--wd-text-sm);
+  color: var(--wd-text-muted);
+}
+
+/*
+ * One row: lead, title and trailing on the first line; the quiet line and
+ * the chips under the title. Chips wrap rather than truncate, because a
+ * conflict chip that is cut off is a conflict nobody sees.
+ */
+.workday-v3 .wd-work-row {
+  position: relative;
+  display: grid;
+  grid-template-columns: 76px minmax(0, 1fr) auto;
+  column-gap: var(--wd-3);
+  row-gap: 2px;
+  padding: var(--wd-2) var(--wd-3);
+  border-top: 1px solid var(--wd-border);
+  color: inherit;
+  text-decoration: none;
+}
+
+.workday-v3 .wd-work-row:first-child {
+  border-top: 0;
+}
+
+.workday-v3 .wd-work-row:hover {
+  background: var(--wd-surface-hover);
+}
+
+.workday-v3 .wd-work-row[data-selected="true"] {
+  background: var(--wd-surface-selected);
+}
+
+.workday-v3 .wd-work-row[data-selected="true"]::before,
+.workday-v3 .wd-work-row[data-flag]::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  width: 2px;
+}
+
+.workday-v3 .wd-work-row[data-flag="danger"]::before { background: var(--wd-danger); }
+.workday-v3 .wd-work-row[data-flag="warning"]::before { background: var(--wd-warning); }
+.workday-v3 .wd-work-row[data-selected="true"]::before { background: var(--wd-accent); }
+
+.workday-v3 .wd-work-row-lead {
+  grid-row: 1 / span 2;
+  font-family: var(--wd-font-mono);
+  font-size: var(--wd-text-xs);
+  color: var(--wd-text-secondary);
+  padding-top: 2px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.workday-v3 .wd-work-row-title {
+  font-size: var(--wd-text-sm);
+  font-weight: var(--wd-weight-medium);
+  color: var(--wd-text);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  min-width: 0;
+}
+
+.workday-v3 .wd-work-row-trailing {
+  font-size: var(--wd-text-xs);
+  white-space: nowrap;
+  color: var(--wd-text-muted);
+  padding-top: 2px;
+}
+
+.workday-v3 .wd-work-row-trailing[data-tone="danger"] { color: var(--wd-danger); }
+.workday-v3 .wd-work-row-trailing[data-tone="success"] { color: var(--wd-success); }
+.workday-v3 .wd-work-row-trailing[data-tone="warning"] { color: var(--wd-warning); }
+.workday-v3 .wd-work-row-trailing[data-tone="accent"] { color: var(--wd-accent); }
+.workday-v3 .wd-work-row-trailing[data-tone="info"] { color: var(--wd-info); }
+
+.workday-v3 .wd-work-row-meta {
+  grid-column: 2 / span 2;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px var(--wd-2);
+  min-width: 0;
+}
+
+.workday-v3 .wd-work-row-sub {
+  font-size: var(--wd-text-xs);
+  color: var(--wd-text-muted);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  max-width: 100%;
+}
+
+.workday-v3 .wd-work-note {
+  display: flex;
+  gap: var(--wd-2);
+  align-items: baseline;
+  padding: 4px var(--wd-3);
+  font-size: var(--wd-text-xs);
+  color: var(--wd-warning);
+  text-decoration: none;
+  border-top: 1px dashed var(--wd-border);
+}
+
+.workday-v3 .wd-work-note:hover {
+  background: var(--wd-surface-hover);
+}
+
+/* ---- Proposals ----------------------------------------------------------- */
+
+.workday-v3 .wd-work-proposals {
+  display: flex;
+  flex-direction: column;
+  gap: var(--wd-2);
+  margin-bottom: var(--wd-3);
+}
+
+.workday-v3 .wd-work-proposal {
+  padding: var(--wd-2) var(--wd-3);
+  background: var(--wd-accent-soft);
+  border-radius: var(--wd-radius-lg);
+  font-size: var(--wd-text-sm);
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.workday-v3 .wd-work-proposal-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--wd-2);
+  flex-wrap: wrap;
+}
+
+.workday-v3 .wd-work-proposal-label {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: var(--wd-text-xs);
+  font-weight: var(--wd-weight-medium);
+  color: var(--wd-accent);
+}
+
+.workday-v3 .wd-work-proposal p {
+  margin: 0;
+  color: var(--wd-text-secondary);
+  line-height: var(--wd-leading-snug);
+}
+
+/* ---- The detail pane ----------------------------------------------------- */
+
+.workday-v3 .wd-work-detail-head {
+  display: flex;
+  flex-direction: column;
+  gap: var(--wd-1);
+  margin-bottom: var(--wd-3);
+}
+
+.workday-v3 .wd-work-detail-kicker {
+  display: flex;
+  align-items: center;
+  gap: var(--wd-2);
+  flex-wrap: wrap;
+  font-size: var(--wd-text-xs);
+  color: var(--wd-text-muted);
+}
+
+.workday-v3 .wd-work-detail-title {
+  font-size: var(--wd-text-xl);
+  font-weight: var(--wd-weight-strong);
+  line-height: var(--wd-leading-tight);
+  letter-spacing: -0.01em;
+  margin: 0;
+  overflow-wrap: anywhere;
+}
+
+.workday-v3 .wd-work-elsewhere {
+  display: flex;
+  align-items: center;
+  gap: var(--wd-2);
+  flex-wrap: wrap;
+  font-size: var(--wd-text-xs);
+  color: var(--wd-text-secondary);
+}
+
+.workday-v3 .wd-work-section {
+  margin-top: var(--wd-4);
+  min-width: 0;
+}
+
+.workday-v3 .wd-work-section-label {
+  display: flex;
+  align-items: baseline;
+  gap: var(--wd-2);
+  font-size: var(--wd-text-xs);
+  font-weight: var(--wd-weight-medium);
+  color: var(--wd-text-muted);
+  text-transform: none;
+  margin: 0 0 var(--wd-2);
+}
+
+.workday-v3 .wd-work-text {
+  margin: 0;
+  font-size: var(--wd-text-sm);
+  line-height: var(--wd-leading-normal);
+  color: var(--wd-text-secondary);
+  white-space: pre-line;
+  overflow-wrap: anywhere;
+}
+
+.workday-v3 .wd-work-facts {
+  display: grid;
+  grid-template-columns: minmax(110px, max-content) minmax(0, 1fr);
+  gap: 4px var(--wd-4);
+  margin: 0;
+  font-size: var(--wd-text-sm);
+}
+
+.workday-v3 .wd-work-facts dt {
+  color: var(--wd-text-muted);
+}
+
+.workday-v3 .wd-work-facts dd {
+  margin: 0;
+  color: var(--wd-text);
+  overflow-wrap: anywhere;
+}
+
+.workday-v3 .wd-work-facts dd[data-tone="danger"] { color: var(--wd-danger); }
+.workday-v3 .wd-work-facts dd[data-tone="warning"] { color: var(--wd-warning); }
+
+.workday-v3 .wd-work-callout {
+  padding: var(--wd-2) var(--wd-3);
+  border-radius: var(--wd-radius);
+  background: var(--wd-surface-subtle);
+  font-size: var(--wd-text-sm);
+  color: var(--wd-text-secondary);
+  line-height: var(--wd-leading-snug);
+  overflow-wrap: anywhere;
+}
+
+.workday-v3 .wd-work-callout[data-tone="warning"] { background: var(--wd-warning-soft); color: var(--wd-warning); }
+.workday-v3 .wd-work-callout[data-tone="danger"] { background: var(--wd-danger-soft); color: var(--wd-danger); }
+.workday-v3 .wd-work-callout[data-tone="success"] { background: var(--wd-success-soft); color: var(--wd-success); }
+.workday-v3 .wd-work-callout[data-tone="ai"] { background: var(--wd-accent-soft); color: var(--wd-text-secondary); }
+
+.workday-v3 .wd-work-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  font-size: var(--wd-text-sm);
+}
+
+.workday-v3 .wd-work-list > li {
+  display: flex;
+  align-items: baseline;
+  gap: var(--wd-2);
+  padding: 6px 0;
+  border-top: 1px solid var(--wd-border);
+  min-width: 0;
+  flex-wrap: wrap;
+}
+
+.workday-v3 .wd-work-list > li:first-child {
+  border-top: 0;
+}
+
+.workday-v3 .wd-work-list-main {
+  flex: 1;
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+.workday-v3 .wd-work-link {
+  color: var(--wd-accent);
+  text-decoration: none;
+  font: inherit;
+  background: none;
+  border: 0;
+  padding: 0;
+  cursor: pointer;
+  text-align: left;
+  overflow-wrap: anywhere;
+}
+
+.workday-v3 .wd-work-link:hover {
+  text-decoration: underline;
+}
+
+.workday-v3 .wd-work-bullets {
+  margin: 0;
+  padding-left: var(--wd-4);
+  font-size: var(--wd-text-sm);
+  color: var(--wd-text-secondary);
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.workday-v3 .wd-work-foot {
+  margin-top: var(--wd-4);
+  padding-top: var(--wd-3);
+  border-top: 1px solid var(--wd-border);
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  font-size: var(--wd-text-xs);
+  color: var(--wd-text-muted);
+}
+
+/* ---- Operations ---------------------------------------------------------- */
+
+.workday-v3 .wd-work-ops {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--wd-2);
+}
+
+.workday-v3 .wd-work-form {
+  margin-top: var(--wd-3);
+  padding: var(--wd-3);
+  border: 1px solid var(--wd-border);
+  border-radius: var(--wd-radius-lg);
+  background: var(--wd-surface-subtle);
+  display: flex;
+  flex-direction: column;
+  gap: var(--wd-2);
+  font-size: var(--wd-text-sm);
+}
+
+.workday-v3 .wd-work-form label {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  color: var(--wd-text-secondary);
+  font-size: var(--wd-text-xs);
+  font-weight: var(--wd-weight-medium);
+}
+
+.workday-v3 .wd-work-form label.wd-work-check {
+  flex-direction: row;
+  align-items: flex-start;
+  gap: var(--wd-2);
+  font-weight: var(--wd-weight-normal);
+  font-size: var(--wd-text-sm);
+  color: var(--wd-text);
+}
+
+.workday-v3 .wd-work-form input[type="text"],
+.workday-v3 .wd-work-form input[type="date"],
+.workday-v3 .wd-work-form select,
+.workday-v3 .wd-work-form textarea {
+  font: inherit;
+  font-size: var(--wd-text-sm);
+  color: var(--wd-text);
+  background: var(--wd-surface);
+  border: 1px solid var(--wd-border-strong);
+  border-radius: var(--wd-radius);
+  padding: 6px var(--wd-2);
+  width: 100%;
+  min-width: 0;
+}
+
+.workday-v3 .wd-work-form textarea {
+  min-height: 72px;
+  resize: vertical;
+}
+
+.workday-v3 .wd-work-form-meta {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  font-size: var(--wd-text-xs);
+  color: var(--wd-text-muted);
+}
+
+.workday-v3 .wd-work-form-actions {
+  display: flex;
+  gap: var(--wd-2);
+  align-items: center;
+  flex-wrap: wrap;
+}
+
+.workday-v3 .wd-work-choices {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  max-height: 160px;
+  overflow-y: auto;
+}
+
+/* ---- The bound context in the drawer ------------------------------------ */
+
+.workday-v3 .wd-bound-head {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding-bottom: var(--wd-3);
+  margin-bottom: var(--wd-3);
+  border-bottom: 1px solid var(--wd-border);
+}
+
+.workday-v3 .wd-bound-title {
+  font-size: var(--wd-text-md);
+  font-weight: var(--wd-weight-strong);
+  margin: 0;
+  overflow-wrap: anywhere;
+}

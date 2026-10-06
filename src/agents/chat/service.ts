@@ -54,6 +54,7 @@ import { getResolvedDemoMode } from "@/server/config/runtime";
 import { getOpenAIClient, probeModelAvailability } from "@/server/openai/client";
 import { getResolvedModels } from "@/server/config/models";
 import { createLogger, redactString } from "@/server/logging/redact";
+import { PRODUCT_IDENTITY } from "@/product/release/identity";
 import {
   buildWorkdayContext,
   findValidatedSuggestion,
@@ -743,7 +744,7 @@ async function runGatedAction(params: {
     parts.push(
       sourceStatusPart({
         state: "prepared-locally",
-        sourceSystem: "NFR WorkOS",
+        sourceSystem: PRODUCT_IDENTITY.name,
         detail:
           language === "de"
             ? "Nichts wurde an ein Zielsystem gesendet."
@@ -774,7 +775,7 @@ async function runGatedAction(params: {
     parts.push(
       sourceStatusPart({
         state: "read-from-source",
-        sourceSystem: "NFR WorkOS",
+        sourceSystem: PRODUCT_IDENTITY.name,
         detail:
           language === "de"
             ? "Die Aenderung ist lokal erfasst. Eine externe Bestaetigung liegt nur vor, wenn ein Zielsystem sie quittiert hat."
@@ -795,7 +796,7 @@ async function runGatedAction(params: {
   parts.push(
     sourceStatusPart({
       state: "failed-externally",
-      sourceSystem: "NFR WorkOS",
+      sourceSystem: PRODUCT_IDENTITY.name,
       detail: result.summary,
       language,
     }),

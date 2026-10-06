@@ -19,13 +19,21 @@
  * There is exactly ONE chrome provider, wrapping everything. Two would give
  * the header and the body separate state, so the AI trigger in the header
  * could not open the dock in the body, which is the kind of bug that looks
- * like a wiring mistake and is actually a tree mistake.
+ * like a wiring mistake and is actually a tree mistake. The shell overlays,
+ * search with the command palette and the Updates panel, sit inside it for
+ * the same reason.
+ *
+ * The rail's counts come from the header model, so each is the count of the
+ * page it links to. Home carries no count: the only number Home shows is how
+ * many items need the person's judgment, which the focus queue decides, and
+ * the frame does not build the focus queue. It used to show the unread
+ * arrival count there, which no part of Home displayed.
  */
 
 import type { ReactNode } from "react";
-import { buildHeaderModel, countOpenDecisions } from "@/db/repositories/header";
-import type { RoleId } from "@/db/schema/core";
+import { buildHeaderModel } from "@/db/repositories/header";
 import type { Language } from "@/i18n/labels";
+import { ShellOverlays } from "@/components/shell/ShellOverlays";
 import { WorkdayChromeProvider, type WdTheme } from "./ChromeContext";
 import { WorkdayHeader } from "./WorkdayHeader";
 import { WorkdayBody } from "./WorkdayBody";
@@ -55,13 +63,13 @@ export function WorkdayAppFrame({
   const model = buildHeaderModel(roleParam);
   const language = model.language as Language;
 
-  const counts: NavigationCounts = model.degraded
-    ? { myWork: 0, decisions: 0, mail: 0 }
-    : {
-        myWork: model.updatesCount,
-        decisions: countOpenDecisions(roleParam as RoleId),
-        mail: 0,
-      };
+  /* A role the release gate does not open shows its release page and counts nothing. */
+  const gated = model.releaseStatus !== null && model.releaseStatus !== "available";
+
+  const counts: NavigationCounts =
+    model.degraded || gated
+      ? { myWork: 0, decisions: 0, mail: 0 }
+      : { myWork: 0, decisions: model.decisionsOpen, mail: 0 };
 
   return (
     <div className="workday-v3" data-wd-theme={theme}>
@@ -70,11 +78,11 @@ export function WorkdayAppFrame({
         initialDemoMode={demoMode}
         initialNavExpanded={navExpanded}
       >
-        {/* Skip-to-main link: visible on keyboard focus, hidden otherwise. */}
-        <a href="#main" className="skip-link">
-          Skip to main content
-        </a>
-
+        {/*
+          * No skip link here. The root layout (`app/layout.tsx`) already puts
+          * one first in every document, pointing at the same `#main`, and a
+          * second identical link made the keyboard's first stop ambiguous.
+          */}
         <div className="wd-frame">
           {/*
             * The fallback is used only when the scenario itself is missing,
@@ -85,7 +93,7 @@ export function WorkdayAppFrame({
           {model.degraded ? (
             <WorkdayHeaderFallback language={language} />
           ) : (
-            <WorkdayHeader model={model} roleId={roleParam} />
+            <WorkdayHeader model={model} />
           )}
 
           <WorkdayBody
@@ -98,10 +106,17 @@ export function WorkdayAppFrame({
             language={language}
             updatesCount={model.updatesCount}
             roleId={roleParam}
+            gated={gated}
           />
         </div>
 
         <WorkdayPanels language={language} roleId={roleParam} />
+        <ShellOverlays
+          roleId={roleParam}
+          language={language}
+          enabled={!model.degraded && !gated}
+          updatesCount={model.updatesCount}
+        />
       </WorkdayChromeProvider>
     </div>
   );

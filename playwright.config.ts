@@ -28,11 +28,20 @@ export default defineConfig({
     { name: "desktop-1440", use: { ...devices["Desktop Chrome"], viewport: { width: 1440, height: 900 } } },
     { name: "desktop-1366", use: { ...devices["Desktop Chrome"], viewport: { width: 1366, height: 768 } } },
   ],
-  webServer: {
-    command: "npm run start",
-    url: "http://localhost:3000/api/health/ai",
-    reuseExistingServer: true,
-    timeout: 180_000,
-    env: { NFR_DEMO_MODE: "safe" },
-  },
+  /*
+   * The local server is started only when no target is named.
+   *
+   * A run pointed at another server through NFR_BASE_URL (an isolated stack
+   * with its own database) must never fall back to starting the default
+   * server on port 3000, which serves the shared demonstration database.
+   */
+  webServer: process.env.NFR_BASE_URL
+    ? undefined
+    : {
+        command: "npm run start",
+        url: "http://localhost:3000/api/health/ai",
+        reuseExistingServer: true,
+        timeout: 180_000,
+        env: { NFR_DEMO_MODE: "safe" },
+      },
 });

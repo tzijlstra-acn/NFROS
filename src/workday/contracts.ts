@@ -19,6 +19,7 @@ import type {
   LiveEventSeverity,
   LiveEventType,
   SuggestionStatus,
+  SuggestionDisposition,
   AIGenerationStateName,
 } from "@/db/schema/live";
 import type { ConnectorMode, FreshnessState } from "@/db/schema/integration";
@@ -452,6 +453,11 @@ export interface AISuggestionView extends AISuggestionContent {
   missingRequiredSources: string[];
   sources: SourceAttribution[];
   createdAt: string;
+  /**
+   * The person's answer so far (plan 4.11, suggestion lifecycle). Optional so
+   * a view built before migration 0006 still type checks; absent reads as new.
+   */
+  disposition?: SuggestionDisposition;
 }
 
 export const SUGGESTION_STATUS_LABELS: Record<SuggestionStatus, { en: string; de: string }> = {

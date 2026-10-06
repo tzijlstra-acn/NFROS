@@ -22,6 +22,7 @@ import {
   readThroughConfigCache,
   resolveOrganisationProfile,
 } from "../organisation/profile";
+import { PRODUCT_IDENTITY } from "../release/identity";
 
 type BrandProfileRow = typeof brandProfiles.$inferSelect;
 
@@ -223,8 +224,9 @@ export function resolveBrandIdentity(brand: BrandProfile): BrandIdentity {
 export const FALLBACK_BRAND_PROFILE: BrandProfile = {
   id: "brand-unconfigured",
   mode: "client",
-  productName: "NFR WorkOS",
-  shortName: "WorkOS",
+  /* The product name comes from the release registry, as in the seeded profiles. */
+  productName: PRODUCT_IDENTITY.name,
+  shortName: PRODUCT_IDENTITY.name,
   clientName: "Not configured",
   syntheticDisclosure: true,
 };

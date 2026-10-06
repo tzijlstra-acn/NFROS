@@ -16,11 +16,12 @@
 
 import Link from "next/link";
 import type { Metadata } from "next";
+import { PRODUCT_IDENTITY } from "@/product/release/identity";
 
 export const dynamic = "force-dynamic";
 
 export const metadata: Metadata = {
-  title: "Setup: NFR WorkOS",
+  title: `Setup: ${PRODUCT_IDENTITY.name}`,
   robots: { index: false, follow: false },
 };
 
@@ -75,7 +76,7 @@ export default async function SetupPage({ searchParams }: SetupPageProps) {
               color: "var(--app-text-1)",
             }}
           >
-            NFR WorkOS
+            {PRODUCT_IDENTITY.name}
           </span>
           <span
             style={{
@@ -401,7 +402,7 @@ function StepWelcome() {
             margin: 0,
           }}
         >
-          Welcome to NFR WorkOS
+          Welcome to {PRODUCT_IDENTITY.name}
         </h1>
         <p
           style={{

@@ -22,6 +22,8 @@ import { IconX } from "@tabler/icons-react";
 import type { Language } from "@/i18n/labels";
 import { useWorkdayChrome, WD_DRAWER_TABS, type WdDrawerTab } from "./ChromeContext";
 import { WorkdayPartnerDock } from "./WorkdayPartnerDock";
+import { BoundContextPanel } from "@/components/work/BoundContextPanel";
+import { useBoundContext } from "@/components/work/context-store";
 
 const TAB_LABELS: Record<WdDrawerTab, { en: string; de: string }> = {
   evidence: { en: "Evidence", de: "Nachweise" },
@@ -32,6 +34,7 @@ const TAB_LABELS: Record<WdDrawerTab, { en: string; de: string }> = {
 
 export function WorkdayPanels({ language, roleId }: { language: Language; roleId: string }) {
   const chrome = useWorkdayChrome();
+  const bound = useBoundContext(roleId);
 
   /*
    * The dock is rendered unconditionally and decides for itself.
@@ -88,12 +91,16 @@ export function WorkdayPanels({ language, roleId }: { language: Language; roleId
 
           <div className="wd-panel-body">
             {/*
-              * The content is supplied by the page through the drawer content
-              * slot. Until a page provides one, the panel says what it is for
-              * rather than showing an empty box: an analyst who opens
-              * Evidence on a screen with no selected object should learn that
-              * selecting one is the next step.
+              * The content is the bound work context: the item the Work Hub
+              * selected, published to `src/components/work/context-store.ts`.
+              * It stays bound after the reader leaves the hub, so once an item
+              * has been selected the drawer shows that item rather than
+              * reverting to the empty state. Until anything is bound, the
+              * panel says what it is for rather than showing an empty box.
               */}
+            {bound ? (
+              <BoundContextPanel bound={bound} tab={chrome.drawerTab} language={language} />
+            ) : (
             <div className="wd-empty">
               <span className="wd-empty-title">
                 {language === "de" ? "Nichts ausgewaehlt" : "Nothing selected"}
@@ -104,6 +111,7 @@ export function WorkdayPanels({ language, roleId }: { language: Language; roleId
                   : "Select a row in the list to see the evidence and details behind it."}
               </span>
             </div>
+            )}
           </div>
         </aside>
       ) : (

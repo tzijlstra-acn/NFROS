@@ -109,6 +109,27 @@ export const AI_CONFIGURATION_REGISTRY: AIConfigurationVersion[] = [
     releasedBy: "system",
     status: "released",
   },
+  /*
+   * A candidate. The same prompt and output schema as the released RCSA
+   * stage preparation, on the reasoning profile, whose stated purpose is
+   * challenge preparation and rating rationale and which no released
+   * configuration uses yet. It is evaluated, compared and approved or
+   * rejected in the Product Owner Console (Quality); it has no release date
+   * because it has not been released.
+   */
+  {
+    id: "AICFG-RCSA-STAGE-PREP-002",
+    name: "RCSA Stage Preparation, reasoning profile",
+    roleId: "rcsa",
+    taskKind: "stage-preparation",
+    promptVersion: "v1.0",
+    outputSchemaVersion: "envelope-v1",
+    modelProfileId: "gpt-4o-reasoning",
+    evaluationSuiteId: "EVAL-RCSA-001",
+    releasedAt: "",
+    releasedBy: "",
+    status: "candidate",
+  },
 ];
 
 /* ==========================================================================

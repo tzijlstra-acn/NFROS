@@ -3,30 +3,30 @@
  *
  * Server rendered, fixed height, one line, and it depends on nothing that can
  * be slow or absent. Everything it needs comes from `buildHeaderModel`, which
- * is a handful of lookups and two counts and cannot reach evidence retrieval,
- * a connector, an AI call or a workspace view.
+ * is a handful of lookups and counts and cannot reach evidence retrieval, a
+ * connector, an AI call or a workspace view.
  *
  * The interactive controls are a separate client component. That split is the
  * point: the identity, the role and the counts are HTML the moment the server
  * responds, and only the menus and the search trigger wait for hydration. A
  * header whose text waited for JavaScript would still be blank when the
  * database was slow, which is the defect this replaces.
+ *
+ * A role that is not Available carries its release state beside its name,
+ * word for word from the registry, on every route. That is the "clear Demo
+ * state" the release gate promises: the reader can never mistake a Demo role
+ * for one this release includes.
  */
 
 import Link from "next/link";
 import { IconCircleDot } from "@tabler/icons-react";
 import type { WorkdayHeaderModel } from "@/db/repositories/header";
+import { ROLE_RELEASE_STATUS_LABELS } from "@/product/release";
 import { WorkdayHeaderClientActions } from "./WorkdayHeaderClientActions";
 
-export function WorkdayHeader({
-  model,
-  roleId,
-}: {
-  model: WorkdayHeaderModel;
-  /** Null while the role is unknown, which the fallback label covers. */
-  roleId: string | null;
-}) {
+export function WorkdayHeader({ model }: { model: WorkdayHeaderModel }) {
   const { language } = model;
+  const gated = model.releaseStatus !== null && model.releaseStatus !== "available";
 
   return (
     <header className="wd-header">
@@ -54,6 +54,13 @@ export function WorkdayHeader({
         */}
       <div className="wd-header-location">
         <span className="wd-header-role">{model.roleLabel}</span>
+        {gated && model.releaseStatus ? (
+          <span className="wd-chip" data-tone="accent" data-testid="header-release-status">
+            {language === "de"
+              ? ROLE_RELEASE_STATUS_LABELS[model.releaseStatus].de
+              : ROLE_RELEASE_STATUS_LABELS[model.releaseStatus].en}
+          </span>
+        ) : null}
         {model.entityLabel ? (
           <span className="wd-header-entity">{model.entityLabel}</span>
         ) : null}
@@ -62,9 +69,10 @@ export function WorkdayHeader({
       <WorkdayHeaderClientActions
         language={language}
         updatesCount={model.updatesCount}
+        suggestionsNeedingYou={model.suggestionsNeedingYou}
         aiState={model.aiState}
         userLabel={model.userLabel}
-        roleId={roleId}
+        gated={gated}
       />
     </header>
   );

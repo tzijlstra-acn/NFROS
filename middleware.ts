@@ -27,12 +27,23 @@
  *   stays on the version the reviewer chose. Without it, clicking any link
  *   inside V3.1 would fall back to the default.
  *
- * It rewrites nothing and redirects nothing. A request that does not ask for a
- * version is untouched apart from the header, which carries the default.
+ * It rewrites nothing. It redirects in exactly one case, the release gate: a
+ * role the release registry marks Planned cannot be entered on any route, so
+ * the request goes to the role selector, which says why. A request that does
+ * not ask for a version is otherwise untouched apart from the header, which
+ * carries the default.
+ *
+ * The gate is applied here, before the route tree renders, because this is the
+ * one place every workday request passes through whatever its interface
+ * version. A Demo role is pinned to the current interface for the same
+ * reason: `?ui=v2` used to serve the whole earlier shell, fully interactive,
+ * for a role the release does not include. The rule itself lives in
+ * `src/workday/role-gate.ts`, which the page dispatcher also applies.
  */
 
 import { NextResponse, type NextRequest } from "next/server";
-import { isV3NativePath, resolveWorkdayUi } from "@/workday/contracts";
+import { CURRENT_WORKDAY_UI, isV3NativePath, resolveWorkdayUi } from "@/workday/contracts";
+import { gateForPath, plannedRoleRedirectHref } from "@/workday/role-gate";
 import { verifyAndExtract } from "@/identity/session";
 import { DEMO_SESSION_COOKIE, PILOT_SESSION_COOKIE } from "@/identity/cookies";
 
@@ -46,6 +57,17 @@ export const UI_COOKIE = "nfr-workday-ui";
 export const PRODUCT_MODE_HEADER = "x-product-mode";
 
 export async function middleware(request: NextRequest) {
+  /*
+   * The release gate comes first. A Planned role has nothing to render, so
+   * there is no interface to resolve for it. A 307 keeps the method, which is
+   * irrelevant for a page and correct for a form post that should not be
+   * silently turned into a GET elsewhere.
+   */
+  const gate = gateForPath(request.nextUrl.pathname);
+  if (gate.kind === "planned") {
+    return NextResponse.redirect(new URL(plannedRoleRedirectHref(gate.release.roleId), request.url), 307);
+  }
+
   const fromQuery = request.nextUrl.searchParams.get("ui");
   const fromCookie = request.cookies.get(UI_COOKIE)?.value;
 
@@ -69,9 +91,19 @@ export async function middleware(request: NextRequest) {
    * the bug: the layout saw V3.1 and built the V3 frame, the page found no V3
    * component and rendered the V2 shell, and the document carried both.
    */
-  const effective = version === "v3.3" && !isV3NativePath(request.nextUrl.pathname)
-    ? "v2"
-    : version;
+  /*
+   * A Demo role always gets the current interface, on every path. The page
+   * dispatcher renders the role's demo page for it there, inside the frame,
+   * and the frame shows the Demo state in the header. Serving V1 or V2 instead
+   * would hand the reviewer an interactive shell for a role that is not in the
+   * release.
+   */
+  const effective =
+    gate.kind === "demo"
+      ? CURRENT_WORKDAY_UI
+      : version === "v3.3" && !isV3NativePath(request.nextUrl.pathname)
+        ? "v2"
+        : version;
 
   const headers = new Headers(request.headers);
   headers.set(UI_HEADER, effective);

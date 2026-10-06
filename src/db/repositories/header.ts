@@ -13,26 +13,45 @@
  * connector call, no AI call, no workspace view and no command index: each of
  * those is a thing the brief forbids the header from depending on, and the way
  * to guarantee that is for the function that feeds it to be unable to reach
- * them.
+ * them. The search index is fetched by the palette when it is first opened;
+ * it is not built here.
+ *
+ * Every count is the count of its destination, read through the same function
+ * the destination reads, because a badge that disagrees with the page it opens
+ * is the one kind of number a reader learns to ignore (audit T06, T07):
+ *
+ *   Decisions   the open decisions the Decisions page lists at this moment,
+ *               through `getDecisions`, which filters on `presentedAtMoment`.
+ *               It used to count every open row, including the ones the day
+ *               presents at 11:45 and 15:00, and showed 5 beside a queue of 3.
+ *
+ *   AI Partner  the suggestions the dock marks as needing the person, through
+ *               `getActiveSuggestions`, which applies the moment, snooze and
+ *               validation filters the dock applies. It used to say
+ *               "1 suggestion" whatever the number.
+ *
+ *   Updates     the updates the Updates panel raises, through `readUpdates`,
+ *               after the notification budget. It used to count unread
+ *               arrivals, a list nothing in the V3.3 shell displayed.
  *
  * Every query is wrapped. A header that throws takes the whole workday with
  * it, and the point of the exercise is a header that renders when other things
- * are broken.
+ * are broken. A count that cannot be read is zero, and zero is never shown as
+ * a badge.
  */
 
-import { and, eq, isNull, sql } from "drizzle-orm";
-import { getDb, isDatabaseReady } from "@/db/client";
+import { isDatabaseReady } from "@/db/client";
 import { DEFAULT_RUN_ID, type RoleId } from "@/db/schema/core";
-import { decisions } from "@/db/schema/decisions";
-import { aiSuggestions, workdayLiveEventReads, workdayLiveEvents } from "@/db/schema/live";
-import { getEntity, getRole, getUser } from "./workday";
+import { getDecisions, getEntity, getRole, getUser } from "./workday";
+import { getActiveSuggestions } from "./partner";
+import { countNeedingYou } from "@/features/partner/rules";
 import { getBrandIdentity } from "@/product";
+import { PRODUCT_IDENTITY } from "@/product/release/identity";
+import { getRoleRelease, type RoleReleaseStatus } from "@/product/release/role-release";
 import { getResolvedDemoMode } from "@/server/config/runtime";
-import { momentToMinutes } from "@/domain/nfr/calculators";
-import { getScenarioState } from "@/scenario/engine/state";
+import { getScenarioState, type ScenarioState } from "@/scenario/engine/state";
+import { readUpdates } from "@/features/updates/read";
 import type { Language } from "@/i18n/labels";
-
-const db = () => getDb();
 
 /**
  * What the header renders.
@@ -48,10 +67,20 @@ export interface WorkdayHeaderModel {
   productMark: string | null;
   roleLabel: string;
   entityLabel: string | null;
+  /** The updates the Updates panel raises. */
   updatesCount: number;
+  /** The suggestions the AI Partner dock marks as needing the person. */
+  suggestionsNeedingYou: number;
+  /** The open decisions the Decisions page lists, for the rail badge. */
+  decisionsOpen: number;
   aiState: "idle" | "working" | "ready" | "offline";
   userLabel: string | null;
   language: Language;
+  /**
+   * The role's release state. A Demo role's header shows the state and none
+   * of the work controls, because nothing behind them can be opened.
+   */
+  releaseStatus: RoleReleaseStatus | null;
   /** True when the scenario is missing, so the header can still say so. */
   degraded: boolean;
 }
@@ -59,50 +88,41 @@ export interface WorkdayHeaderModel {
 /** The shape used when nothing at all can be resolved. */
 export function fallbackHeaderModel(language: Language = "en"): WorkdayHeaderModel {
   return {
-    productName: "NFR WorkOS",
+    productName: PRODUCT_IDENTITY.name,
     productMark: null,
     roleLabel: language === "de" ? "Arbeitstag" : "Workday",
     entityLabel: null,
     updatesCount: 0,
+    suggestionsNeedingYou: 0,
+    decisionsOpen: 0,
     aiState: "idle",
     userLabel: null,
     language,
+    releaseStatus: null,
     degraded: true,
   };
 }
 
-/**
- * Counts unread live events for a role at the current moment.
- *
- * One query with a left join. Read state is per role, which is why this cannot
- * be a single count over the events table.
- */
-function countUpdates(roleId: RoleId, atMoment: string, runId: string): number {
+/** The updates the panel raises for a role now. Zero when they cannot be read. */
+function countUpdates(roleId: RoleId, state: ScenarioState): number {
   try {
-    const minutes = momentToMinutes(atMoment);
-    const rows = db()
-      .select({
-        atMoment: workdayLiveEvents.atMoment,
-        roleIds: workdayLiveEvents.roleIds,
-        readAt: workdayLiveEventReads.readAt,
-      })
-      .from(workdayLiveEvents)
-      .leftJoin(
-        workdayLiveEventReads,
-        and(
-          eq(workdayLiveEventReads.eventId, workdayLiveEvents.id),
-          eq(workdayLiveEventReads.roleId, roleId),
-        ),
-      )
-      .where(eq(workdayLiveEvents.runId, runId))
-      .all();
+    return readUpdates(roleId, state).raised.length;
+  } catch {
+    return 0;
+  }
+}
 
-    return rows.filter((row) => {
-      if (row.readAt !== null) return false;
-      if (momentToMinutes(row.atMoment) > minutes) return false;
-      const roleIds = row.roleIds ?? [];
-      return roleIds.length === 0 || roleIds.includes(roleId);
-    }).length;
+/**
+ * Suggestions the dock marks as needing the person.
+ *
+ * The same rows the dock receives (`getActiveSuggestions`, default limit) and
+ * the same rule it applies to them: revealable, not dismissed, and either
+ * waiting for the user or requiring a decision.
+ */
+export function countSuggestionsNeedingYou(roleId: RoleId, atMoment: string, runId = DEFAULT_RUN_ID): number {
+  try {
+    // One rule for the header and the dock (`suggestionNeedsYou`), including the person's disposition.
+    return countNeedingYou(getActiveSuggestions(roleId, atMoment, { runId }));
   } catch {
     return 0;
   }
@@ -116,38 +136,28 @@ function countUpdates(roleId: RoleId, atMoment: string, runId: string): number {
  * `working` would mean the header asserted activity it cannot observe. The
  * client control raises it to `working` when it starts a run.
  */
-function resolveAiState(roleId: RoleId, runId: string): WorkdayHeaderModel["aiState"] {
+function resolveAiState(suggestions: number): WorkdayHeaderModel["aiState"] {
   try {
     if (getResolvedDemoMode().mode === "offline") return "offline";
-    const row = db()
-      .select({ n: sql<number>`count(*)` })
-      .from(aiSuggestions)
-      .where(
-        and(
-          eq(aiSuggestions.runId, runId),
-          eq(aiSuggestions.roleId, roleId),
-          eq(aiSuggestions.status, "needs-user"),
-          isNull(aiSuggestions.dismissedAt),
-        ),
-      )
-      .get();
-    return (row?.n ?? 0) > 0 ? "ready" : "idle";
   } catch {
     return "idle";
   }
+  return suggestions > 0 ? "ready" : "idle";
 }
 
-/** Open decisions for a role, used by the navigation rather than the header. */
-export function countOpenDecisions(roleId: RoleId, runId = DEFAULT_RUN_ID): number {
+/**
+ * Open decisions for a role at a moment: exactly the rows the Decisions page
+ * lists as open.
+ *
+ * Read through `getDecisions`, the function `buildDecisionQueueView` reads,
+ * so the rail badge and the queue apply one visibility rule. The badge used to
+ * count every open row in the table, including decisions the day presents
+ * later, and the integration test `tests/integration/shell-header.test.ts`
+ * now pins the two together at several moments.
+ */
+export function countOpenDecisions(roleId: RoleId, atMoment: string, runId = DEFAULT_RUN_ID): number {
   try {
-    const row = db()
-      .select({ n: sql<number>`count(*)` })
-      .from(decisions)
-      .where(
-        and(eq(decisions.runId, runId), eq(decisions.roleId, roleId), eq(decisions.status, "open")),
-      )
-      .get();
-    return row?.n ?? 0;
+    return getDecisions(roleId, atMoment, runId).filter((entry) => entry.decision.status === "open").length;
   } catch {
     return 0;
   }
@@ -172,6 +182,7 @@ export function buildHeaderModel(
     const state = getScenarioState(runId);
     const language = (state?.language ?? "en") as Language;
     const brand = getBrandIdentity();
+    const releaseStatus = getRoleRelease(roleParam)?.status ?? null;
 
     const role = getRole(roleParam as RoleId, runId);
     if (!role || !state) {
@@ -179,21 +190,32 @@ export function buildHeaderModel(
         ...fallbackHeaderModel(language),
         productName: brand.shortName,
         productMark: brand.marks[0]?.src ?? null,
+        releaseStatus,
       };
     }
 
     const holder = getUser(role.holderUserId, runId);
     const entity = getEntity(role.entityId, runId);
 
+    /*
+     * A gated role counts nothing. Its routes show the release page, so a
+     * badge would point at work that cannot be opened.
+     */
+    const gated = releaseStatus !== null && releaseStatus !== "available";
+    const suggestions = gated ? 0 : countSuggestionsNeedingYou(role.id, state.currentMoment, runId);
+
     return {
       productName: brand.shortName,
       productMark: brand.marks[0]?.src ?? null,
       roleLabel: language === "de" ? role.titleDe : role.title,
       entityLabel: entity?.shortName ?? null,
-      updatesCount: countUpdates(role.id, state.currentMoment, runId),
-      aiState: resolveAiState(role.id, runId),
+      updatesCount: gated ? 0 : countUpdates(role.id, state),
+      suggestionsNeedingYou: suggestions,
+      decisionsOpen: gated ? 0 : countOpenDecisions(role.id, state.currentMoment, runId),
+      aiState: gated ? "idle" : resolveAiState(suggestions),
       userLabel: holder?.name ?? null,
       language,
+      releaseStatus,
       degraded: false,
     };
   } catch {

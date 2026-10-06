@@ -1,267 +1,166 @@
 /**
- * Pilot readiness dashboard.
+ * Pilot readiness.
  *
- * Six readiness checks, pilot account roster, regulatory scope note and the
- * evidence pack link. Server component: reads the database synchronously and
- * renders the result. Never crashes: every DB call is wrapped in try/catch.
+ * The readiness checks, the pilot account roster, the regulatory scope of the
+ * configured institution and the evidence pack.
+ *
+ * Every check is computed on this request by `runReadinessChecks` in
+ * `src/product/status/sources.ts` and shown in the product status vocabulary.
+ * Four things on this page used to be asserted rather than read, and each is
+ * now sourced or honestly marked:
+ *
+ * - "Audit chain: initialised" passed whenever the table existed, even empty.
+ *   It now verifies the chain, and coverage of the audit trail is its own
+ *   check.
+ * - The institution chip named a bank that is not the configured
+ *   institution. It now reads the organisation profile.
+ * - The jurisdiction was the literal "DE", with DORA and EBA shown for the
+ *   whole institution. It now lists each configured legal entity with the
+ *   regulatory context derived from its bloc, so the Swiss entity carries
+ *   FINMA context and no EU reference.
+ * - The evidence pack linked to an API route that does not exist. The page
+ *   now says whether a pack is on disk and how to produce one.
  *
  * Security constraints:
- * - No credentials shown -- pilot accounts display name, role and institution only.
- * - "Synthetic institution and data" label is rendered by the settings layout.
- * - Every regulatory reference carries the illustrative-context disclaimer.
- * - DORA/EBA scoped to DE/AT only; FINMA scoped to CH only.
+ * - No credentials shown. Pilot accounts display name, roles and institution only.
+ * - The synthetic institution and data label is rendered by the administrator frame.
+ * - Every regulatory reference carries the illustrative context disclaimer.
  */
 
-import { getSqlite } from "@/db/client";
+import { getProductConfig } from "@/product";
 import { PILOT_USERS } from "@/identity/pilot-config";
-import { SettingsHead, SettingsSection, Field, FieldList } from "@/components/settings/primitives";
-import { Notice, Chip } from "@/components/workday-v2/primitives";
+import { getProductMode } from "@/identity/product-mode";
+import {
+  Field,
+  FieldList,
+  RegulatorContext,
+  SettingsHead,
+  SettingsSection,
+} from "@/components/settings/primitives";
+import { Chip, Data, Notice, RegulatoryNote } from "@/components/workday-v2/primitives";
+import { StatusBadge, overallStatus } from "@/product/status";
+import { getRoleRelease } from "@/product/release";
+import {
+  readAdminLanguage,
+  readPilotEvidencePack,
+  runReadinessChecks,
+} from "@/product/status/sources";
+import { pick } from "@/workday/contracts";
+import { StatusList, StatusRow } from "../_components/StatusRows";
 
 export const dynamic = "force-dynamic";
 
-/* ==========================================================================
-   Readiness checks
-   ========================================================================== */
+type Pair = { en: string; de: string };
 
-type CheckStatus = "pass" | "warn" | "error";
+const COPY = {
+  eyebrow: { en: "Administrator area", de: "Administrationsbereich" },
+  title: { en: "Pilot readiness", de: "Pilot-Bereitschaft" },
+  lede: {
+    en: "Readiness checks, pilot accounts and regulatory scope for a design-partner pilot. Every check runs when this page is opened, so open it before each pilot session.",
+    de: "Bereitschaftspruefungen, Pilotkonten und regulatorischer Rahmen fuer einen Piloten mit einem Designpartner. Jede Pruefung laeuft beim Oeffnen dieser Seite, oeffnen Sie sie daher vor jeder Pilotsitzung.",
+  },
+  allVerified: {
+    en: "All {total} readiness checks are verified. The environment is ready for a pilot session.",
+    de: "Alle {total} Bereitschaftspruefungen sind verifiziert. Die Umgebung ist fuer eine Pilotsitzung bereit.",
+  },
+  someVerified: {
+    en: "{verified} of {total} checks are verified. Review the others before starting a pilot session.",
+    de: "{verified} von {total} Pruefungen sind verifiziert. Pruefen Sie die anderen, bevor Sie eine Pilotsitzung beginnen.",
+  },
+  checks: { en: "Readiness checks", de: "Bereitschaftspruefungen" },
+  accounts: { en: "Pilot accounts", de: "Pilotkonten" },
+  accountsNote: {
+    en: "Synthetic accounts configured for a design-partner pilot. Credentials are not shown here.",
+    de: "Synthetische Konten fuer einen Piloten mit einem Designpartner. Anmeldedaten werden hier nicht angezeigt.",
+  },
+  administrator: { en: "Administrator", de: "Administrator" },
+  scope: { en: "Regulatory scope", de: "Regulatorischer Rahmen" },
+  scopeNote: {
+    en: "Derived from each legal entity's regulatory bloc. DORA and the EBA guidelines are shown for the EU entities in Germany and Austria only; the Swiss entity carries FINMA context, and DORA does not apply to it directly.",
+    de: "Aus dem regulatorischen Block jeder Rechtseinheit abgeleitet. DORA und die EBA-Leitlinien erscheinen nur fuer die EU-Einheiten in Deutschland und Oesterreich; die Schweizer Einheit traegt FINMA-Kontext, und DORA gilt fuer sie nicht unmittelbar.",
+  },
+  noEntities: {
+    en: "The organisation profile names no legal entities. Seed the scenario before reading this section.",
+    de: "Das Organisationsprofil nennt keine Rechtseinheiten. Spielen Sie das Szenario ein, bevor Sie diesen Abschnitt lesen.",
+  },
+  identity: { en: "Identity configuration", de: "Identitaetskonfiguration" },
+  status: { en: "Status", de: "Status" },
+  evidence: { en: "Evidence pack", de: "Nachweispaket" },
+  evidenceNote: {
+    en: "A JSON file with the readiness state, a seeded data summary, the regulatory scope and the synthetic data disclosure, for design-partner handoff documentation. It contains no credentials, no session secrets and no personal data.",
+    de: "Eine JSON-Datei mit Bereitschaftsstand, Uebersicht der eingespielten Daten, regulatorischem Rahmen und dem Hinweis auf synthetische Daten, fuer die Uebergabe an einen Designpartner. Sie enthaelt keine Anmeldedaten, keine Sitzungsgeheimnisse und keine personenbezogenen Daten.",
+  },
+  generate: { en: "Generate", de: "Erzeugen" },
+  generatedAt: { en: "Generated", de: "Erzeugt" },
+  download: { en: "Download in the interface", de: "Download in der Oberflaeche" },
+  downloadNote: {
+    en: "There is no download route in this build. Generate the pack from the command line; it is written to release/pilot-evidence.json.",
+    de: "In diesem Build gibt es keinen Downloadweg. Erzeugen Sie das Paket ueber die Kommandozeile; es wird nach release/pilot-evidence.json geschrieben.",
+  },
+} as const;
 
-interface ReadinessCheck {
-  id: string;
-  label: string;
-  detail: string;
-  status: CheckStatus;
+function fill(template: string, values: Record<string, string | number>): string {
+  return template.replace(/\{(\w+)\}/g, (_, key: string) => String(values[key] ?? ""));
 }
-
-function runReadinessChecks(): ReadinessCheck[] {
-  const checks: ReadinessCheck[] = [];
-
-  // 1. Database: accessible
-  {
-    let status: CheckStatus = "error";
-    let detail = "Database could not be reached.";
-    try {
-      const row = getSqlite()
-        .prepare("SELECT count(*) as n FROM sqlite_master WHERE type = 'table'")
-        .get() as { n: number } | undefined;
-      if ((row?.n ?? 0) > 0) {
-        status = "pass";
-        detail = `Schema present: ${String(row?.n ?? 0)} tables found.`;
-      } else {
-        status = "warn";
-        detail = "Database accessible but no tables found. Run db:migrate and db:seed.";
-      }
-    } catch (err) {
-      status = "error";
-      detail = `Database not accessible: ${err instanceof Error ? err.message : "unknown error"}.`;
-    }
-    checks.push({ id: "database", label: "Database: accessible", detail, status });
-  }
-
-  // 2. Seed data: loaded
-  {
-    let status: CheckStatus = "warn";
-    let detail = "role_app_runs table is empty or not yet migrated. Run db:seed.";
-    try {
-      const row = getSqlite()
-        .prepare("SELECT count(*) as n FROM role_app_runs")
-        .get() as { n: number } | undefined;
-      const count = row?.n ?? 0;
-      if (count > 0) {
-        status = "pass";
-        detail = `${String(count)} process run(s) seeded.`;
-      }
-    } catch {
-      status = "warn";
-      detail = "role_app_runs table not found. Run db:migrate and db:seed.";
-    }
-    checks.push({ id: "seed-data", label: "Seed data: loaded", detail, status });
-  }
-
-  // 3. Identity mode: configured
-  {
-    const productMode = process.env["PRODUCT_MODE"] ?? "";
-    let status: CheckStatus = "warn";
-    let detail = "";
-    if (productMode === "design-partner") {
-      status = "pass";
-      detail = "PRODUCT_MODE = design-partner. Role assignment is fixed per account.";
-    } else if (productMode === "offline-evaluation") {
-      status = "pass";
-      detail = "PRODUCT_MODE = offline-evaluation. Sessions are unattended-safe.";
-    } else if (productMode === "") {
-      status = "warn";
-      detail = "PRODUCT_MODE is not set. Running in demonstration mode, not suitable for pilot sessions.";
-    } else {
-      status = "warn";
-      detail = `PRODUCT_MODE = ${productMode}. Set to 'design-partner' for pilot sessions.`;
-    }
-    checks.push({ id: "identity-mode", label: "Identity mode: configured", detail, status });
-  }
-
-  // 4. AI routines: seeded
-  {
-    let status: CheckStatus = "warn";
-    let detail = "ai_routines table is empty or not yet migrated.";
-    try {
-      const row = getSqlite()
-        .prepare("SELECT count(*) as n FROM ai_routines")
-        .get() as { n: number } | undefined;
-      const count = row?.n ?? 0;
-      if (count > 0) {
-        status = "pass";
-        detail = `${String(count)} AI routine(s) seeded.`;
-      }
-    } catch {
-      status = "warn";
-      detail = "ai_routines table not found. Run db:migrate and db:seed.";
-    }
-    checks.push({ id: "ai-routines", label: "AI routines: seeded", detail, status });
-  }
-
-  // 5. Audit chain: initialised
-  {
-    let status: CheckStatus = "warn";
-    let detail = "audit_chain_records table not found. Run db:migrate.";
-    try {
-      const row = getSqlite()
-        .prepare("SELECT count(*) as n FROM audit_chain_records")
-        .get() as { n: number } | undefined;
-      const count = row?.n ?? 0;
-      status = "pass";
-      detail =
-        count > 0
-          ? `Audit chain initialised: ${String(count)} record(s).`
-          : "Audit chain table present. Records will be written when events occur.";
-    } catch {
-      status = "warn";
-    }
-    checks.push({ id: "audit-chain", label: "Audit chain: initialised", detail, status });
-  }
-
-  // 6. At least one process run active
-  {
-    let status: CheckStatus = "warn";
-    let detail = "No active process runs found. Run db:seed.";
-    try {
-      const row = getSqlite()
-        .prepare("SELECT count(*) as n FROM role_app_runs WHERE status != 'archived'")
-        .get() as { n: number } | undefined;
-      const count = row?.n ?? 0;
-      if (count > 0) {
-        status = "pass";
-        detail = `${String(count)} active process run(s).`;
-      }
-    } catch {
-      status = "warn";
-      detail = "role_app_runs table not found. Run db:migrate and db:seed.";
-    }
-    checks.push({
-      id: "active-run",
-      label: "At least one process run active",
-      detail,
-      status,
-    });
-  }
-
-  return checks;
-}
-
-/* ==========================================================================
-   Page
-   ========================================================================== */
 
 export default function PilotReadinessPage() {
+  const language = readAdminLanguage();
+  const say = (pair: Pair) => pick(pair, language);
+  const config = getProductConfig();
   const checks = runReadinessChecks();
-  const passCount = checks.filter((c) => c.status === "pass").length;
-  const allPass = passCount === checks.length;
-
-  const productMode = process.env["PRODUCT_MODE"] ?? "demonstration";
-
-  // Jurisdiction -- derived from the seed institution (DE).
-  // Typed as string so comparisons against "CH" are valid.
-  const jurisdiction: string = "DE";
+  const verified = checks.filter((check) => check.reading.status === "verified").length;
+  const overall = overallStatus(checks.map((check) => check.reading.status));
+  const identityCheck = checks.find((check) => check.id === "identity-mode");
+  const pack = readPilotEvidencePack();
+  const entities = config.organisation.legalEntities;
 
   return (
     <div className="app-stack app-stack-6">
-      <SettingsHead
-        eyebrow="Administrator area"
-        title="Pilot readiness"
-        lede="Readiness checks, pilot accounts and regulatory scope for the design-partner release. Use this page before each pilot session to confirm the environment is ready."
-      />
+      <SettingsHead eyebrow={say(COPY.eyebrow)} title={say(COPY.title)} lede={say(COPY.lede)} />
 
-      {allPass ? (
-        <Notice tone="info">
-          All {checks.length} readiness checks pass. The environment is ready for a pilot session.
-        </Notice>
-      ) : (
-        <Notice tone="warning">
-          {passCount} of {checks.length} checks pass. Review the items marked as warning below
-          before starting a pilot session.
-        </Notice>
-      )}
+      <Notice tone={overall === "verified" ? "info" : "warning"}>
+        {overall === "verified"
+          ? fill(say(COPY.allVerified), { total: checks.length })
+          : fill(say(COPY.someVerified), { verified, total: checks.length })}
+      </Notice>
 
-      {/* Readiness checks */}
-      <SettingsSection title="Readiness checks" count={checks.length}>
-        <div className="app-stack app-stack-3">
+      <SettingsSection
+        title={say(COPY.checks)}
+        count={checks.length}
+        trailing={<StatusBadge status={overall} language={language} />}
+      >
+        <StatusList label={say(COPY.checks)}>
           {checks.map((check) => (
-            <div
+            <StatusRow
               key={check.id}
-              style={{
-                display: "flex",
-                alignItems: "flex-start",
-                gap: "var(--app-4)",
-                padding: "var(--app-4)",
-                border: "1px solid var(--app-border)",
-                borderRadius: "var(--app-radius)",
-                background: "var(--app-surface-1)",
-              }}
-            >
-              <CheckMark status={check.status} />
-              <div className="app-stack app-stack-1" style={{ flex: 1, minWidth: 0 }}>
-                <span
-                  style={{
-                    fontSize: "var(--app-text-sm)",
-                    fontWeight: 500,
-                    color: "var(--app-text-1)",
-                  }}
-                >
-                  {check.label}
-                </span>
-                <span
-                  style={{
-                    fontSize: "var(--app-text-xs)",
-                    color: "var(--app-text-3)",
-                    lineHeight: 1.5,
-                  }}
-                >
-                  {check.detail}
-                </span>
-              </div>
-              <StatusBadge status={check.status} />
-            </div>
+              label={say(check.label)}
+              status={check.reading}
+              language={language}
+            />
           ))}
-        </div>
+        </StatusList>
       </SettingsSection>
 
-      {/* Pilot accounts */}
-      <SettingsSection title="Pilot accounts" count={PILOT_USERS.length}>
+      <SettingsSection title={say(COPY.accounts)} count={PILOT_USERS.length}>
         <div className="app-stack app-stack-2">
-          <p
-            className="app-secondary"
-            style={{ fontSize: "var(--app-text-sm)", maxWidth: "76ch" }}
-          >
-            Synthetic accounts pre-configured for the design-partner pilot. Credentials are not
-            shown here. Use the identity configuration to retrieve login details.
+          <p className="app-secondary" style={{ fontSize: "var(--app-text-sm)", maxWidth: "76ch" }}>
+            {say(COPY.accountsNote)}
           </p>
-          <FieldList label="Pilot accounts">
+          <FieldList label={say(COPY.accounts)}>
             {PILOT_USERS.map((user) => (
               <Field
                 key={user.userId}
                 label={user.displayName}
                 value={
                   <span className="app-row app-row-wrap">
-                    <Chip tone="neutral">{user.isAdministrator ? "Administrator" : `Role: ${user.roleIds.join(", ")}`}</Chip>
-                    <Chip tone="info">Arcadia Savings Bank</Chip>
+                    <Chip tone="neutral">
+                      {user.isAdministrator
+                        ? say(COPY.administrator)
+                        : user.roleIds
+                            .map((roleId) => getRoleRelease(roleId)?.releaseLabel ?? roleId)
+                            .join(", ")}
+                    </Chip>
+                    <Chip tone="info">{config.organisation.name}</Chip>
                     <span className="app-meta">{user.userId}</span>
                   </span>
                 }
@@ -271,176 +170,71 @@ export default function PilotReadinessPage() {
         </div>
       </SettingsSection>
 
-      {/* Regulatory scope */}
-      <SettingsSection title="Regulatory scope">
+      <SettingsSection title={say(COPY.scope)} count={entities.length}>
         <div className="app-stack app-stack-3">
-          <FieldList label="Regulatory scope">
-            <Field label="Jurisdiction" value={jurisdiction} />
-            <Field
-              label="Applicable frameworks"
-              value={
-                jurisdiction === "CH" ? (
-                  <span className="app-row app-row-wrap">
-                    <Chip tone="info">FINMA</Chip>
-                  </span>
-                ) : (
-                  <span className="app-row app-row-wrap">
-                    <Chip tone="info">DORA</Chip>
-                    <Chip tone="info">EBA ICT guidelines</Chip>
-                  </span>
-                )
-              }
-            />
-            <Field
-              label="Note"
-              value={
-                jurisdiction === "CH"
-                  ? "FINMA circulars apply to this entity. DORA does not directly apply to Swiss entities."
-                  : "DORA and EBA guidelines apply to DE/AT entities in scope of the EU digital resilience framework."
-              }
-            />
-          </FieldList>
-          <p className="app-meta" style={{ maxWidth: "76ch" }}>
-            Illustrative regulatory context, not legal advice. Regulatory references in this
-            product are for orientation only and do not constitute a compliance statement.
-          </p>
+          {entities.length === 0 ? (
+            <Notice tone="warning">{say(COPY.noEntities)}</Notice>
+          ) : (
+            <FieldList label={say(COPY.scope)}>
+              {entities.map((entity) => (
+                <Field
+                  key={entity.id}
+                  label={`${entity.name} (${entity.country})`}
+                  value={<RegulatorContext items={entity.regulatorContext} language={language} />}
+                />
+              ))}
+            </FieldList>
+          )}
+          <span className="app-meta" style={{ maxWidth: "76ch" }}>
+            {say(COPY.scopeNote)} <RegulatoryNote language={language} />
+          </span>
         </div>
       </SettingsSection>
 
-      {/* Identity mode */}
-      <SettingsSection title="Identity configuration">
-        <FieldList label="Identity mode details">
-          <Field label="PRODUCT_MODE" value={productMode} mono />
-          <Field
-            label="Status"
-            value={
-              productMode === "design-partner" || productMode === "offline-evaluation" ? (
-                <Chip tone="success">Configured for pilot</Chip>
-              ) : (
-                <Chip tone="warning">Demonstration mode: set PRODUCT_MODE for pilot use</Chip>
-              )
-            }
-          />
+      <SettingsSection title={say(COPY.identity)}>
+        <FieldList label={say(COPY.identity)}>
+          <Field label="PRODUCT_MODE" value={getProductMode()} mono />
+          {identityCheck ? (
+            <Field
+              label={say(COPY.status)}
+              value={
+                <StatusBadge
+                  status={identityCheck.reading.status}
+                  language={language}
+                  detail={say(identityCheck.reading.detail)}
+                />
+              }
+              note={say(identityCheck.reading.detail)}
+            />
+          ) : null}
         </FieldList>
       </SettingsSection>
 
-      {/* Evidence pack */}
-      <SettingsSection title="Evidence pack">
+      <SettingsSection title={say(COPY.evidence)}>
         <div className="app-stack app-stack-3">
-          <p
-            className="app-secondary"
-            style={{ fontSize: "var(--app-text-sm)", maxWidth: "76ch" }}
-          >
-            The evidence pack is a JSON file that captures the current readiness state, seeded
-            data summary, regulatory scope and synthetic-data disclosure. It is intended for
-            design-partner handoff documentation.
+          <p className="app-secondary" style={{ fontSize: "var(--app-text-sm)", maxWidth: "76ch" }}>
+            {say(COPY.evidenceNote)}
           </p>
-          <p
-            className="app-secondary"
-            style={{ fontSize: "var(--app-text-sm)", maxWidth: "76ch" }}
-          >
-            To generate: run{" "}
-            <code
-              style={{
-                fontFamily: "var(--app-font-mono)",
-                fontSize: "var(--app-text-xs)",
-                background: "var(--app-surface-2)",
-                padding: "1px 4px",
-                borderRadius: "var(--app-radius-sm)",
-                border: "1px solid var(--app-border)",
-              }}
-            >
-              npm run pilot:evidence-pack
-            </code>{" "}
-            which writes to{" "}
-            <code
-              style={{
-                fontFamily: "var(--app-font-mono)",
-                fontSize: "var(--app-text-xs)",
-                background: "var(--app-surface-2)",
-                padding: "1px 4px",
-                borderRadius: "var(--app-radius-sm)",
-                border: "1px solid var(--app-border)",
-              }}
-            >
-              release/pilot-evidence.json
-            </code>
-            .
-          </p>
-          <div>
-            <a
-              href="/api/pilot/evidence"
-              style={{
-                display: "inline-flex",
-                alignItems: "center",
-                gap: "var(--app-2)",
-                fontSize: "var(--app-text-sm)",
-                color: "var(--app-text-2)",
-                textDecoration: "none",
-                padding: "var(--app-2) var(--app-4)",
-                border: "1px solid var(--app-border)",
-                borderRadius: "var(--app-radius)",
-                background: "var(--app-surface-1)",
-              }}
-            >
-              Download evidence pack (API)
-            </a>
-          </div>
-          <p className="app-meta" style={{ maxWidth: "76ch" }}>
-            The evidence pack contains no credentials, no session secrets and no personal data.
-            It contains only operational metadata and counts.
-          </p>
+          <FieldList label={say(COPY.evidence)}>
+            <Field
+              label={say(COPY.evidence)}
+              value={<StatusBadge status={pack.status} language={language} detail={say(pack.detail)} />}
+              note={say(pack.detail)}
+            />
+            {pack.generatedAt ? (
+              <Field label={say(COPY.generatedAt)} value={<Data>{pack.generatedAt}</Data>} />
+            ) : null}
+            <Field label={say(COPY.generate)} value={<Data>npm run pilot:evidence-pack</Data>} />
+            <Field
+              label={say(COPY.download)}
+              value={
+                <StatusBadge status="unavailable" language={language} detail={say(COPY.downloadNote)} />
+              }
+              note={say(COPY.downloadNote)}
+            />
+          </FieldList>
         </div>
       </SettingsSection>
     </div>
   );
-}
-
-/* ==========================================================================
-   Local presentational helpers
-   ========================================================================== */
-
-function CheckMark({ status }: { status: CheckStatus }) {
-  const color =
-    status === "pass"
-      ? "var(--app-success-text)"
-      : status === "warn"
-        ? "var(--app-warning-text)"
-        : "var(--app-danger-text)";
-
-  const symbol = status === "pass" ? "+" : status === "warn" ? "!" : "x";
-
-  return (
-    <span
-      aria-hidden="true"
-      style={{
-        display: "inline-flex",
-        alignItems: "center",
-        justifyContent: "center",
-        width: 20,
-        height: 20,
-        borderRadius: "50%",
-        background:
-          status === "pass"
-            ? "var(--app-success-surface)"
-            : status === "warn"
-              ? "var(--app-warning-surface)"
-              : "var(--app-danger-surface)",
-        border: `1px solid ${color}`,
-        color,
-        fontSize: "var(--app-text-xs)",
-        fontWeight: 700,
-        flexShrink: 0,
-        marginTop: 1,
-      }}
-    >
-      {symbol}
-    </span>
-  );
-}
-
-function StatusBadge({ status }: { status: CheckStatus }) {
-  if (status === "pass") return <Chip tone="success">Pass</Chip>;
-  if (status === "warn") return <Chip tone="warning">Warn</Chip>;
-  return <Chip tone="danger">Error</Chip>;
 }

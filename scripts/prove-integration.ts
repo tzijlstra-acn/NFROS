@@ -34,6 +34,7 @@ import { migrate } from "drizzle-orm/better-sqlite3/migrator";
 import { mkdtempSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join, resolve, sep } from "node:path";
+import { PRODUCT_IDENTITY } from "../src/product/release/identity";
 
 /* ==========================================================================
    Assertions and transcript
@@ -129,7 +130,7 @@ async function main(): Promise<void> {
   const { eq, and } = await import("drizzle-orm");
   const schema = await import("../src/db/schema");
 
-  console.log("NFR WorkOS integration proof");
+  console.log(`${PRODUCT_IDENTITY.name} integration proof`);
   console.log(`Disposable database: ${process.env.NFR_DB_PATH}`);
 
   seedScenario();

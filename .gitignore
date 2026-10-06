@@ -31,6 +31,8 @@ coverage/
 AGENTS.md
 CLAUDE.md
 .next-verify/
+# Isolated dev builds (NFR_DIST_DIR=.next-<id>) used by parallel test stacks
+.next-*/
 
 # Temporary audit and QA scratch directories
 .tmp-check/
@@ -40,8 +42,9 @@ docs/screenshots/
 # Generated eval run results
 evals/results/
 
-# Release package output
-release/
+# Release package output. Anchored to the root: unanchored, it also ignored
+# src/product/release/, the release registry.
+/release/
 
 # Brag / local scratch output
 brag-output/

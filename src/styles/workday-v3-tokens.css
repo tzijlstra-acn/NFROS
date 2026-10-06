@@ -98,10 +98,25 @@
   /* ====================================================================
      Text
      ==================================================================== */
+  /*
+   * Every text token reaches WCAG AA (4.5:1) as small text on every surface
+   * in this scope, including the accent and status tints.
+   *
+   * Muted was #7b8494, which measured 3.77:1 on white and 3.49:1 on the
+   * canvas and failed axe on every main page; it carries the header entity,
+   * meta lines, row subtitles, the synthetic data label and stepper labels, so
+   * it is too common to be a quiet exception. Disabled was #a0a8b5 at 2.40:1,
+   * and it is not only used on disabled controls: locked stage labels, the
+   * header separator and placeholders read it as text. Measured now:
+   *   muted     #5a6372  6.07 on white, 5.61 on the canvas, 5.22 at worst
+   *   disabled  #636c7c  5.29 on white, 4.90 on the canvas, 4.56 at worst
+   * The step from secondary to muted to disabled is kept, so the hierarchy
+   * still reads; it is carried by weight and size more than by lightness.
+   */
   --wd-text: #172033;
   --wd-text-secondary: #475467;
-  --wd-text-muted: #7b8494;
-  --wd-text-disabled: #a0a8b5;
+  --wd-text-muted: #5a6372;
+  --wd-text-disabled: #636c7c;
 
   /* ====================================================================
      Colour, used for meaning and nowhere else.
@@ -109,6 +124,13 @@
   --wd-accent: #5b4ff2;
   --wd-accent-soft: #eeecff;
   --wd-accent-border: #c7c2fb;
+  /*
+   * Text on a filled accent, and the filled accent under a pointer. Tokens
+   * rather than literals so the dark theme can invert them: white on the dark
+   * theme's light accent measured 2.32:1. Light: 5.46:1, and 6.74:1 on hover.
+   */
+  --wd-on-accent: #ffffff;
+  --wd-accent-hover: #4c40e0;
 
   --wd-info: #2563eb;
   --wd-info-soft: #eff6ff;
@@ -194,14 +216,25 @@
   --wd-border: #2a313c;
   --wd-border-strong: #3c4553;
 
+  /*
+   * Dark muted #8d96a5 already passed (4.91:1 at worst). Dark disabled was
+   * #6a7382 at 3.06:1 on the hover surface and failed for the same reason as
+   * the light value. Disabled takes the old muted value and muted moves one
+   * step lighter, so the order is unchanged:
+   *   muted     #9aa3b2  6.72 on the surface, 5.75 at worst
+   *   disabled  #8d96a5  5.73 on the surface, 4.91 at worst
+   */
   --wd-text: #f2f4f7;
   --wd-text-secondary: #c2c9d4;
-  --wd-text-muted: #8d96a5;
-  --wd-text-disabled: #6a7382;
+  --wd-text-muted: #9aa3b2;
+  --wd-text-disabled: #8d96a5;
 
   --wd-accent: #a79fff;
   --wd-accent-soft: #221f3d;
   --wd-accent-border: #413a7a;
+  /* Dark text on the light accent: 7.37:1, and 9.27:1 on hover. */
+  --wd-on-accent: #171c24;
+  --wd-accent-hover: #bdb7ff;
 
   --wd-info: #8ab4ff;
   --wd-info-soft: #16233a;

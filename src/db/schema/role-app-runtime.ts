@@ -12,7 +12,7 @@
  * uppercase slugs for content identifiers.
  */
 
-import { sqliteTable, text, integer, index } from "drizzle-orm/sqlite-core";
+import { sqliteTable, text, integer, index, uniqueIndex } from "drizzle-orm/sqlite-core";
 
 /* ---------------------------------------------------------------------------
    Role-app runs
@@ -56,7 +56,9 @@ export const roleAppRuns = sqliteTable(
  * Stage-level state for each role-app run.
  *
  * One row per stage that has been entered. Stages that have not yet been
- * reached have no row; their status is inferred as "locked".
+ * reached have no row; their status is inferred as "locked". The unique index
+ * on run and stage is what makes opening a stage idempotent: a second open of
+ * the same stage finds the row instead of creating a twin.
  */
 export const roleAppStageRuns = sqliteTable(
   "role_app_stage_runs",
@@ -70,9 +72,19 @@ export const roleAppStageRuns = sqliteTable(
     openedAt: text("opened_at"),
     completedAt: text("completed_at"),
     completedByUserId: text("completed_by_user_id"),
+    /** The artifact holding the validated AI preparation, once it exists. */
     aiOutputId: text("ai_output_id"),
+    /** The durable background job that prepares this stage. */
+    preparationJobId: text("preparation_job_id"),
+    /** The payload bound approval that authorised the completion. */
+    completionApprovalId: text("completion_approval_id"),
+    /** The rationale the person confirmed as their own when completing. */
+    completionRationale: text("completion_rationale"),
   },
-  (table) => [index("role_app_stage_runs_run_idx").on(table.runId, table.roleAppRunId)],
+  (table) => [
+    index("role_app_stage_runs_run_idx").on(table.runId, table.roleAppRunId),
+    uniqueIndex("role_app_stage_runs_stage_unq").on(table.roleAppRunId, table.stageId),
+  ],
 );
 
 /* ---------------------------------------------------------------------------
@@ -82,6 +94,11 @@ export const roleAppStageRuns = sqliteTable(
 /**
  * Tasks within a stage: the individual work items the AI or the human must
  * complete before the stage can be marked done.
+ *
+ * One row per contract item (AI job, human task, decision, governed tool,
+ * completion approval), keyed by `taskKey`. The unique index on stage run and
+ * task key makes every task write idempotent: creating a task twice, or
+ * recording the same human input twice, finds the existing row.
  */
 export const roleAppStageTasks = sqliteTable(
   "role_app_stage_tasks",
@@ -89,24 +106,42 @@ export const roleAppStageTasks = sqliteTable(
     id: text("id").primaryKey(),
     runId: text("run_id").notNull(),
     stageRunId: text("stage_run_id").notNull(),
+    /** The contract key of the item this task tracks, for example "evidence-dispositions". */
+    taskKey: text("task_key").notNull().default(""),
     /** "ai-job" | "human-input" | "human-review" | "human-decision" | "approval" | "tool-execution" | "source-wait" */
     taskKind: text("task_kind").notNull(),
     label: text("label").notNull(),
-    /** "pending" | "in-progress" | "completed" | "skipped" */
+    /** "pending" | "in-progress" | "completed" | "skipped" | "failed" */
     status: text("status").notNull(),
     requiredForCompletion: integer("required_for_completion", { mode: "boolean" }).notNull().default(true),
+    createdAt: text("created_at"),
     completedAt: text("completed_at"),
+    completedByUserId: text("completed_by_user_id"),
+    /** The approval that authorised the task's change, for tool and approval tasks. */
+    approvalId: text("approval_id"),
+    /** Plain language reason for the current status, shown beside the task. */
+    statusReason: text("status_reason"),
     /** JSON string holding the task output. */
     output: text("output"),
   },
-  (table) => [index("role_app_stage_tasks_run_idx").on(table.runId, table.stageRunId)],
+  (table) => [
+    index("role_app_stage_tasks_run_idx").on(table.runId, table.stageRunId),
+    uniqueIndex("role_app_stage_tasks_key_unq").on(table.stageRunId, table.taskKey),
+  ],
 );
 
 /* ---------------------------------------------------------------------------
    Artifacts
    --------------------------------------------------------------------------- */
 
-/** Artifacts produced by stages: evidence packs, preparation documents, etc. */
+/**
+ * Artifacts produced by stages: evidence packs, preparation documents, stage
+ * records.
+ *
+ * Versioned by `artifactKey`: a stage that writes the same artifact again
+ * writes version two rather than overwriting version one, and the digest lets
+ * a completion approval bind to the exact content it covered.
+ */
 export const roleAppArtifacts = sqliteTable(
   "role_app_artifacts",
   {
@@ -114,43 +149,36 @@ export const roleAppArtifacts = sqliteTable(
     runId: text("run_id").notNull(),
     roleAppRunId: text("role_app_run_id").notNull(),
     stageId: text("stage_id").notNull(),
+    stageRunId: text("stage_run_id"),
+    /** The contract key of the artifact spec, for example "evidence-pack". */
+    artifactKey: text("artifact_key").notNull().default(""),
     /** "evidence-pack" | "meeting-preparation" | "minutes-draft" | etc. */
     artifactKind: text("artifact_kind").notNull(),
     label: text("label").notNull(),
     /** JSON string or plain text content. */
     content: text("content"),
+    version: integer("version").notNull().default(1),
+    /** sha256 over the content, truncated. Bound into completion approvals. */
+    contentDigest: text("content_digest"),
+    /** "ai-preparation" | "stage-completion" | "human" */
+    producedBy: text("produced_by"),
+    /** The AI mode that produced it: "live" | "safe" | "offline". Null for human work. */
+    mode: text("mode"),
+    createdByUserId: text("created_by_user_id"),
     createdAt: text("created_at").notNull(),
   },
-  (table) => [index("role_app_artifacts_run_idx").on(table.runId, table.roleAppRunId)],
+  (table) => [
+    index("role_app_artifacts_run_idx").on(table.runId, table.roleAppRunId),
+    index("role_app_artifacts_key_idx").on(table.roleAppRunId, table.stageId, table.artifactKey),
+  ],
 );
 
-/* ---------------------------------------------------------------------------
-   Process events (audit trail)
-   --------------------------------------------------------------------------- */
-
-/**
- * Append-only event log for role-app runs.
- *
- * Every state transition writes exactly one row. The process page and the
- * audit view read this table to reconstruct what happened and when.
+/*
+ * Process events used to live in `role_app_events`. They are now ordinary
+ * events on the OS event backbone, `os_events` in `./os-events.ts`, with a
+ * `process_run_id`. Keeping a second, process-only account of the same events
+ * is exactly what plan section 8.1 rules out.
  */
-export const roleAppEvents = sqliteTable(
-  "role_app_events",
-  {
-    id: text("id").primaryKey(),
-    runId: text("run_id").notNull(),
-    roleAppRunId: text("role_app_run_id").notNull(),
-    stageId: text("stage_id"),
-    /** "run-started" | "stage-entered" | "stage-completed" | "ai-prepared" | "human-decided" | "tool-executed" | "run-completed" | "run-blocked" */
-    eventKind: text("event_kind").notNull(),
-    /** "ai" | "human" | "system" */
-    actorKind: text("actor_kind").notNull(),
-    actorId: text("actor_id"),
-    payload: text("payload", { mode: "json" }).$type<Record<string, unknown>>(),
-    at: text("at").notNull(),
-  },
-  (table) => [index("role_app_events_run_idx").on(table.runId, table.roleAppRunId)],
-);
 
 /* ---------------------------------------------------------------------------
    AI routines
@@ -187,11 +215,21 @@ export const aiRoutines = sqliteTable(
    --------------------------------------------------------------------------- */
 
 /**
- * Structured meeting minutes produced by the AI after a concluded meeting.
+ * Meeting minutes: a draft while it is being written, a record once a person
+ * confirms it.
  *
- * Linked to the meetings table by `meetingId`. A meeting row exists before
- * minutes are drafted; the minutes row records the outcome once the AI has
- * processed the transcript or the scripted anchor turns.
+ * Linked to the meetings table by `meetingId`. The working draft is the
+ * structured `draft` document (facts, decisions, actions with owners and due
+ * dates, unresolved questions, evidence references and the distribution
+ * list), which the person edits and the meetings module validates on every
+ * write. Each write raises `version` and recomputes `contentDigest`, and the
+ * confirmation approval binds to both, so a draft edited after it was
+ * approved cannot be confirmed under that approval.
+ *
+ * On confirmation the flat record columns (`factItems`, `decisionIds`,
+ * `actionIds`, `unresolvedItems`, `evidenceIds`) are written from the draft,
+ * the minutes become the evidence document named in `evidenceDocumentId`, and
+ * the actions they create carry `source_minutes_id` back to this row.
  */
 export const meetingMinutes = sqliteTable(
   "meeting_minutes",
@@ -216,6 +254,28 @@ export const meetingMinutes = sqliteTable(
     confirmedAt: text("confirmed_at"),
     distributedAt: text("distributed_at"),
     createdAt: text("created_at").notNull(),
+    /**
+     * The structured working draft. Validated by the meetings module's
+     * minutes schema on every read and write; null for a record that was
+     * confirmed before drafts were structured.
+     */
+    draft: text("draft", { mode: "json" }).$type<Record<string, unknown>>(),
+    /** Raised by every write to the draft. The confirmation approval binds to it. */
+    version: integer("version").notNull().default(1),
+    /** sha256 over the draft, truncated. Bound into the confirmation approval. */
+    contentDigest: text("content_digest"),
+    /** How the AI part of the draft was prepared: "safe" | "offline" | "live". Null when only a person wrote it. */
+    preparedMode: text("prepared_mode"),
+    editedByUserId: text("edited_by_user_id"),
+    editedAt: text("edited_at"),
+    /** The evidence document the confirmed minutes became. */
+    evidenceDocumentId: text("evidence_document_id"),
+    /** Who the confirmed minutes go to. Confirmed by the person with the minutes. */
+    distributionUserIds: text("distribution_user_ids", { mode: "json" }).$type<string[]>().notNull().default([]),
+    /** The simulated collaboration message the distribution was recorded as. */
+    distributionMessageId: text("distribution_message_id"),
+    /** The payload bound approval that authorised the confirmation. */
+    confirmationApprovalId: text("confirmation_approval_id"),
   },
   (table) => [index("meeting_minutes_run_idx").on(table.runId, table.meetingId)],
 );
@@ -223,6 +283,24 @@ export const meetingMinutes = sqliteTable(
 /* ---------------------------------------------------------------------------
    Action updates
    --------------------------------------------------------------------------- */
+
+/**
+ * The kinds of entry an action's history holds.
+ *
+ *   UPD update        CC  completion condition agreed   BLK blocked
+ *   UNB unblocked     ASN accountability transferred    DUE due date moved
+ *   CMP completed     REO reopened                      ESC escalated
+ *   RMD reminder sent REQ evidence requested            MTG meeting record
+ *   CRT created       (raised from confirmed minutes or another source)
+ *
+ * The kind used to be carried only in the identifier prefix (`AUP-CMP-...`).
+ * Migration 0005 copied it into `kind`; the identifier keeps its prefix, so
+ * an entry still reads the same in an export.
+ */
+export const ACTION_UPDATE_KINDS = [
+  "UPD", "CC", "BLK", "UNB", "ASN", "DUE", "CMP", "REO", "ESC", "RMD", "REQ", "MTG", "CRT",
+] as const;
+export type ActionUpdateKind = (typeof ACTION_UPDATE_KINDS)[number];
 
 /**
  * Append-only progress notes on actions.
@@ -243,6 +321,8 @@ export const actionUpdates = sqliteTable(
     note: text("note").notNull(),
     evidenceIds: text("evidence_ids", { mode: "json" }).$type<string[]>().notNull(),
     statusAfter: text("status_after").notNull(),
+    /** The kind of entry. See `ACTION_UPDATE_KINDS`. */
+    kind: text("kind").$type<ActionUpdateKind>().notNull().default("UPD"),
   },
   (table) => [index("action_updates_run_idx").on(table.runId, table.actionId)],
 );

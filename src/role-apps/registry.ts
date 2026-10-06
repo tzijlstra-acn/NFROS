@@ -15,9 +15,9 @@
  * catalogue.
  */
 
-import { RCSA_CYCLE_ASSISTANT } from "./rcsa/definition";
-import { THIRD_PARTY_ONBOARDING_APP } from "./tprm/definition";
-import type { RoleAppDefinition } from "./contracts";
+import { RCSA_CYCLE_ASSISTANT, RCSA_CYCLE_PROCESS } from "./rcsa/definition";
+import { THIRD_PARTY_ONBOARDING_APP, TPRM_ONBOARDING_PROCESS } from "./tprm/definition";
+import type { RoleAppDefinition, RoleProcessDefinition } from "./contracts";
 
 /* ---------------------------------------------------------------------------
    Demo apps: RCSA
@@ -162,4 +162,27 @@ export function getRoleApps(roleId: string): RoleAppDefinition[] {
 
 export function getRoleApp(id: string): RoleAppDefinition | undefined {
   return ROLE_APP_REGISTRY.find((app) => app.id === id);
+}
+
+/**
+ * The process definitions the installed apps implement.
+ *
+ * Only installed apps have a full stage contract, so only their processes are
+ * listed. A demo app's `processId` resolves to nothing here, which is what the
+ * process engine relies on to refuse running a process that is not installed.
+ */
+export const PROCESS_DEFINITIONS: readonly RoleProcessDefinition[] = [
+  RCSA_CYCLE_PROCESS,
+  TPRM_ONBOARDING_PROCESS,
+];
+
+export function getProcessDefinition(processId: string): RoleProcessDefinition | undefined {
+  return PROCESS_DEFINITIONS.find((process) => process.id === processId);
+}
+
+/** The installed apps, for surfaces that list runnable processes. */
+export function getInstalledRoleApps(roleId?: string): RoleAppDefinition[] {
+  return ROLE_APP_REGISTRY.filter(
+    (app) => app.status === "installed" && (roleId === undefined || app.roleId === roleId),
+  );
 }

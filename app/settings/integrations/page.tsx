@@ -15,6 +15,11 @@
  *
  * Nothing on this page can display a credential. The only credential related
  * value that reaches it is a four valued state column.
+ *
+ * Each mode group carries a status badge from the product vocabulary, mapped
+ * by `statusForConnectorMode`: the mode says what is built, the badge says
+ * what is true of the data. It replaces the raw mode identifier that used to
+ * sit in that position.
  */
 
 import { eq } from "drizzle-orm";
@@ -50,9 +55,79 @@ import {
   type QueueRowModel,
 } from "@/components/integrations";
 import { CONNECTOR_MODE_LABELS, pick } from "@/workday/contracts";
-import type { Language } from "@/i18n/labels";
+import { StatusBadge, statusForConnectorMode } from "@/product/status";
+import { readAdminLanguage } from "@/product/status/sources";
+import { WrappingDetail } from "../_components/StatusRows";
 
 export const dynamic = "force-dynamic";
+
+const COPY = {
+  eyebrow: { en: "Administrator area", de: "Administrationsbereich" },
+  title: { en: "Integrations", de: "Integrationen" },
+  emptyLede: {
+    en: "Connector instances, their declared capabilities, their health and the outbound command queue.",
+    de: "Konnektorinstanzen, ihre deklarierten Faehigkeiten, ihr Zustand und die Warteschlange ausgehender Befehle.",
+  },
+  noInstances: {
+    en: "No connector instances are configured. Run the migration and the seed, then call the integration seed, to populate the connector registry.",
+    de: "Es sind keine Konnektorinstanzen konfiguriert. Fuehren Sie Migration und Seed aus und rufen Sie dann den Integrations-Seed auf, um das Konnektorverzeichnis zu fuellen.",
+  },
+  lede: {
+    en: "The product is a system of engagement. The bank's GRC platform, document repository, process intelligence tool and collaboration suite remain systems of record. Every connector instance below declares exactly one readiness mode, and the mode is the claim: a simulated source says so, and an adapter that is only on the roadmap refuses every operation rather than returning an empty result.",
+    de: "Das Produkt ist ein System of Engagement. GRC-Plattform, Dokumentenablage, Process-Intelligence-Werkzeug und Kollaborationsumgebung der Bank bleiben die fuehrenden Systeme. Jede Konnektorinstanz unten deklariert genau einen Bereitschaftsmodus, und der Modus ist die Aussage: eine simulierte Quelle sagt das, und ein Adapter, der nur auf der Roadmap steht, lehnt jeden Vorgang ab, statt ein leeres Ergebnis zu liefern.",
+  },
+  fabric: { en: "State of the fabric", de: "Zustand der Integrationsschicht" },
+  instances: { en: "Connector instances configured", de: "Konfigurierte Konnektorinstanzen" },
+  references: {
+    en: "External references retained, {conflicted} flagged as conflicted",
+    de: "Gespeicherte externe Referenzen, davon {conflicted} als widerspruechlich markiert",
+  },
+  inbound: {
+    en: "Inbound events received, deduplicated on connector and event key",
+    de: "Empfangene eingehende Ereignisse, nach Konnektor und Ereignisschluessel dedupliziert",
+  },
+  synced: {
+    en: "Object types synced at least once, of {configured} configured",
+    de: "Mindestens einmal abgeglichene Objekttypen, von {configured} konfigurierten",
+  },
+  acknowledged: {
+    en: "Outbound commands acknowledged by a target system",
+    de: "Von einem Zielsystem bestaetigte ausgehende Befehle",
+  },
+  unconfirmed: { en: "Outbound commands not yet confirmed", de: "Noch nicht bestaetigte ausgehende Befehle" },
+  controls: { en: "Connector controls", de: "Konnektorsteuerung" },
+  controlsNote: {
+    en: "Setting a connector unavailable is how the failure path is demonstrated. An approved decision routed to an unavailable target is queued and then dead lettered. The decision, its rationale and its approval are untouched: what failed is the delivery of its consequence to one external system, and recovering the connector lets the same command complete on its original idempotency key.",
+    de: "Einen Konnektor auf nicht verfuegbar zu setzen, zeigt den Fehlerpfad. Eine genehmigte Entscheidung an ein nicht verfuegbares Ziel wird eingereiht und dann als unzustellbar abgelegt. Entscheidung, Begruendung und Genehmigung bleiben unberuehrt: fehlgeschlagen ist nur die Zustellung ihrer Folge an ein externes System, und nach der Wiederherstellung schliesst derselbe Befehl mit seinem urspruenglichen Idempotenzschluessel ab.",
+  },
+  queue: { en: "Outbound command queue", de: "Warteschlange ausgehender Befehle" },
+  packs: { en: "Connector packs", de: "Konnektorpakete" },
+  packsNote: {
+    en: "A pack is a connector family. The named adapters listed against each family are the scope a real engagement would discuss. None of them is a claim: the mode on each instance above is what says whether anything is built.",
+    de: "Ein Paket ist eine Konnektorfamilie. Die je Familie genannten Adapter sind der Umfang, ueber den ein echtes Projekt sprechen wuerde. Keiner davon ist eine Aussage: der Modus jeder Instanz oben sagt, ob etwas gebaut ist.",
+  },
+  jurisdiction: { en: "Jurisdiction aware", de: "Jurisdiktionsbewusst" },
+  sync: { en: "Sync state and freshness thresholds", de: "Abgleichstand und Aktualitaetsschwellen" },
+  syncNote: {
+    en: "The staleness threshold is per connector and object type, because two sources do not age at the same rate. An assessment four hours old is current. A payment volume four hours old is not. The threshold is what turns a sync timestamp into the word the interface shows beside the data.",
+    de: "Die Schwelle fuer veraltete Daten gilt je Konnektor und Objekttyp, denn zwei Quellen altern nicht gleich schnell. Eine vier Stunden alte Bewertung ist aktuell, ein vier Stunden altes Zahlungsvolumen nicht. Die Schwelle macht aus einem Abgleichzeitpunkt das Wort, das die Oberflaeche neben den Daten zeigt.",
+  },
+  noSync: { en: "No sync state configured", de: "Kein Abgleichstand konfiguriert" },
+  noSyncDetail: {
+    en: "A row appears here for every object type a connector declares as readable.",
+    de: "Hier erscheint eine Zeile fuer jeden Objekttyp, den ein Konnektor als lesbar deklariert.",
+  },
+  staleAfter: { en: "Stale after", de: "Veraltet nach" },
+  minutes: { en: "minutes", de: "Minuten" },
+  status: { en: "status", de: "Status" },
+  seen: { en: "seen", de: "gesehen" },
+  changed: { en: "changed", de: "geaendert" },
+  conflicted: { en: "conflicted", de: "widerspruechlich" },
+} as const;
+
+function fill(template: string, values: Record<string, string | number>): string {
+  return template.replace(/\{(\w+)\}/g, (_, key: string) => String(values[key] ?? ""));
+}
 
 /** Connectors whose simulated system can be switched off from this screen. */
 const CONTROLLABLE_KEYS = new Set([
@@ -66,7 +141,8 @@ const CONTROLLABLE_KEYS = new Set([
 ]);
 
 export default function IntegrationsSettingsPage() {
-  const language: Language = "en";
+  const language = readAdminLanguage();
+  const say = (pair: { en: string; de: string }) => pick(pair, language);
   const state = getScenarioState();
   const runId = state?.runId ?? DEFAULT_RUN_ID;
 
@@ -93,14 +169,11 @@ export default function IntegrationsSettingsPage() {
     return (
       <div className="app-stack app-stack-6">
         <SettingsHead
-          eyebrow="Administrator area"
-          title="Integrations"
-          lede="Connector instances, their declared capabilities, their health and the outbound command queue."
+          eyebrow={say(COPY.eyebrow)}
+          title={say(COPY.title)}
+          lede={say(COPY.emptyLede)}
         />
-        <Notice tone="warning">
-          No connector instances are configured. Run the migration and the seed, then call the
-          integration seed, to populate the connector registry.
-        </Notice>
+        <Notice tone="warning">{say(COPY.noInstances)}</Notice>
       </div>
     );
   }
@@ -205,37 +278,33 @@ export default function IntegrationsSettingsPage() {
 
   return (
     <div className="app-stack app-stack-6">
-      <SettingsHead
-        eyebrow="Administrator area"
-        title="Integrations"
-        lede="The product is a system of engagement. The bank's GRC platform, document repository, process intelligence tool and collaboration suite remain systems of record. Every connector instance below declares exactly one readiness mode, and the mode is the claim: a simulated source says so, and an adapter that is only on the roadmap refuses every operation rather than returning an empty result."
-      />
+      <SettingsHead eyebrow={say(COPY.eyebrow)} title={say(COPY.title)} lede={say(COPY.lede)} />
 
-      <SettingsSection title="State of the fabric">
+      <SettingsSection title={say(COPY.fabric)}>
         <div className="app-grid-3">
           <Item
             title={<Data size="sm">{instances.length}</Data>}
-            subtitle="Connector instances configured"
+            subtitle={say(COPY.instances)}
           />
           <Item
             title={<Data size="sm">{references.length}</Data>}
-            subtitle={`External references retained, ${conflictedCount} flagged as conflicted`}
+            subtitle={fill(say(COPY.references), { conflicted: conflictedCount })}
           />
           <Item
             title={<Data size="sm">{inbound.length}</Data>}
-            subtitle="Inbound events received, deduplicated on connector and event key"
+            subtitle={say(COPY.inbound)}
           />
           <Item
             title={<Data size="sm">{syncedTypes}</Data>}
-            subtitle={`Object types synced at least once, of ${syncState.length} configured`}
+            subtitle={fill(say(COPY.synced), { configured: syncState.length })}
           />
           <Item
             title={<Data size="sm">{summary.acknowledged}</Data>}
-            subtitle="Outbound commands acknowledged by a target system"
+            subtitle={say(COPY.acknowledged)}
           />
           <Item
             title={<Data size="sm">{summary.queued + summary.failed + summary.deadLettered}</Data>}
-            subtitle="Outbound commands not yet confirmed"
+            subtitle={say(COPY.unconfirmed)}
           />
         </div>
       </SettingsSection>
@@ -248,7 +317,12 @@ export default function IntegrationsSettingsPage() {
             key={mode}
             title={pick(CONNECTOR_MODE_LABELS[mode], language)}
             count={group.length}
-            trailing={<Chip tone="neutral">{mode}</Chip>}
+            trailing={
+              <span className="app-row">
+                <span className="app-oid">{mode}</span>
+                <StatusBadge status={statusForConnectorMode(mode)} language={language} />
+              </span>
+            }
           >
             <div className="app-stack app-stack-3">
               <p className="app-secondary" style={{ maxWidth: "76ch", margin: 0 }}>
@@ -264,49 +338,37 @@ export default function IntegrationsSettingsPage() {
         );
       })}
 
-      <SettingsSection title="Connector controls">
+      <SettingsSection title={say(COPY.controls)}>
         <div className="app-stack app-stack-3">
           <p className="app-secondary" style={{ maxWidth: "76ch", margin: 0 }}>
-            Setting a connector unavailable is how the failure path is demonstrated. An approved
-            decision routed to an unavailable target is queued and then dead lettered. The decision,
-            its rationale and its approval are untouched: what failed is the delivery of its
-            consequence to one external system, and recovering the connector lets the same command
-            complete on its original idempotency key.
+            {say(COPY.controlsNote)}
           </p>
           <ConnectorControls instances={controls} language={language} />
         </div>
       </SettingsSection>
 
-      <SettingsSection title="Outbound command queue" count={queueRows.length}>
+      <SettingsSection title={say(COPY.queue)} count={queueRows.length}>
         <RetryQueue rows={queueRows} language={language} />
       </SettingsSection>
 
-      <SettingsSection title="Connector packs" count={packs.length}>
+      <SettingsSection title={say(COPY.packs)} count={packs.length}>
         <div className="app-stack app-stack-3">
           <p className="app-secondary" style={{ maxWidth: "76ch", margin: 0 }}>
-            A pack is a connector family. The named adapters listed against each family are the
-            scope a real engagement would discuss. None of them is a claim: the mode on each
-            instance above is what says whether anything is built.
+            {say(COPY.packsNote)}
           </p>
           <List label="Connector packs">
             {packs.map((pack) => (
               <Item
                 key={pack.id}
                 title={
-                  <span className="app-row app-row-wrap">
+                  <span className="app-row app-row-wrap" style={{ whiteSpace: "normal" }}>
                     <span className="app-strong">{pack.name}</span>
                     <Chip tone="neutral">{pack.family}</Chip>
                     {pack.id === "regulatory-content" ? (
-                      <Chip tone="info" title="Jurisdiction aware">
-                        Jurisdiction aware
+                      <Chip tone="info" title={say(COPY.jurisdiction)}>
+                        {say(COPY.jurisdiction)}
                       </Chip>
                     ) : null}
-                  </span>
-                }
-                subtitle={
-                  <span className="app-stack app-stack-1">
-                    <span>{pack.description}</span>
-                    {pack.id === "regulatory-content" ? <RegulatoryNote language={language} /> : null}
                   </span>
                 }
                 trailing={
@@ -318,25 +380,29 @@ export default function IntegrationsSettingsPage() {
                     ))}
                   </span>
                 }
-              />
+              >
+                <WrappingDetail>
+                  {pack.description}
+                  {pack.id === "regulatory-content" ? (
+                    <>
+                      {" "}
+                      <RegulatoryNote language={language} />
+                    </>
+                  ) : null}
+                </WrappingDetail>
+              </Item>
             ))}
           </List>
         </div>
       </SettingsSection>
 
-      <SettingsSection title="Sync state and freshness thresholds" count={syncState.length}>
+      <SettingsSection title={say(COPY.sync)} count={syncState.length}>
         <div className="app-stack app-stack-3">
           <p className="app-secondary" style={{ maxWidth: "76ch", margin: 0 }}>
-            The staleness threshold is per connector and object type, because two sources do not age
-            at the same rate. An assessment four hours old is current. A payment volume four hours
-            old is not. The threshold is what turns a sync timestamp into the word the interface
-            shows beside the data.
+            {say(COPY.syncNote)}
           </p>
           {syncState.length === 0 ? (
-            <Empty
-              title="No sync state configured"
-              detail="A row appears here for every object type a connector declares as readable."
-            />
+            <Empty title={say(COPY.noSync)} detail={say(COPY.noSyncDetail)} />
           ) : (
             <List label="Sync state">
               {syncState.map((row) => {
@@ -352,24 +418,24 @@ export default function IntegrationsSettingsPage() {
                     }
                     subtitle={
                       <span className="app-row app-row-wrap">
-                        <span className="app-faint">Stale after</span>
+                        <span className="app-faint">{say(COPY.staleAfter)}</span>
                         <Data>{row.stalenessThresholdMinutes}</Data>
-                        <span className="app-faint">minutes</span>
+                        <span className="app-faint">{say(COPY.minutes)}</span>
                         <span className="app-context-sep" aria-hidden="true">
                           /
                         </span>
-                        <span className="app-faint">status</span>
+                        <span className="app-faint">{say(COPY.status)}</span>
                         <span className="app-oid">{row.lastSyncStatus}</span>
                       </span>
                     }
                     trailing={
                       <span className="app-row">
                         <Data>{row.recordsSeen}</Data>
-                        <span className="app-faint">seen</span>
+                        <span className="app-faint">{say(COPY.seen)}</span>
                         <Data>{row.recordsChanged}</Data>
-                        <span className="app-faint">changed</span>
+                        <span className="app-faint">{say(COPY.changed)}</span>
                         <Data>{row.recordsConflicted}</Data>
-                        <span className="app-faint">conflicted</span>
+                        <span className="app-faint">{say(COPY.conflicted)}</span>
                       </span>
                     }
                   />

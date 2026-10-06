@@ -63,6 +63,31 @@ export function getRuntimeStatus(): RuntimeStatus {
 }
 
 /**
+ * What the key resolution means, in one sentence chosen from four.
+ *
+ * This used to be one fixed sentence, "A usable key was resolved from the
+ * local source", returned whether or not a key had been resolved, so the
+ * control room printed it next to "no key was resolved". The sentence is now
+ * chosen from what is actually known: whether a key in the expected form was
+ * found, and whether a live call in this process has been accepted or
+ * rejected. Each sentence is fixed text with nothing interpolated, so none of
+ * them can carry anything about the key itself: not its value, prefix, suffix
+ * or length.
+ */
+export function describeKeyResolution(configured: boolean, verified: boolean | null): string {
+  if (!configured) {
+    return "No key was resolved from the local source, so live AI is not available. The Safe and Offline modes do not need one.";
+  }
+  if (verified === true) {
+    return "A key was resolved from the local source, and the provider accepted a live call made with it in this process.";
+  }
+  if (verified === false) {
+    return "A key was resolved from the local source, but the provider rejected the last live call made with it in this process. Check that the key is current.";
+  }
+  return "A key in the expected form was resolved from the local source. It has not been sent to the provider in this process, so it is not verified. Run npm run smoke:live to verify it.";
+}
+
+/**
  * Safe status for the health endpoint and the entry screen.
  *
  * Deliberately narrow. It reports whether a key was found and which file
@@ -100,8 +125,7 @@ export function getPublicHealth(): {
      * because a health check that spends money and adds latency every time it
      * is polled is the wrong trade; `npm run smoke:live` makes exactly one.
      */
-    liveAiConfiguredMeaning:
-      "A usable key was resolved from the local source. It has not been sent to the provider, so this does not confirm the key is accepted. Run npm run smoke:live to verify.",
+    liveAiConfiguredMeaning: describeKeyResolution(runtime.openai.configured, lastVerification),
     liveAiVerified: lastVerification,
     configurationSource: runtime.openai.source,
     configurationVariable: runtime.openai.variableName,

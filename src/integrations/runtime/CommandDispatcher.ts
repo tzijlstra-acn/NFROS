@@ -81,6 +81,7 @@ import {
   requeueFromDeadLetter,
 } from "./Outbox";
 import { DEFAULT_RETRY_POLICY, runAttempt, shouldRetry, type RetryPolicy } from "./RetryPolicy";
+import { isWritePaused } from "./WritePause";
 
 const log = createLogger("integration-outbound");
 
@@ -584,6 +585,35 @@ async function attemptCommand(
   let command: CommandRow = loaded;
 
   const instance = requireConnectorInstance(command.connectorInstanceId);
+
+  /*
+   * Paused writes (src/integrations/runtime/WritePause.ts). The command stays
+   * in the outbox exactly as it is and the connector is not called. This is
+   * the one place every attempt passes through, the first dispatch, the
+   * drain and a manual retry alike, so a pause cannot be bypassed by
+   * whichever path happens to run next. The decision and its approval are
+   * untouched; delivery waits for the resume.
+   */
+  if (isWritePaused(instance.id)) {
+    const message = `Writes to ${instance.sourceSystem} are paused. ${command.id} stays queued and nothing was sent; it is delivered when writes resume.`;
+    add(5, "execute-through-connector", "stopped", message);
+    return {
+      commandId: command.id,
+      status: command.status,
+      created: attemptContext.created,
+      acknowledged: false,
+      receiptId: null,
+      externalId: null,
+      attempts: command.attempts,
+      blocked: false,
+      denialCode: null,
+      deadLettered: false,
+      auditEventId: null,
+      message,
+      steps: attemptContext.steps,
+    };
+  }
+
   const { connector } = resolveConnector(instance.id);
 
   const context = createConnectorContext({
@@ -1054,6 +1084,29 @@ export async function retryCommand(
   }
 
   /*
+   * A retry while writes are paused changes nothing: the dead letter stays
+   * open and the command keeps its state, so the worklist still shows what
+   * needs delivering once writes resume.
+   */
+  if (isWritePaused(command.connectorInstanceId)) {
+    return {
+      commandId: command.id,
+      status: command.status,
+      created: false,
+      acknowledged: false,
+      receiptId: null,
+      externalId: null,
+      attempts: command.attempts,
+      blocked: true,
+      denialCode: "writes-paused",
+      deadLettered: command.status === "dead-letter",
+      auditEventId: null,
+      message: `Writes to this connector are paused. ${command.id} was not retried; resume writes first.`,
+      steps,
+    };
+  }
+
+  /*
    * The attempt counter resets to zero so the bound applies to this retry
    * rather than to the lifetime of the command. The identifier and the
    * idempotency key do not change, which is what keeps the retry from
@@ -1081,14 +1134,19 @@ export async function retryCommand(
   });
 }
 
-/** Attempts every command currently due. One pass, no loop. */
+/**
+ * Attempts every command currently due. One pass, no loop. With a connector
+ * named, only that connector's commands: what resuming its writes delivers.
+ */
 export async function drainOutbox(
   runId: string,
-  options: DispatchOptions = {},
+  options: DispatchOptions & { connectorInstanceId?: string } = {},
 ): Promise<DispatchResult[]> {
   const clock = options.clock ?? systemClock;
   const { claimDue } = await import("./Outbox");
-  const due = claimDue(runId, clock);
+  const due = claimDue(runId, clock).filter(
+    (command) => !options.connectorInstanceId || command.connectorInstanceId === options.connectorInstanceId,
+  );
   const results: DispatchResult[] = [];
 
   for (const command of due) {

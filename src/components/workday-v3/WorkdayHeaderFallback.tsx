@@ -17,17 +17,19 @@
 import Link from "next/link";
 import { IconCircleDot, IconSearch, IconSparkles, IconUserCircle } from "@tabler/icons-react";
 import type { Language } from "@/i18n/labels";
+import { PRODUCT_IDENTITY } from "@/product/release/identity";
 
 export function WorkdayHeaderFallback({ language = "en" }: { language?: Language }) {
+  const name = PRODUCT_IDENTITY.name;
   return (
     <header className="wd-header wd-header-fallback">
       <Link
         href="/"
         className="wd-brand"
-        aria-label={language === "de" ? "NFR WorkOS, zur Startseite" : "NFR WorkOS, to the entry screen"}
+        aria-label={language === "de" ? `${name}, zur Startseite` : `${name}, to the entry screen`}
       >
         <IconCircleDot size={18} stroke={2} aria-hidden="true" />
-        <span className="wd-brand-name">NFR WorkOS</span>
+        <span className="wd-brand-name">{name}</span>
       </Link>
 
       <div className="wd-header-location">

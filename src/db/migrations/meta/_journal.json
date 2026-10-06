@@ -29,6 +29,41 @@
       "when": 1790937666387,
       "tag": "0003_calm_sentry",
       "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "6",
+      "when": 1791193561837,
+      "tag": "0004_process_engine",
+      "breakpoints": true
+    },
+    {
+      "idx": 5,
+      "version": "6",
+      "when": 1791282955289,
+      "tag": "0005_work_lineage",
+      "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "6",
+      "when": 1791301265285,
+      "tag": "0006_data_model",
+      "breakpoints": true
+    },
+    {
+      "idx": 7,
+      "version": "6",
+      "when": 1791305589460,
+      "tag": "0007_decision_process_run",
+      "breakpoints": true
+    },
+    {
+      "idx": 8,
+      "version": "6",
+      "when": 1791309137848,
+      "tag": "0008_inbox_lineage_and_stage_inputs",
+      "breakpoints": true
     }
   ]
 }

@@ -10,6 +10,21 @@
 import { sqliteTable, text, integer, real, index } from "drizzle-orm/sqlite-core";
 import type { ProvenanceKind, RoleId } from "./core";
 
+/**
+ * What an inbox message became (migration 0008), as the Inbox's lineage
+ * (`src/features/work/modules/inbox/lineage.ts`) names it.
+ *
+ * The first five are work: an action, a decision input, an evidence
+ * document, a process stage input or a delegation. `dismissed` is a person
+ * closing the message as noise, and it is recorded only while the message has
+ * become no work: a later conversion to work replaces it.
+ */
+export const INBOX_CONVERSION_KINDS = ["action", "decision", "evidence", "process", "delegated", "dismissed"] as const;
+export type InboxConversionKind = (typeof INBOX_CONVERSION_KINDS)[number];
+
+/** The conversion kinds that are work. "Message converted to work" counts only these. */
+export const INBOX_WORK_CONVERSION_KINDS: readonly InboxConversionKind[] = ["action", "decision", "evidence", "process", "delegated"];
+
 export const inboxMessages = sqliteTable(
   "inbox_messages",
   {
@@ -45,6 +60,37 @@ export const inboxMessages = sqliteTable(
     /** Decision or action created from this message. */
     linkedDecisionId: text("linked_decision_id"),
     linkedActionId: text("linked_action_id"),
+    /**
+     * What the message became, who made it so and when (0006 added who and
+     * when; 0008 added the kind and widened the definition). Home's Partner
+     * update, the Inbox's Converted and Handled places and the "Message
+     * converted to work" measure read these.
+     *
+     * The rule, kept by `recordInboxConversion`
+     * (src/db/repositories/inbox-conversion.ts): the first conversion to work
+     * of any kind in `INBOX_WORK_CONVERSION_KINDS` is recorded once and never
+     * replaced; a dismissal is recorded only while there is no conversion to
+     * work, and a conversion to work replaces it. All three stay null until a
+     * person acts. The migrations fill them from the backbone's
+     * `inbox-converted:<message>:<kind>:` events and the standing noise
+     * triage, and leave who and when null where no event records them.
+     */
+    conversionKind: text("conversion_kind").$type<InboxConversionKind>(),
+    convertedByUserId: text("converted_by_user_id"),
+    convertedAt: text("converted_at"),
+    /**
+     * Who confirmed the current classification (`confirmed_triage`), when and
+     * why (migration 0008). From the person's own triage, or from the first
+     * conversion when converting the message is what confirmed it. The reason
+     * is the person's, required when they departed from the AI's proposal.
+     */
+    triageConfirmedByUserId: text("triage_confirmed_by_user_id"),
+    triageConfirmedAt: text("triage_confirmed_at"),
+    triageReason: text("triage_reason"),
+    /** The evidence document the message was filed as (migration 0008). */
+    linkedEvidenceDocumentId: text("linked_evidence_document_id"),
+    /** The internal colleague the message was delegated to (migration 0008). */
+    delegatedToUserId: text("delegated_to_user_id"),
     /** True when this message is duplicate of another evidence request. */
     isDuplicateOf: text("is_duplicate_of"),
     requiresResponseBy: text("requires_response_by"),
@@ -117,8 +163,25 @@ export const meetings = sqliteTable(
     /** The subject of the meeting, for example the control under challenge. */
     subjectKind: text("subject_kind"),
     subjectId: text("subject_id"),
+    /** The person who recorded the meeting as held, and when on the scenario day. */
+    heldByUserId: text("held_by_user_id"),
+    heldAt: text("held_at"),
+    /**
+     * The process run and stage whose deadline depends on this meeting.
+     *
+     * Recorded rather than inferred at read time. Migration 0005 and the seed
+     * write it with the rule the Work Hub used to apply on every read (a
+     * running process whose scope holds the meeting's subject, at the stage
+     * the role's configuration says this kind of meeting serves), so a link
+     * shown anywhere in the product is one a reader can find in the row.
+     */
+    processRunId: text("process_run_id"),
+    stageId: text("stage_id"),
   },
-  (table) => [index("meet_run_role_idx").on(table.runId, table.roleId)],
+  (table) => [
+    index("meet_run_role_idx").on(table.runId, table.roleId),
+    index("meet_process_idx").on(table.runId, table.processRunId, table.stageId),
+  ],
 );
 
 /**
@@ -160,6 +223,29 @@ export const meetingMessages = sqliteTable(
   (table) => [index("meetmsg_idx").on(table.runId, table.meetingId, table.sortOrder)],
 );
 
+/**
+ * What a simulated collaboration message is (migration 0008).
+ *
+ * Until 0008 a reader told a delegation from a reply by its channel name,
+ * which is display text. The kind is the fact; the channel stays the label.
+ *
+ *   message                an ordinary simulated message, the default
+ *   delegation             an inbox message handed to a colleague
+ *   reply                  an answer to an inbox message's sender
+ *   minutes-distribution   confirmed minutes sent to the attendees
+ *   validation-request     a request for factual validation
+ *   follow-up              an action follow-up sent to its owner
+ */
+export const COLLABORATION_MESSAGE_KINDS = [
+  "message",
+  "delegation",
+  "reply",
+  "minutes-distribution",
+  "validation-request",
+  "follow-up",
+] as const;
+export type CollaborationMessageKind = (typeof COLLABORATION_MESSAGE_KINDS)[number];
+
 /** Simulated outbound collaboration messages. These never leave the machine. */
 export const collaborationMessages = sqliteTable(
   "collaboration_messages",
@@ -168,6 +254,8 @@ export const collaborationMessages = sqliteTable(
     runId: text("run_id").notNull(),
     fromRoleId: text("from_role_id").$type<RoleId>().notNull(),
     toUserIds: text("to_user_ids", { mode: "json" }).$type<string[]>().notNull(),
+    /** See `COLLABORATION_MESSAGE_KINDS`. A writer that sets none records "message". */
+    kind: text("kind").$type<CollaborationMessageKind>().notNull().default("message"),
     channelName: text("channel_name").notNull(),
     subject: text("subject").notNull(),
     body: text("body").notNull(),
@@ -237,10 +325,15 @@ export const evidenceDocuments = sqliteTable(
     /** True when only visible after the 14:05 event. */
     fromSharedEvent: integer("from_shared_event", { mode: "boolean" }).notNull().default(false),
     revealedAtMoment: text("revealed_at_moment").notNull().default("07:45"),
+    /** Lineage: the confirmed minutes this document is the record of. */
+    sourceMinutesId: text("source_minutes_id"),
+    /** Lineage: the inbox message this document was filed from. */
+    sourceMessageId: text("source_message_id"),
   },
   (table) => [
     index("evdoc_run_idx").on(table.runId),
     index("evdoc_type_idx").on(table.runId, table.sourceType),
+    index("evdoc_minutes_idx").on(table.runId, table.sourceMinutesId),
   ],
 );
 

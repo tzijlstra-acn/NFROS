@@ -60,7 +60,8 @@ export interface WorkdayChromeState {
   panel: WdPanel | null;
   drawerTab: WdDrawerTab;
   openDrawer: (tab: WdDrawerTab, trigger?: HTMLElement | null) => void;
-  toggleDock: () => void;
+  /** Opens or closes the AI Partner dock. The trigger receives focus when it closes. */
+  toggleDock: (trigger?: HTMLElement | null) => void;
   closePanel: () => void;
   dockOpen: boolean;
   drawerOpen: boolean;
@@ -153,8 +154,26 @@ export function WorkdayChromeProvider({
     setPanel("drawer");
   }, []);
 
-  const toggleDock = useCallback(() => {
-    setPanel((current) => (current === "dock" ? null : "dock"));
+  /*
+   * Opening the dock remembers what opened it, as the drawer does, so closing
+   * it returns focus there. Without this a keyboard user who closed the dock
+   * was dropped at the top of the document (`workday-v3-a11y.spec.ts`). A
+   * caller whose control is about to disappear, the command palette, passes
+   * the control that opened the palette instead.
+   */
+  const toggleDock = useCallback((trigger?: HTMLElement | null) => {
+    setPanel((current) => {
+      if (current === "dock") return null;
+      /* Checked, because the bridged V2 controls may pass a click event here. */
+      const opener =
+        trigger instanceof HTMLElement
+          ? trigger
+          : document.activeElement instanceof HTMLElement
+            ? document.activeElement
+            : null;
+      drawerTrigger.current = opener;
+      return "dock";
+    });
   }, []);
 
   /*

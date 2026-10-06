@@ -1,0 +1,291 @@
+/*
+ * The meeting lifecycle inside the Work Hub detail pane: the phase tabs, the
+ * conversation record with its capture controls, and the minutes with their
+ * editor and confirmation. Built on the Work Hub's own tokens and blocks
+ * (`workday-v3-work.css`), so a meeting reads like every other item in the
+ * pane. Every block wraps rather than scrolls sideways: the pane is as narrow
+ * as 600px at 1366x768 and becomes a drawer below 1180px.
+ */
+
+.workday-v3 .wd-meet {
+  display: flex;
+  flex-direction: column;
+  gap: var(--wd-3);
+  min-width: 0;
+}
+
+/* ---- Phases ----------------------------------------------------------- */
+
+.workday-v3 .wd-meet-phases {
+  display: flex;
+  gap: var(--wd-1);
+  flex-wrap: wrap;
+  border-bottom: 1px solid var(--wd-border);
+  padding-bottom: var(--wd-2);
+}
+
+.workday-v3 .wd-meet-phase {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 6px;
+  padding: 6px var(--wd-3);
+  border-radius: var(--wd-radius);
+  border: 1px solid transparent;
+  background: none;
+  font: inherit;
+  font-size: var(--wd-text-sm);
+  font-weight: var(--wd-weight-medium);
+  color: var(--wd-text-secondary);
+  cursor: pointer;
+}
+
+.workday-v3 .wd-meet-phase:hover {
+  background: var(--wd-surface-subtle);
+}
+
+.workday-v3 .wd-meet-phase[aria-selected="true"] {
+  background: var(--wd-accent-soft);
+  border-color: var(--wd-accent);
+  color: var(--wd-text);
+}
+
+.workday-v3 .wd-meet-phase-state {
+  font-size: var(--wd-text-xs);
+  font-weight: var(--wd-weight-normal);
+  color: var(--wd-text-muted);
+}
+
+.workday-v3 .wd-meet-phase[data-current="true"] .wd-meet-phase-state {
+  color: var(--wd-accent);
+  font-weight: var(--wd-weight-medium);
+}
+
+.workday-v3 .wd-meet-pane {
+  display: flex;
+  flex-direction: column;
+  gap: var(--wd-1);
+  min-width: 0;
+}
+
+.workday-v3 .wd-meet-pane[hidden] {
+  display: none;
+}
+
+.workday-v3 .wd-meet-head {
+  display: flex;
+  align-items: center;
+  gap: var(--wd-2);
+  flex-wrap: wrap;
+  font-size: var(--wd-text-xs);
+  color: var(--wd-text-muted);
+}
+
+/* ---- Lists of prepared items -------------------------------------------- */
+
+.workday-v3 .wd-meet-cites {
+  display: inline-flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  margin-left: 4px;
+}
+
+.workday-v3 .wd-meet-cites .wd-oid {
+  font-size: var(--wd-text-xs);
+}
+
+/* ---- The conversation record --------------------------------------------- */
+
+.workday-v3 .wd-meet-turns {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--wd-2);
+}
+
+.workday-v3 .wd-meet-turn {
+  border: 1px solid var(--wd-border);
+  border-radius: var(--wd-radius);
+  padding: var(--wd-2) var(--wd-3);
+  background: var(--wd-surface);
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  min-width: 0;
+}
+
+.workday-v3 .wd-meet-turn[data-kind="assistant"] {
+  background: var(--wd-accent-soft);
+}
+
+.workday-v3 .wd-meet-turn[data-kind="system"] {
+  background: var(--wd-surface-subtle);
+}
+
+.workday-v3 .wd-meet-turn[data-flagged="true"] {
+  border-color: var(--wd-warning);
+}
+
+.workday-v3 .wd-meet-turn-head {
+  display: flex;
+  align-items: center;
+  gap: var(--wd-2);
+  flex-wrap: wrap;
+  font-size: var(--wd-text-xs);
+  color: var(--wd-text-muted);
+}
+
+.workday-v3 .wd-meet-turn-speaker {
+  font-weight: var(--wd-weight-medium);
+  color: var(--wd-text);
+  font-size: var(--wd-text-sm);
+}
+
+.workday-v3 .wd-meet-turn-text {
+  margin: 0;
+  font-size: var(--wd-text-sm);
+  line-height: var(--wd-leading-normal);
+  color: var(--wd-text-secondary);
+  overflow-wrap: anywhere;
+}
+
+.workday-v3 .wd-meet-flag {
+  padding: 6px var(--wd-2);
+  border-radius: var(--wd-radius);
+  background: var(--wd-warning-soft);
+  color: var(--wd-warning);
+  font-size: var(--wd-text-xs);
+  line-height: var(--wd-leading-snug);
+  overflow-wrap: anywhere;
+}
+
+.workday-v3 .wd-meet-evidence {
+  font-size: var(--wd-text-xs);
+  color: var(--wd-text-secondary);
+}
+
+.workday-v3 .wd-meet-evidence > summary {
+  cursor: pointer;
+  color: var(--wd-accent);
+}
+
+.workday-v3 .wd-meet-evidence ul {
+  list-style: none;
+  margin: 6px 0 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.workday-v3 .wd-meet-evidence li {
+  overflow-wrap: anywhere;
+}
+
+.workday-v3 .wd-meet-capture {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-wrap: wrap;
+  font-size: var(--wd-text-xs);
+  color: var(--wd-text-muted);
+}
+
+/* ---- Forms inside the lifecycle -------------------------------------------- */
+
+.workday-v3 .wd-meet-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: var(--wd-2);
+  min-width: 0;
+}
+
+.workday-v3 .wd-meet-radio {
+  display: flex;
+  gap: var(--wd-3);
+  flex-wrap: wrap;
+}
+
+/* ---- The minutes ------------------------------------------------------------ */
+
+.workday-v3 .wd-meet-minutes {
+  display: flex;
+  flex-direction: column;
+  gap: var(--wd-2);
+  min-width: 0;
+}
+
+.workday-v3 .wd-meet-minutes-head {
+  display: flex;
+  align-items: center;
+  gap: var(--wd-2);
+  flex-wrap: wrap;
+}
+
+.workday-v3 .wd-meet-minutes-title {
+  margin: 0;
+  font-size: var(--wd-text-md);
+  font-weight: var(--wd-weight-strong);
+  overflow-wrap: anywhere;
+}
+
+.workday-v3 .wd-meet-items {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.workday-v3 .wd-meet-items > li {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: 6px 0;
+  border-top: 1px solid var(--wd-border);
+  font-size: var(--wd-text-sm);
+  color: var(--wd-text-secondary);
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+.workday-v3 .wd-meet-items > li:first-child {
+  border-top: 0;
+}
+
+.workday-v3 .wd-meet-item-meta {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-wrap: wrap;
+  font-size: var(--wd-text-xs);
+  color: var(--wd-text-muted);
+}
+
+.workday-v3 .wd-meet-problem {
+  color: var(--wd-danger);
+  font-size: var(--wd-text-xs);
+}
+
+.workday-v3 .wd-meet-edit-item {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: var(--wd-2);
+  border: 1px solid var(--wd-border);
+  border-radius: var(--wd-radius);
+  background: var(--wd-surface);
+}
+
+.workday-v3 .wd-meet-record {
+  padding: var(--wd-2) var(--wd-3);
+  border-radius: var(--wd-radius);
+  background: var(--wd-success-soft);
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  font-size: var(--wd-text-sm);
+  color: var(--wd-text);
+  overflow-wrap: anywhere;
+}

@@ -13,6 +13,7 @@
 import { writeFileSync, mkdirSync } from "fs";
 import { join } from "path";
 import { getHealthSummary } from "../src/health/service.js";
+import { PRODUCT_IDENTITY, PRODUCT_RELEASE } from "../src/product/release/product-release";
 
 async function createBundle(): Promise<void> {
   const timestamp = new Date().toISOString().replace(/[:.]/g, "-");
@@ -24,10 +25,11 @@ async function createBundle(): Promise<void> {
   const health = await getHealthSummary(true);
   writeFileSync(join(bundleDir, "health.json"), JSON.stringify(health, null, 2));
 
-  // Release metadata -- no secrets
+  // Release metadata, read from the release registry. No secrets.
   const release = {
-    version: "4.0.0",
-    name: "NFROS Design Partner Release",
+    version: PRODUCT_RELEASE.version,
+    name: `${PRODUCT_IDENTITY.name} ${PRODUCT_RELEASE.name.en}`,
+    stage: PRODUCT_RELEASE.stage,
     buildTime: new Date().toISOString(),
     nodeVersion: process.version,
     platform: process.platform,

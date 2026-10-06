@@ -1,139 +1,112 @@
 /**
- * Demo and planned role page.
+ * The page a Demo or Planned role shows instead of its work.
  *
- * Shown when a user navigates directly to a demo or planned role URL. It is a
- * standalone light page with no navigation rail, explaining that the role
- * is not part of the current two-role interactive release and pointing
- * toward the available roles and the presentation.
+ * The release gate (`src/workday/role-gate.ts`) renders this on every workday
+ * route of a Demo role, under every interface version, inside the frame. A
+ * Planned role never reaches it in normal use, because the gate redirects
+ * before anything renders; it is kept for that case so a page reached without
+ * the middleware still says the truth rather than rendering the role's work.
+ *
+ * It states three things and nothing else: the role's release state, word for
+ * word from the registry; what the role is for, from the registry summary;
+ * and which roles this release does include, so the reader has somewhere to
+ * go. It claims no demonstration content of its own, because there is none to
+ * show: inventing a sample day for a role the release does not include would
+ * be exactly the theatre the release model exists to prevent.
+ *
+ * Colours come from the V3.3 tokens rather than literals, so the page passes
+ * the same contrast check as the rest of the workday. It used to carry its own
+ * grey, which failed it.
  *
  * Server component. No client-side state needed.
  */
 
 import Link from "next/link";
-import type { RoleReleaseDefinition } from "@/product/release/role-release";
+import {
+  ROLE_RELEASE_STATUS_LABELS,
+  rolesWithReleaseStatus,
+  type RoleReleaseDefinition,
+} from "@/product/release";
+import type { Language } from "@/i18n/labels";
 
-export function PreviewRolePage({ role }: { role: RoleReleaseDefinition }) {
-  const statusLabel =
-    role.status === "demo"
-      ? "Demo role"
-      : role.status === "planned"
-        ? "Planned role"
-        : "Preview role";
+const COPY = {
+  demoBody: {
+    en: "This role is shown as a demonstration. It is not part of the current two-role interactive release, so its work, processes and decisions cannot be opened or changed here.",
+    de: "Diese Rolle wird als Demonstration gezeigt. Sie gehoert nicht zum aktuellen interaktiven Release mit zwei Rollen, daher koennen ihre Arbeit, Prozesse und Entscheidungen hier weder geoeffnet noch geaendert werden.",
+  },
+  plannedBody: {
+    en: "This role is planned. It is not part of the current release and cannot be opened.",
+    de: "Diese Rolle ist geplant. Sie gehoert nicht zum aktuellen Release und kann nicht geoeffnet werden.",
+  },
+  purpose: { en: "What this role is for", de: "Wofuer diese Rolle gedacht ist" },
+  available: { en: "Available in this release", de: "In diesem Release verfuegbar" },
+  choose: { en: "Choose an available role", de: "Verfuegbare Rolle waehlen" },
+  presentation: { en: "View the presentation", de: "Praesentation ansehen" },
+} as const;
+
+function pick(pair: { en: string; de: string }, language: Language): string {
+  return language === "de" ? pair.de : pair.en;
+}
+
+export function PreviewRolePage({
+  role,
+  language = "en",
+  title = null,
+}: {
+  role: RoleReleaseDefinition;
+  language?: Language;
+  /**
+   * The role's own title in the interface language, as the header shows it.
+   * The registry's release label is English only, so a German page would
+   * otherwise head itself in English under a German header.
+   */
+  title?: string | null;
+}) {
+  const status = ROLE_RELEASE_STATUS_LABELS[role.status];
+  const summary = language === "de" && role.summaryDe.length > 0 ? role.summaryDe : role.summary;
+  const available = rolesWithReleaseStatus("available").map((entry) => entry.releaseLabel);
 
   return (
     <div
-      style={{
-        display: "flex",
-        flexDirection: "column",
-        alignItems: "center",
-        justifyContent: "center",
-        gap: 20,
-        padding: "var(--wd-12, 48px) var(--wd-6, 24px)",
-        textAlign: "center",
-      }}
+      className="wd-main-inner"
+      data-testid="role-release-gate"
+      data-release-status={role.status}
+      lang={language}
     >
-      <span
-        style={{
-          fontSize: 12,
-          fontWeight: 500,
-          color: "rgb(122 132 153)",
-          letterSpacing: "0.01em",
-        }}
-      >
-        {statusLabel}
-      </span>
+      <div className="wd-stack-4" style={{ maxWidth: "62ch", paddingTop: "var(--wd-6)" }}>
+        <span className="wd-chip" data-tone={role.status === "demo" ? "accent" : undefined} style={{ alignSelf: "flex-start" }}>
+          {pick(status, language)}
+        </span>
 
-      <h1
-        style={{
-          margin: 0,
-          fontSize: 20,
-          fontWeight: 600,
-          letterSpacing: "-0.012em",
-          color: "rgb(23 32 51)",
-        }}
-      >
-        {role.releaseLabel}
-      </h1>
+        <h1 className="wd-object-title">{title ?? role.releaseLabel}</h1>
 
-      <p
-        style={{
-          margin: 0,
-          fontSize: 14,
-          color: "rgb(84 95 118)",
-          maxWidth: "52ch",
-          lineHeight: 1.55,
-        }}
-      >
-        This role is not part of the current two-role interactive release.
-      </p>
+        <p className="wd-now-reason" style={{ margin: 0 }}>
+          {pick(role.status === "demo" ? COPY.demoBody : COPY.plannedBody, language)}
+        </p>
 
-      <p
-        style={{
-          margin: 0,
-          fontSize: 13,
-          color: "rgb(122 132 153)",
-          maxWidth: "52ch",
-          lineHeight: 1.55,
-        }}
-      >
-        Available in this release: Operational Risk Partner, Third-Party Risk Manager
-      </p>
+        <div className="wd-stack-1">
+          <span className="wd-meta">{pick(COPY.purpose, language)}</span>
+          <p className="wd-secondary" style={{ margin: 0, fontSize: "var(--wd-text-sm)" }}>
+            {summary}
+          </p>
+        </div>
 
-      <div
-        style={{
-          display: "flex",
-          gap: 10,
-          marginTop: 8,
-          flexWrap: "wrap",
-          justifyContent: "center",
-        }}
-      >
-        <Link
-          href="/workday"
-          style={{
-            display: "inline-flex",
-            alignItems: "center",
-            height: 34,
-            padding: "0 16px",
-            borderRadius: 6,
-            background: "rgb(91 79 242)",
-            color: "rgb(255 255 255)",
-            fontSize: 14,
-            fontWeight: 500,
-            textDecoration: "none",
-          }}
-        >
-          Choose an available role
-        </Link>
-        <Link
-          href="/story"
-          style={{
-            display: "inline-flex",
-            alignItems: "center",
-            height: 34,
-            padding: "0 16px",
-            borderRadius: 6,
-            border: "1px solid rgb(214 219 228)",
-            background: "rgb(255 255 255)",
-            color: "rgb(23 32 51)",
-            fontSize: 14,
-            fontWeight: 500,
-            textDecoration: "none",
-          }}
-        >
-          View presentation
-        </Link>
+        <div className="wd-stack-1">
+          <span className="wd-meta">{pick(COPY.available, language)}</span>
+          <p className="wd-secondary" style={{ margin: 0, fontSize: "var(--wd-text-sm)" }}>
+            {available.join(", ")}
+          </p>
+        </div>
+
+        <div className="wd-row wd-row-wrap" style={{ marginTop: "var(--wd-2)" }}>
+          <Link href="/workday" className="wd-btn wd-btn-primary">
+            {pick(COPY.choose, language)}
+          </Link>
+          <Link href="/story" className="wd-btn wd-btn-secondary">
+            {pick(COPY.presentation, language)}
+          </Link>
+        </div>
       </div>
-
-      <span
-        style={{
-          fontSize: 12,
-          color: "rgb(122 132 153)",
-          marginTop: 8,
-        }}
-      >
-        Synthetic institution and data
-      </span>
     </div>
   );
 }

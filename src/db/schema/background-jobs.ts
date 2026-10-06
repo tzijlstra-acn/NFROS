@@ -33,7 +33,15 @@ export const backgroundJobs = sqliteTable(
     idempotencyKey: text("idempotency_key").notNull().unique(),
     /** "ai-routine"|"ai-preparation"|"meeting-preparation"|"minutes-draft"|"action-follow-up"|"evidence-refresh"|"integration-command"|"process-resume"|"evaluation-run" */
     jobKind: text("job_kind").notNull(),
-    /** "pending"|"leased"|"completed"|"failed"|"cancelled" */
+    /**
+     * "pending"|"leased"|"completed"|"failed"|"cancelled", plus two parked
+     * states the process engine uses: "waiting-for-source" (a required source
+     * is unavailable) and "waiting-for-approval" (the autonomy level does not
+     * allow the job to start without a person). A parked job is never leased;
+     * it returns to "pending" when its reason clears. The user-facing states
+     * (Queued, Running, Retrying, ...) are derived from this column and the
+     * attempt count in `src/features/process/preparation.ts`.
+     */
     status: text("status").notNull(),
     priority: integer("priority").notNull().default(5),
     scheduledAt: text("scheduled_at").notNull(),

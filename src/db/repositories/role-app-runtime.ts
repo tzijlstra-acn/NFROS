@@ -2,12 +2,16 @@
  * Read and write access for role-app runtime state.
  *
  * Queries here cover the full process runtime: runs, stage runs, tasks,
- * artifacts, events, AI routines, meeting minutes and action updates.
+ * artifacts, AI routines, meeting minutes and action updates. Process events
+ * are no longer here: they are events on the OS event backbone
+ * (`src/features/events/backbone.ts`), read by process run.
  *
- * Mutation functions are intentionally thin: they update one field or insert
- * one row. Anything more complex belongs in the scenario engine.
+ * Mutation functions are intentionally thin: they update one row or insert
+ * one row. The lifecycle rules (what may change when, and what must change
+ * together in one transaction) belong to the process engine in
+ * `src/features/process`, which is the only writer of stage state.
  *
- * Synchronous throughout -- better-sqlite3 does not use promises.
+ * Synchronous throughout: better-sqlite3 does not use promises.
  */
 
 import { and, asc, desc, eq } from "drizzle-orm";
@@ -18,7 +22,6 @@ import {
   aiRoutines,
   meetingMinutes,
   roleAppArtifacts,
-  roleAppEvents,
   roleAppRuns,
   roleAppStageRuns,
   roleAppStageTasks,
@@ -42,9 +45,6 @@ export type NewStageTask = typeof roleAppStageTasks.$inferInsert;
 
 export type RoleAppArtifact = typeof roleAppArtifacts.$inferSelect;
 export type NewArtifact = typeof roleAppArtifacts.$inferInsert;
-
-export type RoleAppEvent = typeof roleAppEvents.$inferSelect;
-export type NewEvent = typeof roleAppEvents.$inferInsert;
 
 export type AIRoutine = typeof aiRoutines.$inferSelect;
 export type NewAIRoutine = typeof aiRoutines.$inferInsert;
@@ -102,7 +102,7 @@ export function createRun(run: NewRun): PersistedRoleAppRun {
 export function updateRunStage(id: string, currentStageId: string, status: string): void {
   db()
     .update(roleAppRuns)
-    .set({ currentStageId, status, updatedAt: new Date().toISOString() })
+    .set({ currentStageId, status, updatedAt: new Date().toISOString(), blockedReason: null })
     .where(eq(roleAppRuns.id, id))
     .run();
 }
@@ -122,6 +122,26 @@ export function blockRun(id: string, reason: string): void {
     .set({ status: "blocked", blockedReason: reason, updatedAt: new Date().toISOString() })
     .where(eq(roleAppRuns.id, id))
     .run();
+}
+
+/** Every run of one role-app for a role, newest first. */
+export function getRunsForApp(
+  roleId: string,
+  roleAppId: string,
+  runId = DEFAULT_RUN_ID,
+): PersistedRoleAppRun[] {
+  return db()
+    .select()
+    .from(roleAppRuns)
+    .where(
+      and(
+        eq(roleAppRuns.runId, runId),
+        eq(roleAppRuns.roleId, roleId),
+        eq(roleAppRuns.roleAppId, roleAppId),
+      ),
+    )
+    .orderBy(desc(roleAppRuns.startedAt))
+    .all();
 }
 
 /* ==========================================================================
@@ -179,22 +199,119 @@ export function advanceStageRun(id: string, status: string): void {
     .run();
 }
 
-export function completeStageRun(id: string, userId: string | null): void {
-  const now = new Date().toISOString();
+export function completeStageRun(
+  id: string,
+  userId: string | null,
+  completion: { approvalId?: string | null; rationale?: string | null; at?: string } = {},
+): void {
+  const now = completion.at ?? new Date().toISOString();
   db()
     .update(roleAppStageRuns)
     .set({
       status: "completed",
       completedAt: now,
       completedByUserId: userId ?? undefined,
+      completionApprovalId: completion.approvalId ?? null,
+      completionRationale: completion.rationale ?? null,
     })
     .where(eq(roleAppStageRuns.id, id))
     .run();
 }
 
+export function getStageRunById(id: string): RoleAppStageRun | undefined {
+  return db().select().from(roleAppStageRuns).where(eq(roleAppStageRuns.id, id)).get() ?? undefined;
+}
+
+/** Updates the preparation pointers on a stage run. */
+export function setStageRunPreparation(
+  id: string,
+  patch: { status?: string; preparationJobId?: string | null; aiOutputId?: string | null },
+): void {
+  db().update(roleAppStageRuns).set(patch).where(eq(roleAppStageRuns.id, id)).run();
+}
+
+/* ==========================================================================
+   Stage tasks
+   ========================================================================== */
+
+export function getStageTasks(stageRunId: string, runId = DEFAULT_RUN_ID): RoleAppStageTask[] {
+  return db()
+    .select()
+    .from(roleAppStageTasks)
+    .where(and(eq(roleAppStageTasks.runId, runId), eq(roleAppStageTasks.stageRunId, stageRunId)))
+    .orderBy(asc(roleAppStageTasks.createdAt), asc(roleAppStageTasks.id))
+    .all();
+}
+
+export function getStageTask(stageRunId: string, taskKey: string): RoleAppStageTask | undefined {
+  return (
+    db()
+      .select()
+      .from(roleAppStageTasks)
+      .where(and(eq(roleAppStageTasks.stageRunId, stageRunId), eq(roleAppStageTasks.taskKey, taskKey)))
+      .get() ?? undefined
+  );
+}
+
+/**
+ * Inserts a task unless one with the same stage run and key exists.
+ *
+ * Returns the row and whether it was created, so the caller publishes a
+ * "human task created" event only for a task that is genuinely new.
+ */
+export function ensureStageTask(task: NewStageTask): { task: RoleAppStageTask; created: boolean } {
+  const existing = getStageTask(task.stageRunId, task.taskKey ?? "");
+  if (existing) return { task: existing, created: false };
+  db().insert(roleAppStageTasks).values(task).run();
+  const created = getStageTask(task.stageRunId, task.taskKey ?? "");
+  if (!created) throw new Error(`Failed to create stage task: ${task.id}`);
+  return { task: created, created: true };
+}
+
+export function updateStageTask(
+  id: string,
+  patch: Partial<
+    Pick<
+      RoleAppStageTask,
+      "status" | "completedAt" | "completedByUserId" | "approvalId" | "statusReason" | "output" | "label"
+    >
+  >,
+): void {
+  db().update(roleAppStageTasks).set(patch).where(eq(roleAppStageTasks.id, id)).run();
+}
+
 /* ==========================================================================
    Artifacts
    ========================================================================== */
+
+/** The latest version of one artifact of a stage, or undefined. */
+export function getLatestArtifact(
+  roleAppRunId: string,
+  stageId: string,
+  artifactKey: string,
+  runId = DEFAULT_RUN_ID,
+): RoleAppArtifact | undefined {
+  return (
+    db()
+      .select()
+      .from(roleAppArtifacts)
+      .where(
+        and(
+          eq(roleAppArtifacts.runId, runId),
+          eq(roleAppArtifacts.roleAppRunId, roleAppRunId),
+          eq(roleAppArtifacts.stageId, stageId),
+          eq(roleAppArtifacts.artifactKey, artifactKey),
+        ),
+      )
+      .orderBy(desc(roleAppArtifacts.version))
+      .limit(1)
+      .get() ?? undefined
+  );
+}
+
+export function getArtifactById(id: string): RoleAppArtifact | undefined {
+  return db().select().from(roleAppArtifacts).where(eq(roleAppArtifacts.id, id)).get() ?? undefined;
+}
 
 export function createArtifact(artifact: NewArtifact): RoleAppArtifact {
   db().insert(roleAppArtifacts).values(artifact).run();
@@ -227,27 +344,11 @@ export function getArtifacts(
   return stageId !== undefined ? rows.filter((r) => r.stageId === stageId) : rows;
 }
 
-/* ==========================================================================
-   Events
-   ========================================================================== */
-
-export function recordEvent(event: NewEvent): void {
-  db().insert(roleAppEvents).values(event).run();
-}
-
-export function getEvents(roleAppRunId: string, runId = DEFAULT_RUN_ID): RoleAppEvent[] {
-  return db()
-    .select()
-    .from(roleAppEvents)
-    .where(
-      and(
-        eq(roleAppEvents.runId, runId),
-        eq(roleAppEvents.roleAppRunId, roleAppRunId),
-      ),
-    )
-    .orderBy(asc(roleAppEvents.at))
-    .all();
-}
+/*
+ * Process events: `recordEvent` and `getEvents` were removed with the
+ * `role_app_events` table. Publish with `publishOsEvent` and read with
+ * `listOsEvents({ processRunId })` from `src/features/events/backbone.ts`.
+ */
 
 /* ==========================================================================
    AI routines

@@ -125,7 +125,7 @@ export function ProcessMap({
           return (
             <a
               key={stage.id}
-              href={`${basePath}?stage=${stage.id}`}
+              href={`${basePath}${basePath.includes("?") ? "&" : "?"}stage=${stage.id}`}
               style={sharedStyle}
               aria-current={isSelected ? "step" : undefined}
             >

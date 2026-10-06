@@ -17,12 +17,19 @@ import type { Language } from "@/i18n/labels";
 export function WorkdayDisclosure({
   label,
   count,
+  summary,
   children,
   language,
   defaultOpen = false,
 }: {
   label: string;
   count?: number;
+  /**
+   * One quiet line after the count, visible while collapsed. Home's Done uses
+   * it for the category split ("5 handled automatically, 2 completed by you"),
+   * which is the part of the summary a reader needs without opening it.
+   */
+  summary?: string;
   children: ReactNode;
   language: Language;
   defaultOpen?: boolean;
@@ -55,6 +62,7 @@ export function WorkdayDisclosure({
         {count === undefined ? null : (
           <span className="wd-disclosure-count">{count}</span>
         )}
+        {summary ? <span className="wd-disclosure-count">{summary}</span> : null}
         <span className="wd-sr-only">
           {open
             ? language === "de"

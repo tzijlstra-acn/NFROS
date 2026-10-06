@@ -18,6 +18,12 @@ import {
   releaseExpiredLeases,
 } from "@/db/repositories/background-jobs";
 import type { BackgroundJob } from "@/db/repositories/background-jobs";
+/*
+ * The process engine's stage preparation is a real handler. Importing the
+ * implementations registers every stage's preparer, which the handler needs.
+ */
+import "@/features/process/implementations";
+import { isStagePreparationJob, processPreparationJob } from "@/features/process/preparation";
 
 const WORKER_ID = `worker-${process.pid}-${Date.now()}`;
 const LEASE_SECONDS = 30;
@@ -33,6 +39,12 @@ async function processJob(job: BackgroundJob): Promise<void> {
       break;
 
     case "ai-preparation":
+      if (isStagePreparationJob(job)) {
+        // Parks, fails, retries or completes the job itself, with its events.
+        const result = await processPreparationJob(job);
+        console.log(`[worker] Stage preparation ${job.id}: ${result.outcome}`);
+        break;
+      }
       await new Promise<void>((resolve) => setTimeout(resolve, 200));
       completeJob(job.id, "AI preparation completed (offline mode)");
       break;

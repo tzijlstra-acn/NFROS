@@ -47,6 +47,8 @@
   "exclude": [
     "node_modules",
     "exports",
-    ".next"
+    ".next",
+    ".next-os-*",
+    ".next-showcase"
   ]
 }

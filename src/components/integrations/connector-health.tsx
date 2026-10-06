@@ -396,7 +396,8 @@ export function ConnectorRow({
       }
       subtitle={
         <span className="app-stack app-stack-1">
-          <span>{model.readinessNote}</span>
+          {/* Wraps: the readiness note is the claim, and a claim cut off at 1366 is not made. */}
+          <span style={{ whiteSpace: "normal" }}>{model.readinessNote}</span>
           <span className="app-row app-row-wrap">
             <span className="app-faint">{language === "de" ? "Quelle" : "Source"}</span>
             <span>{model.sourceSystem}</span>

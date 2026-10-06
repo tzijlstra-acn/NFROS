@@ -42,6 +42,8 @@ import {
 import type { AIPartnerTabId } from "@/components/ai-partner/AIPartnerDock";
 import type { Language } from "@/i18n/labels";
 import { useWorkdayChrome, type WdDrawerTab } from "./ChromeContext";
+import { useBoundContext } from "@/components/work/context-store";
+import { formatSelectionParam } from "@/workday/selection-url";
 
 /**
  * The V2 drawer's six tabs onto the V3 drawer's four.
@@ -97,6 +99,11 @@ export function WorkdayPartnerDock({
   const [failed, setFailed] = useState(false);
   const [attempt, setAttempt] = useState(0);
 
+  /* The Work Hub's bound selection, and the selection the payload was read for. */
+  const bound = useBoundContext(roleId);
+  const selectionParam = bound?.ai.selection ? formatSelectionParam(bound.ai.selection) : "";
+  const [loadedFor, setLoadedFor] = useState<string | null>(null);
+
   /*
    * Fetched once and kept. Closing the dock and opening it again must not
    * discard a conversation the user is in the middle of, so the payload is
@@ -137,31 +144,46 @@ export function WorkdayPartnerDock({
      * aborted, the second completes, and once there is a payload the effect
      * re-runs and does nothing.
      */
-    if (payload !== null) return;
+    /*
+     * The payload is also re-read when the bound work selection changes, so
+     * the partner's context follows what the reader selected in the Work Hub.
+     * The new payload replaces the old one in place: `PartnerClient` is not
+     * remounted, so the conversation and the subscription survive, and its
+     * chat reads the selection at send time. The selection travels in the
+     * `selection` parameter the partner route already parses.
+     */
+    if (payload !== null && loadedFor === selectionParam) return;
     if (failed) return;
 
     const controller = new AbortController();
     let cancelled = false;
+    const hadPayload = payload !== null;
 
     void (async () => {
       try {
         const response = await fetch(
-          `/api/workday/partner?role=${encodeURIComponent(roleId)}`,
+          `/api/workday/partner?role=${encodeURIComponent(roleId)}${
+            selectionParam ? `&selection=${encodeURIComponent(selectionParam)}` : ""
+          }`,
           { signal: controller.signal, cache: "no-store" },
         );
         if (!response.ok) throw new Error(String(response.status));
         const body = (await response.json()) as PartnerPayload;
         if (cancelled) return;
         setPayload(body);
+        setLoadedFor(selectionParam);
         setFailed(false);
       } catch {
         /*
          * A dock that cannot load is a dock that cannot load. It must not
          * take the workspace with it, and it must not report a reason it
          * cannot stand behind, so the user is told plainly that this one
-         * panel is unavailable.
+         * panel is unavailable. A failed refresh for a new selection keeps
+         * the conversation on screen rather than replacing it with an error.
          */
-        if (!cancelled) setFailed(true);
+        if (cancelled) return;
+        if (hadPayload) setLoadedFor(selectionParam);
+        else setFailed(true);
       }
     })();
 
@@ -169,7 +191,7 @@ export function WorkdayPartnerDock({
       cancelled = true;
       controller.abort();
     };
-  }, [open, roleId, attempt, payload, failed]);
+  }, [open, roleId, attempt, payload, failed, selectionParam, loadedFor]);
 
   /*
    * The bridge. `openDrawer` is the only member the dock uses that has to

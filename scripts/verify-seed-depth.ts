@@ -167,6 +167,30 @@ const MUST_BE_ZERO: Check[] = [
   },
 ];
 
+/* Minutes are referentially intact (audit T20): every reference resolves. Each must be zero. */
+const REFERENTIAL: Check[] = [
+  {
+    label: "minutes whose meeting does not exist",
+    sql: "select count(*) as n from meeting_minutes m where not exists (select 1 from meetings g where g.run_id = m.run_id and g.id = m.meeting_id)",
+    minimum: 0,
+  },
+  {
+    label: "minutes citing a missing decision or action",
+    sql: "select (select count(*) from meeting_minutes m, json_each(m.decision_ids) j where not exists (select 1 from decisions d where d.id = j.value)) + (select count(*) from meeting_minutes m, json_each(m.action_ids) j where not exists (select 1 from actions a where a.id = j.value)) as n",
+    minimum: 0,
+  },
+  {
+    label: "minutes citing missing evidence",
+    sql: "select count(*) as n from meeting_minutes m, json_each(m.evidence_ids) j where not exists (select 1 from evidence_documents e where e.id = j.value)",
+    minimum: 0,
+  },
+  {
+    label: "confirmed minutes not filed as evidence",
+    sql: "select count(*) as n from meeting_minutes m where m.status in ('confirmed','distributed') and not exists (select 1 from evidence_documents e where e.id = m.evidence_document_id and e.source_minutes_id = m.id)",
+    minimum: 0,
+  },
+];
+
 function run(checks: Check[], mode: "at-least" | "exactly-zero"): number {
   let failures = 0;
   for (const check of checks) {
@@ -196,6 +220,9 @@ function main(): void {
 
   console.log("\nDecisions reserved for a human, which must be unmade:");
   failures += run(MUST_BE_ZERO, "exactly-zero");
+
+  console.log("\nReferences that must resolve:");
+  failures += run(REFERENTIAL, "exactly-zero");
 
   const total = getSqlite()
     .prepare(

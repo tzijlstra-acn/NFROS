@@ -327,6 +327,133 @@ export function releaseExpiredLeases(runId = DEFAULT_RUN_ID): number {
 }
 
 /* ==========================================================================
+   Targeted leasing and parking (process engine)
+   ========================================================================== */
+
+/**
+ * Leases one named job, when it is pending.
+ *
+ * The poll loop leases whatever is next; a server action that has just queued
+ * a stage preparation wants to run that one. The status condition on the
+ * update is the lock: a second caller, in this process or the worker, finds
+ * no pending row and gets undefined rather than a second lease.
+ */
+export function leaseJobById(
+  jobId: string,
+  leaseOwner: string,
+  leaseSeconds: number,
+): BackgroundJob | undefined {
+  const now = new Date().toISOString();
+  const leaseExpiry = new Date(Date.now() + leaseSeconds * 1000).toISOString();
+
+  const candidate = db().select().from(backgroundJobs).where(eq(backgroundJobs.id, jobId)).get();
+  if (!candidate || candidate.status !== "pending") return undefined;
+
+  const result = db()
+    .update(backgroundJobs)
+    .set({
+      status: "leased",
+      leaseOwner,
+      leaseExpiresAt: leaseExpiry,
+      attemptCount: candidate.attemptCount + 1,
+      updatedAt: now,
+    })
+    .where(and(eq(backgroundJobs.id, jobId), eq(backgroundJobs.status, "pending")))
+    .run();
+  if (result.changes === 0) return undefined;
+
+  db()
+    .insert(backgroundJobAttempts)
+    .values({
+      id: `${candidate.id}-A${String(candidate.attemptCount + 1).padStart(2, "0")}`,
+      runId: candidate.runId,
+      jobId: candidate.id,
+      attemptNumber: candidate.attemptCount + 1,
+      startedAt: now,
+      completedAt: null,
+      outcome: null,
+      errorCode: null,
+      errorRedacted: null,
+      leaseOwner,
+    })
+    .run();
+
+  return db().select().from(backgroundJobs).where(eq(backgroundJobs.id, jobId)).get() ?? undefined;
+}
+
+/**
+ * Parks a job that cannot proceed yet, with the reason.
+ *
+ * "waiting-for-source" and "waiting-for-approval" are never leased by the
+ * poll loop, so a parked job does not burn its attempts while it waits. The
+ * attempt that discovered the reason is closed as a success, because nothing
+ * failed: the job did exactly what it should and stopped.
+ */
+export function parkJob(
+  jobId: string,
+  status: "waiting-for-source" | "waiting-for-approval",
+  reason: string,
+): void {
+  const now = new Date().toISOString();
+  const job = db().select().from(backgroundJobs).where(eq(backgroundJobs.id, jobId)).get();
+  if (!job) return;
+
+  db()
+    .update(backgroundJobs)
+    .set({
+      status,
+      resultSummary: reason,
+      leaseOwner: null,
+      leaseExpiresAt: null,
+      /*
+       * The attempt that parked the job must not count against its retries.
+       * The attempt counter also names the attempt rows, so it cannot go back
+       * down without colliding with the row just written; the budget grows by
+       * one instead.
+       */
+      maxAttempts: job.status === "leased" ? job.maxAttempts + 1 : job.maxAttempts,
+      updatedAt: now,
+    })
+    .where(eq(backgroundJobs.id, jobId))
+    .run();
+
+  const latestAttempt = db()
+    .select()
+    .from(backgroundJobAttempts)
+    .where(eq(backgroundJobAttempts.jobId, jobId))
+    .orderBy(asc(backgroundJobAttempts.attemptNumber))
+    .all()
+    .at(-1);
+  if (latestAttempt && !latestAttempt.completedAt) {
+    db()
+      .update(backgroundJobAttempts)
+      .set({ completedAt: now, outcome: "success", errorCode: status, errorRedacted: reason })
+      .where(eq(backgroundJobAttempts.id, latestAttempt.id))
+      .run();
+  }
+}
+
+/** Returns a parked job to the queue. Returns false when it was not parked. */
+export function unparkJob(jobId: string): boolean {
+  const result = db()
+    .update(backgroundJobs)
+    .set({ status: "pending", scheduledAt: new Date().toISOString(), updatedAt: new Date().toISOString() })
+    .where(
+      and(
+        eq(backgroundJobs.id, jobId),
+        or(eq(backgroundJobs.status, "waiting-for-source"), eq(backgroundJobs.status, "waiting-for-approval")),
+      ),
+    )
+    .run();
+  return result.changes > 0;
+}
+
+/** One job by id. */
+export function getJobById(jobId: string): BackgroundJob | undefined {
+  return db().select().from(backgroundJobs).where(eq(backgroundJobs.id, jobId)).get() ?? undefined;
+}
+
+/* ==========================================================================
    Reads
    ========================================================================== */
 

@@ -85,8 +85,12 @@ import {
   roleAppStageRunsData,
   aiRoutinesData,
   meetingMinutesData,
+  seedProcessRuntime,
 } from "@/db/seed/role-app-runtime";
 import { seedAuditChain } from "@/db/seed/audit-chain";
+import { seedTprmOnboardingStages } from "@/db/seed/tprm-onboarding-stages";
+import { seedMeetingRecords, seedMeetingSafeOutputs } from "@/db/seed/meeting-lifecycle";
+import { seedRcsaStageSources } from "@/db/seed/rcsa-stages";
 
 import * as institution from "@/scenario/data/institution";
 import * as thirdParty from "@/scenario/data/third-party";
@@ -131,6 +135,8 @@ import { SCENARIO_DATE } from "@/scenario/data/contract";
  * integration event, and a suggestion is attached to a live event.
  */
 import { seedProductConfiguration } from "@/product/seed";
+import { seedProductState } from "@/db/seed/product-state";
+import { seedDecisionProcessLinks } from "@/db/seed/decision-process-links";
 import { seedIntegrations } from "@/integrations/seed";
 import { seedLiveEvents } from "@/scenario/live-event-seed";
 import { seedAiPartner } from "@/agents/suggestions/seed";
@@ -149,8 +155,12 @@ export interface SeedSummary {
  * yesterday's conclusions already on the record.
  */
 const RUN_SCOPED_TABLES = [
-  "background_job_attempts", "background_jobs",
-  "role_app_stage_tasks", "role_app_stage_runs", "role_app_artifacts", "role_app_events",
+  /* Migrations 0006 and 0008: the AI Partner, operations, personalisation, stage inputs. Empty after a seed. */
+  "ai_routine_run_outputs", "ai_routine_runs", "ai_suggestion_dispositions", "ai_feedback",
+  "partner_contexts", "notifications", "integration_incidents", "data_quality_issues",
+  "experience_events", "user_preferences", "saved_views", "user_object_lists", "process_stage_inputs",
+  "background_job_attempts", "background_jobs", "os_events",
+  "role_app_stage_tasks", "role_app_stage_runs", "role_app_artifacts",
   "role_app_runs", "action_updates", "ai_routines", "meeting_minutes",
   "execution_receipt_lines", "approvals", "tool_calls", "agent_messages", "agent_runs",
   "agent_sessions", "cached_ai_outputs", "monitoring_activations", "background_actions",
@@ -394,6 +404,9 @@ export function seedScenario(runId: string = DEFAULT_RUN_ID): SeedSummary {
     total += insertAll(aiRoutines, aiRoutinesData, counts, "aiRoutines");
     total += insertAll(meetingMinutes, meetingMinutesData, counts, "meetingMinutes");
 
+    /* The seeded decisions a stage contract binds, linked to their run (migration 0007). Updates, not new rows. */
+    seedDecisionProcessLinks(runId);
+
     /*
      * The integration projection, inside the transaction and last.
      *
@@ -406,6 +419,43 @@ export function seedScenario(runId: string = DEFAULT_RUN_ID): SeedSummary {
     const integrations = seedIntegrations(runId);
     counts["integrations"] = integrations.rowsWritten;
     total += integrations.rowsWritten;
+
+    /*
+     * The meeting records (migration 0005): the held meetings the seeded
+     * minutes record, the recorded process links and action lineage, and the
+     * confirmed minutes as evidence. Before the process engine, so its safe
+     * mode digests are taken over the corpus this adds to.
+     */
+    const meetingRecords = seedMeetingRecords(runId);
+    counts["meetingRecords"] = meetingRecords;
+    total += meetingRecords;
+
+    /* The RCSA stages' first-line submissions, before the engine digests the corpus. */
+    const rcsaStageSources = seedRcsaStageSources(runId);
+    counts["rcsaStageSources"] = rcsaStageSources;
+    total += rcsaStageSources;
+
+    /*
+     * The process engine's view of the same day: history events on the event
+     * backbone, the two current stages opened by the engine with their tasks
+     * and queued preparation, and the safe mode preparation cache. Inside the
+     * transaction and after the integration projection, because the engine
+     * reads the evidence corpus and checks the connector instances that
+     * supply each stage source.
+     */
+    const processRuntime = seedProcessRuntime(runId);
+    counts["processRuntime"] = processRuntime;
+    total += processRuntime;
+
+    /* The second onboarding file, at Stage 1, and the specialist review huddles. */
+    const onboardingStages = seedTprmOnboardingStages(runId);
+    counts["tprmOnboardingStages"] = onboardingStages;
+    total += onboardingStages;
+
+    /* The meeting lifecycle's safe mode outputs, last, so every seeded meeting is covered. */
+    const meetingSafeOutputs = seedMeetingSafeOutputs(runId);
+    counts["meetingSafeOutputs"] = meetingSafeOutputs;
+    total += meetingSafeOutputs;
   });
 
   writeEverything();
@@ -419,6 +469,16 @@ export function seedScenario(runId: string = DEFAULT_RUN_ID): SeedSummary {
   const product = seedProductConfiguration();
   counts["productConfiguration"] = product.rowsWritten;
   total += product.rowsWritten;
+
+  /*
+   * The Product Owner Console's release and pilot state (migration 0006):
+   * Role App versions derived from the code registry, the installed apps'
+   * tenant enablement and one pilot in setup. Product state, like the
+   * configuration above, so it is written beside it and outside the run.
+   */
+  const productState = seedProductState();
+  counts["productState"] = productState.rowsWritten;
+  total += productState.rowsWritten;
 
   const live = seedLiveEvents(runId);
   counts["liveEvents"] = live.events;

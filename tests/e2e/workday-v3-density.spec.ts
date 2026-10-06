@@ -280,8 +280,9 @@ test.describe("the V3.1 information budget at 1366x768", () => {
         .toBeLessThanOrEqual(1);
 
       /* ---------- Done collapsed on load ---------- */
+      // Home's Done reads "Done today 7, 5 handled automatically, 2 completed by you".
       const done = page.getByRole("button", {
-        name: /(Handled automatically|Automatisch bearbeitet)/,
+        name: /(Done today|Heute erledigt|Handled automatically|Automatisch bearbeitet)/,
       });
       const doneCount = await done.count();
       if (doneCount > 0) {

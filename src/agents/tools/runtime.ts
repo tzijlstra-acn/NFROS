@@ -43,6 +43,12 @@ export interface ToolContext {
   /** Set when the call belongs to a specific agent run. */
   agentRunId?: string | null;
   language: "en" | "de";
+  /**
+   * The object the call is about, when the caller names one. Passed to the
+   * gate with the approval, which refuses an approval granted for another
+   * object (`approval-target-mismatch`).
+   */
+  target?: { kind: string; id: string } | null;
 }
 
 /** What a handler returns. */
@@ -147,6 +153,7 @@ function loadApproval(runId: string, approvalId: string): ApprovalContext | null
     authorityScope: row.authorityScope,
     payloadFingerprint: row.payloadFingerprint,
     consumedAt: row.consumedAt,
+    target: row.targetKind && row.targetId ? { kind: row.targetKind, id: row.targetId } : null,
   };
 }
 
@@ -248,6 +255,7 @@ export async function executeTool(
     payload,
     approval,
     actingUserId: context.actingUserId,
+    target: context.target ?? null,
   });
 
   /* ---- Denied ---- */

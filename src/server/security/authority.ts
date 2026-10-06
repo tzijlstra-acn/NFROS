@@ -213,6 +213,62 @@ export const TOOL_REGISTRY: Readonly<Record<string, ToolDefinition>> = Object.fr
   recordApproval: m("recordApproval", ["action.create"], "Records a human approval. Cannot approve itself."),
   captureLessonsLearned: m("captureLessonsLearned", ["incident.classify"], "Records lessons learned against an incident.", true),
   resetScenario: m("resetScenario", ["scenario.control"], "Restores the original seeded day.", true),
+  /*
+   * Role App stage completion. A stage outcome is a material record (an
+   * evidence corpus accepted, a stage gate passed with conditions), so it runs
+   * through this gate with a payload bound approval like any other material
+   * change. One tool per installed app, because each needs its own scope.
+   */
+  completeRcsaStage: m("completeRcsaStage", ["rcsa.rate"], "Completes one stage of an RCSA cycle and opens the next, after its completion criteria are verified."),
+  completeOnboardingStage: m("completeOnboardingStage", ["supplier.assess"], "Completes one stage of a third-party onboarding and opens the next, after its completion criteria are verified."),
+  /*
+   * Work Hub action follow-up and meeting outcome. Handlers live in
+   * `src/features/work/modules/actions/tools.ts`. Closing an action, moving
+   * its due date, transferring its accountability, reopening it and recording
+   * a meeting as held change the record of who must do what by when, so they
+   * are material and need a payload bound approval from a person. A progress
+   * update is append only and routine. A reminder draft writes nothing.
+   */
+  draftActionReminder: d("draftActionReminder", ["draft.create"], "Drafts a reminder to the accountable owner of an action. Sending is a separate step."),
+  addActionUpdate: a("addActionUpdate", ["action.create"], "Appends a progress update to an action. Updates are append only and never edited.", false),
+  reassignAction: m("reassignAction", ["action.create"], "Transfers accountability for an action to a named person. Accountability can be transferred, never removed."),
+  changeActionDueDate: m("changeActionDueDate", ["action.create"], "Moves the due date of an action and records the reason."),
+  completeAction: m("completeAction", ["action.create"], "Closes an action against its completion condition, citing the evidence that supports closure."),
+  reopenAction: m("reopenAction", ["action.create"], "Reopens a completed action and records the reason.", true),
+  recordMeetingHeld: m("recordMeetingHeld", ["action.create"], "Records that a meeting was held, its outcome, and a follow-up entry on the work that depended on it."),
+  /*
+   * The meeting lifecycle. Handlers live in
+   * `src/features/work/modules/meetings/tools.ts`. Capturing a statement,
+   * preparing the minutes draft and saving a person's edits write a draft,
+   * which is not a record, so they are routine. Confirming the minutes makes
+   * them the record: it files them as evidence, creates actions with owners
+   * and due dates, records the meeting as held and tells the process stage
+   * and the decisions it served, so it is material and needs a payload bound
+   * approval from a person. Distribution is a simulated message to the
+   * confirmed recipients and never leaves the machine.
+   */
+  captureMeetingItem: a("captureMeetingItem", ["draft.create"], "Captures a statement from a meeting as a fact, decision, action or unresolved item in the minutes draft."),
+  prepareMeetingMinutes: a("prepareMeetingMinutes", ["draft.create"], "Prepares the minutes draft from the meeting record and the items captured in it. A draft is not a record."),
+  editMeetingMinutes: a("editMeetingMinutes", ["draft.create"], "Saves a person's edits to a minutes draft. The draft is not a record until it is confirmed."),
+  confirmMeetingMinutes: m("confirmMeetingMinutes", ["action.create"], "Confirms meeting minutes as the record: files them as evidence, creates their actions with meeting lineage, records the meeting as held and updates the process stage and decisions it served."),
+  distributeMeetingMinutes: a("distributeMeetingMinutes", ["action.create"], "Distributes confirmed minutes to their confirmed recipients as a simulated message. Nothing leaves this machine."),
+  /*
+   * Inbox triage and conversion. Handlers live in
+   * `src/features/work/modules/inbox/tools.ts`. Recording a triage, linking a
+   * message to the work it became, filing it as evidence, attaching it to a
+   * process stage, delegating it and sending a simulated reply each record
+   * what a person did with a message; none of them changes who must do what
+   * by when, so they are routine and reversible. Raising an action from a
+   * message is the material step, and it runs through `createAction` above
+   * with the message as its source. A reply draft writes nothing.
+   */
+  recordInboxTriage: a("recordInboxTriage", ["action.create"], "Records a person's triage of an inbox message: confirmed, changed, filed as information or dismissed, with the reason."),
+  linkInboxMessage: a("linkInboxMessage", ["action.create"], "Links an inbox message to the action or decision it became, and records the link on the action's history."),
+  fileInboxMessageAsEvidence: a("fileInboxMessageAsEvidence", ["action.create"], "Files an inbox message as an evidence document against the objects it supports, with the message as its source."),
+  addInboxMessageToProcess: a("addInboxMessageToProcess", ["action.create"], "Attaches an inbox message to an open stage of a running process, through the process event backbone."),
+  delegateInboxMessage: a("delegateInboxMessage", ["action.create"], "Delegates an inbox message to a named colleague with a simulated internal message. Nothing leaves this machine."),
+  draftInboxReply: d("draftInboxReply", ["draft.create"], "Drafts a reply to an inbox message from the message and what was done with it. Sending is a separate step."),
+  sendInboxReply: a("sendInboxReply", ["action.create"], "Sends a reply to an inbox message as a simulated message. It never reaches a real recipient."),
 
   /* ---- PROHIBITED: present so refusal is explicit and testable ---- */
   sendExternalEmail: x("sendExternalEmail", "Sending mail outside this machine is not implemented and is refused by design."),
@@ -275,6 +331,12 @@ export const ROLE_AUTHORITY_SCOPES: Record<RoleId, readonly AuthorityScope[]> = 
   ],
 };
 
+/** The object an approval or a request is about: a decision, an action, a set of minutes. */
+export interface ApprovalTarget {
+  kind: string;
+  id: string;
+}
+
 /** The approval context a material tool requires. */
 export interface ApprovalContext {
   approvedBy: string;
@@ -287,6 +349,8 @@ export interface ApprovalContext {
   payloadFingerprint: string;
   /** Set once the approval has been used, preventing replay. */
   consumedAt?: string | null;
+  /** The object the approval was granted for, when it names one. */
+  target?: ApprovalTarget | null;
 }
 
 export interface AuthorityRequest {
@@ -298,6 +362,13 @@ export interface AuthorityRequest {
   approval?: ApprovalContext | null;
   /** The user identifier on whose behalf the action is taken. */
   actingUserId: string;
+  /**
+   * The object the change is about, when the caller names one. An approval
+   * that names a different object is refused, even if the payloads happened
+   * to fingerprint alike. Either side may leave it out; the fingerprint is
+   * then the whole binding, as before.
+   */
+  target?: ApprovalTarget | null;
 }
 
 export type AuthorityDecision =
@@ -314,6 +385,7 @@ export type AuthorityDenialCode =
   | "approval-role-mismatch"
   | "approval-decision-mismatch"
   | "approval-payload-mismatch"
+  | "approval-target-mismatch"
   | "approval-already-consumed"
   | "approval-scope-insufficient"
   | "self-approval";
@@ -470,6 +542,28 @@ function validateApproval(
       code: "approval-payload-mismatch",
       reason:
         "The approved change and the requested change do not match. Approval does not transfer to a different payload.",
+      fingerprint,
+    };
+  }
+
+  /*
+   * The target, when both sides name one. Checked after the fingerprint, so
+   * an approval for a different payload is still reported as that; this
+   * catches the narrower case of an approval granted for one object being
+   * presented for another with an identical payload.
+   */
+  const approvedTarget = approval.target ?? null;
+  const requestedTarget = request.target ?? null;
+  if (
+    approvedTarget !== null &&
+    requestedTarget !== null &&
+    (approvedTarget.kind !== requestedTarget.kind || approvedTarget.id !== requestedTarget.id)
+  ) {
+    return {
+      allowed: false,
+      tool,
+      code: "approval-target-mismatch",
+      reason: "The approval was granted for a different object than the one this change is about.",
       fingerprint,
     };
   }

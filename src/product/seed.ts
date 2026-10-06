@@ -36,6 +36,7 @@ import {
   DEFAULT_TERMINOLOGY_TERMS,
 } from "./terminology/terms";
 import { ACTIVE_PRODUCT_CONFIG_ID, resetProductConfigCaches } from "./organisation/profile";
+import { PRODUCT_IDENTITY } from "./release/identity";
 
 /**
  * A fixed timestamp rather than `new Date()`.
@@ -72,13 +73,18 @@ export const LOCAL_DEPLOYMENT_PROFILE_ID = "deployment-restricted-local";
  * abstract geometry with no wordmark, and the organisation name is rendered as
  * text beside it by the shell, so swapping in a real asset at engagement time
  * is a file replacement and nothing else.
+ *
+ * The product name is read from the release registry in every mode. Branding
+ * changes whose marks and attribution are shown, never what the product is
+ * called, and a seed that typed the name three times was how the shell came to
+ * say one name while the landing page said another.
  */
 export const PRODUCT_BRAND_PROFILES: (typeof brandProfiles.$inferInsert)[] = [
   {
     id: DEFAULT_BRAND_PROFILE_ID,
     mode: "client",
-    productName: "NFR WorkOS",
-    shortName: "WorkOS",
+    productName: PRODUCT_IDENTITY.name,
+    shortName: PRODUCT_IDENTITY.name,
     clientName: "Arcadia Banking Group",
     operatorName: "Accenture",
     primaryLogoUrl: "/brand/client-mark.svg",
@@ -94,8 +100,8 @@ export const PRODUCT_BRAND_PROFILES: (typeof brandProfiles.$inferInsert)[] = [
   {
     id: COBRANDED_BRAND_PROFILE_ID,
     mode: "co-branded",
-    productName: "NFR WorkOS",
-    shortName: "WorkOS",
+    productName: PRODUCT_IDENTITY.name,
+    shortName: PRODUCT_IDENTITY.name,
     clientName: "Arcadia Banking Group",
     operatorName: "Accenture",
     primaryLogoUrl: "/brand/client-mark.svg",
@@ -111,8 +117,8 @@ export const PRODUCT_BRAND_PROFILES: (typeof brandProfiles.$inferInsert)[] = [
   {
     id: OPERATOR_BRAND_PROFILE_ID,
     mode: "accenture",
-    productName: "NFR WorkOS",
-    shortName: "WorkOS",
+    productName: PRODUCT_IDENTITY.name,
+    shortName: PRODUCT_IDENTITY.name,
     clientName: "Arcadia Banking Group",
     operatorName: "Accenture",
     /*

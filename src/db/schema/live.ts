@@ -75,6 +75,38 @@ export const SUGGESTION_STATUSES = [
 ] as const;
 export type SuggestionStatus = (typeof SUGGESTION_STATUSES)[number];
 
+/**
+ * What the person did with a suggestion (plan section 4.11, suggestion lifecycle).
+ *
+ * Separate from `status`, which is the preparation pipeline (monitoring,
+ * checking, ready, ...) and is read by Home, the dock and the focus queue.
+ * The disposition is the human answer to a prepared suggestion, and it is
+ * what product quality and pilot analytics count as accepted, modified and
+ * rejected:
+ *
+ *   new        prepared, not yet looked at
+ *   reviewed   opened and read, no answer yet
+ *   accepted   taken as prepared
+ *   modified   taken with changes the person made (recorded in the history)
+ *   rejected   declined by the person
+ *   executed   the accepted or modified change ran through the authority gate
+ *   expired    no longer applicable, for example its decision was recorded elsewhere
+ *
+ * The current value lives on the suggestion row so every reader can rely on
+ * it; every change is also appended to `ai_suggestion_dispositions` with who,
+ * when, from, to and the modification.
+ */
+export const SUGGESTION_DISPOSITIONS = [
+  "new",
+  "reviewed",
+  "accepted",
+  "modified",
+  "rejected",
+  "executed",
+  "expired",
+] as const;
+export type SuggestionDisposition = (typeof SUGGESTION_DISPOSITIONS)[number];
+
 export const workdayLiveEvents = sqliteTable(
   "workday_live_events",
   {
@@ -206,6 +238,17 @@ export const aiSuggestions = sqliteTable(
     createdAt: text("created_at").notNull(),
     dismissedAt: text("dismissed_at"),
     snoozedUntilMoment: text("snoozed_until_moment"),
+
+    /* ---- the person's disposition (migration 0006) ---- */
+    /**
+     * The current disposition, see `SUGGESTION_DISPOSITIONS`. Written only
+     * together with a row in `ai_suggestion_dispositions`, by
+     * `recordSuggestionDisposition` in `src/db/repositories/suggestion-dispositions.ts`.
+     */
+    disposition: text("disposition").$type<SuggestionDisposition>().notNull().default("new"),
+    dispositionAt: text("disposition_at"),
+    /** Null for a system change, such as expiry. */
+    dispositionByUserId: text("disposition_by_user_id"),
   },
   (table) => [
     index("ais_run_role_idx").on(table.runId, table.roleId, table.atMoment),

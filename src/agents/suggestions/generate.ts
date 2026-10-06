@@ -21,10 +21,11 @@
  * already holds to and for the same reason.
  */
 
-import { and, desc, eq } from "drizzle-orm";
-import { getDb } from "@/db/client";
+import { and, desc, eq, inArray, isNull, ne } from "drizzle-orm";
+import { getDb, getSqlite } from "@/db/client";
 import { DEFAULT_RUN_ID, type RoleId } from "@/db/schema/core";
 import { aiSuggestions } from "@/db/schema/live";
+import { recordSuggestionDisposition } from "@/db/repositories/suggestion-dispositions";
 import { cachedAiOutputs } from "@/db/schema/decisions";
 import {
   connectorInstances,
@@ -457,6 +458,7 @@ function rowToView(row: typeof aiSuggestions.$inferSelect, sources: SourceAttrib
     confidence: row.confidence,
     uncertainty: row.uncertainty,
     decisionRequired: row.decisionRequired,
+    disposition: row.disposition,
   };
 }
 
@@ -512,7 +514,59 @@ export interface PersistSuggestionParams {
   id?: string;
 }
 
-/** Writes a suggestion row. The only writer of `ai_suggestions`. */
+type SuggestionRow = typeof aiSuggestions.$inferSelect;
+type SuggestionInsert = typeof aiSuggestions.$inferInsert;
+
+let dispositionSequence = 0;
+
+function dispositionEntryId(suggestionId: string): string {
+  dispositionSequence += 1;
+  return `DSP-${suggestionId}-${Date.now().toString(36).toUpperCase()}-${String(dispositionSequence).padStart(4, "0")}`;
+}
+
+/**
+ * Whether a regenerated suggestion says something different from the stored one.
+ *
+ * The prepared content and the authority it carries, not the bookkeeping: a
+ * new timestamp or a replayed stage list is the same suggestion, and the
+ * person's answer to it still stands.
+ */
+export function materiallyChanged(previous: SuggestionRow, next: SuggestionInsert): boolean {
+  const same = (a: unknown, b: unknown) => JSON.stringify(a ?? null) === JSON.stringify(b ?? null);
+  return !(
+    same(previous.headline, next.headline) &&
+    same(previous.changeSummary, next.changeSummary) &&
+    same(previous.whyItMatters, next.whyItMatters) &&
+    same(previous.recommendedAction, next.recommendedAction) &&
+    same(previous.alternatives, next.alternatives) &&
+    same([...(previous.evidenceIds ?? [])].sort(), [...(next.evidenceIds ?? [])].sort()) &&
+    same(previous.decisionRequired, next.decisionRequired) &&
+    same(previous.authorityClass, next.authorityClass) &&
+    same(previous.decisionId, next.decisionId) &&
+    same(previous.constrained, next.constrained) &&
+    same(previous.validatedAt === null, next.validatedAt === null)
+  );
+}
+
+/**
+ * Writes a suggestion row. The only writer of `ai_suggestions`.
+ *
+ * The person's answer survives regeneration (os-data-model handoff, section
+ * 6). The row is still replaced by id, so a reseed rewrites rather than
+ * duplicates, but:
+ *
+ *   an unchanged suggestion keeps its disposition, its snooze and its
+ *   dismissal, because nothing the person answered has changed;
+ *
+ *   a materially changed suggestion under the same id records the old version
+ *   as expired and the new version as new, both in the disposition history,
+ *   so the history says what happened instead of silently resetting;
+ *
+ *   a newly validated suggestion about the same matter (same role, object,
+ *   event and decision) supersedes the open ones before it, which are
+ *   recorded as expired with a pointer to it. A suggestion the person already
+ *   answered is left as answered.
+ */
 export function persistSuggestion(params: PersistSuggestionParams): typeof aiSuggestions.$inferSelect {
   const id = params.id ?? nextSuggestionId();
   const now = new Date().toISOString();
@@ -556,13 +610,99 @@ export function persistSuggestion(params: PersistSuggestionParams): typeof aiSug
     snoozedUntilMoment: null,
   };
 
-  // Upsert on the primary key so a reseed rewrites rather than duplicating.
-  db().delete(aiSuggestions).where(eq(aiSuggestions.id, id)).run();
-  db().insert(aiSuggestions).values(row).run();
+  const write = getSqlite().transaction((): SuggestionRow => {
+    const previous = db().select().from(aiSuggestions).where(eq(aiSuggestions.id, id)).get();
+    const changed = previous ? materiallyChanged(previous, row) : false;
 
-  const written = db().select().from(aiSuggestions).where(eq(aiSuggestions.id, id)).get();
-  if (!written) throw new Error(`The suggestion ${id} was not written.`);
-  return written;
+    if (previous && changed && previous.disposition !== "expired") {
+      recordSuggestionDisposition({
+        id: dispositionEntryId(id),
+        suggestionId: id,
+        to: "expired",
+        actorKind: "system",
+        actorUserId: null,
+        at: now,
+        atMoment: params.atMoment,
+        reason: "The prepared content changed, so this version no longer applies.",
+        resultKind: "suggestion",
+        resultId: id,
+        runId: params.runId,
+      });
+    }
+
+    // Upsert on the primary key so a reseed rewrites rather than duplicating.
+    db().delete(aiSuggestions).where(eq(aiSuggestions.id, id)).run();
+    const carried: Partial<SuggestionInsert> = previous
+      ? changed
+        ? { disposition: "expired", dispositionAt: now, dispositionByUserId: null }
+        : {
+            disposition: previous.disposition,
+            dispositionAt: previous.dispositionAt,
+            dispositionByUserId: previous.dispositionByUserId,
+            dismissedAt: previous.dismissedAt,
+            snoozedUntilMoment: previous.snoozedUntilMoment,
+          }
+      : {};
+    db().insert(aiSuggestions).values({ ...row, ...carried }).run();
+
+    if (previous && changed) {
+      recordSuggestionDisposition({
+        id: dispositionEntryId(id),
+        suggestionId: id,
+        to: "new",
+        actorKind: "system",
+        actorUserId: null,
+        at: now,
+        atMoment: params.atMoment,
+        reason: "Prepared again from changed records.",
+        runId: params.runId,
+      });
+    }
+
+    if (!previous && params.validatedAt !== null) expireSuperseded(params, id, now);
+
+    const written = db().select().from(aiSuggestions).where(eq(aiSuggestions.id, id)).get();
+    if (!written) throw new Error(`The suggestion ${id} was not written.`);
+    return written;
+  });
+
+  return write();
+}
+
+/** Open, validated suggestions about the same matter as a new one become expired, pointing at it. */
+function expireSuperseded(params: PersistSuggestionParams, newId: string, at: string): void {
+  const conditions = [
+    eq(aiSuggestions.runId, params.runId),
+    eq(aiSuggestions.roleId, params.roleId),
+    eq(aiSuggestions.objectType, params.objectType),
+    eq(aiSuggestions.objectId, params.objectId),
+    ne(aiSuggestions.id, newId),
+    ne(aiSuggestions.stateDigest, params.stateDigest),
+    inArray(aiSuggestions.disposition, ["new", "reviewed"]),
+    params.eventId === null ? isNull(aiSuggestions.eventId) : eq(aiSuggestions.eventId, params.eventId),
+    params.decisionId === null ? isNull(aiSuggestions.decisionId) : eq(aiSuggestions.decisionId, params.decisionId),
+  ];
+  const older = db()
+    .select({ id: aiSuggestions.id, validatedAt: aiSuggestions.validatedAt })
+    .from(aiSuggestions)
+    .where(and(...conditions))
+    .all()
+    .filter((entry) => entry.validatedAt !== null);
+  for (const entry of older) {
+    recordSuggestionDisposition({
+      id: dispositionEntryId(entry.id),
+      suggestionId: entry.id,
+      to: "expired",
+      actorKind: "system",
+      actorUserId: null,
+      at,
+      atMoment: params.atMoment,
+      reason: `Superseded by ${newId}, prepared for the same matter.`,
+      resultKind: "suggestion",
+      resultId: newId,
+      runId: params.runId,
+    });
+  }
 }
 
 /* ==========================================================================

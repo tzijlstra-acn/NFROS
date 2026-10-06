@@ -429,16 +429,22 @@ Four of these properties are additionally proved end to end against a real datab
 
 ### 7.2 Order of operations in the decision engine
 
-`recordDecisionAndExecute` (`src/scenario/engine/decide.ts:378`) records the human judgment **before**
-executing anything (`:415`), with the comment that this happens first so a decision is on the record
-even if a downstream mutation fails. It then loops the declared consequences, grants a fingerprinted
-approval per consequence, calls `executeTool` with it, and writes an `execution_receipt_lines` row
-only for consequences that actually returned `outcome: "executed"`. A consequence kind with no
-mapping returns null rather than throwing, and is recorded as not executed
-(`src/scenario/engine/decide.ts:469`), so a seeded typo degrades the receipt rather than breaking the
-user's decision.
+`recordDecisionAndExecute` (`src/scenario/engine/decide.ts`) first plans the chosen option with
+`planDecisionOption`: every declared consequence is mapped onto its tool and exact payload, and the
+gate is asked about each with a prospective approval from the holder of the decision's own role. It
+refuses, writing nothing, when the decision is already recorded, the caller states another acting
+role, the fingerprints the person approved differ from the plan, or the gate would refuse any
+consequence (including a consequence kind with no mapping, refused as `not-implemented`). Otherwise
+it records the human judgment, grants one fingerprinted approval per consequence that needs one, in
+the name of the decision role's holder, calls `executeTool` with it, and writes an
+`execution_receipt_lines` row only for consequences that actually returned `outcome: "executed"`.
+It then writes an outcome record (audit action `recordDecisionOutcome`) listing executed and not
+executed consequences with their reasons, and publishes `decision-recorded:<id>` on the event
+backbone. This order is the fix for the defect recorded as J20, where the decision was written as
+decided while every consequence was refused under the active role's approver.
 
-The receipt the user sees is therefore assembled from mutations that succeeded, not from the proposal.
+The receipt the user sees is therefore assembled from mutations that succeeded, and the changes that
+did not execute are read from the outcome record, so both survive a refresh.
 
 ---
 
@@ -771,14 +777,14 @@ editing: quietly rewriting a model's risk conclusion would be worse than showing
 3. **`recordApproval` is a registry entry with no handler.** It is APPROVAL_REQUIRED and material,
    requires `action.create`, and would need an approval to record an approval. Approvals are created
    by `grantApproval` in the decision engine, not through the tool path.
-4. **Approvals are auto granted inside the decision engine.** `recordDecisionAndExecute`
-   (`src/scenario/engine/decide.ts:476`) calls `grantApproval` with `rationaleConfirmed: true` for
-   every declared consequence of the option the user chose. The human act being recorded is the
-   choice of option plus the typed rationale; there is no second, per consequence confirmation step.
-   The approval chain is therefore genuine and correctly bound, but the human sees one confirmation
-   covering several fingerprinted approvals rather than one per change.
-5. **The approver identity is derived from a static map, not from an authenticated session.**
-   `ROLE_HOLDERS` (`src/scenario/engine/decide.ts:41`) maps each role to a fixed person identifier.
+4. **Approvals are granted inside the decision engine.** `recordDecisionAndExecute` calls
+   `grantApproval` with `rationaleConfirmed: true` for every declared consequence that needs one. In
+   the V3.3 Decisions workspace the person approves each change separately against its exact payload
+   and the engine refuses a confirmation whose approved fingerprints differ from its plan. The V1 and
+   V2 surfaces still send one confirmation for all of an option's changes.
+5. **The approver identity is derived from the roles table, not from an authenticated session.**
+   `roleHolderUserId` (`src/scenario/engine/decide.ts`) reads the holder of the decision's role from
+   the `roles` table, with the static `ROLE_HOLDERS` map as the fallback for an unseeded run.
    There is no authentication, no session, no password and no signature anywhere in this prototype.
    The `self-approval` check rejects an identity beginning `agent:`, but any non agent string would
    be accepted as a person.

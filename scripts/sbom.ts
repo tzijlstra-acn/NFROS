@@ -3,6 +3,7 @@
 
 import { readFileSync, writeFileSync, mkdirSync } from "fs";
 import { join } from "path";
+import { PRODUCT_RELEASE } from "../src/product/release/product-release";
 
 interface PackageEntry {
   version?: string;
@@ -53,7 +54,7 @@ const sbom = {
     component: {
       type: "application",
       name: pkg.name ?? "nfr-workos",
-      version: pkg.version ?? "4.0.0",
+      version: pkg.version ?? PRODUCT_RELEASE.version,
     },
   },
   components: components.slice(0, 500), // limit for readability

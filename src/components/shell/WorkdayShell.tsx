@@ -16,6 +16,7 @@ import { getResolvedDemoMode } from "@/server/config/runtime";
 import { toolsAvailableAt } from "@/server/security/authority";
 import { NAV_LABELS, MODE_LABELS, laneLabel, t, type Language, type LaneId } from "@/i18n/labels";
 import { SyntheticLabel } from "@/components/evidence/primitives";
+import { PRODUCT_IDENTITY } from "@/product/release/identity";
 import {
   AutonomySelector,
   BackgroundWorkReveal,
@@ -125,7 +126,7 @@ export function WorkdayShell({ roleId, children, intelligenceRail, activeNav = "
             className="display strong-text"
             style={{ fontSize: "var(--text-base)", letterSpacing: "var(--tracking-tight)" }}
           >
-            NFR WorkOS
+            {PRODUCT_IDENTITY.name}
           </span>
         </Link>
 

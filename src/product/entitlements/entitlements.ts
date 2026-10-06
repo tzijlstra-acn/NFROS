@@ -156,7 +156,7 @@ export const SETTINGS_AREAS: readonly AdminArea[] = [
   {
     href: "/settings/ai-quality",
     icon: "ai-quality",
-    label: { en: "AI quality", de: "KI-Qualitat" },
+    label: { en: "AI quality", de: "KI-Qualitaet" },
     adminFeature: null,
   },
   {

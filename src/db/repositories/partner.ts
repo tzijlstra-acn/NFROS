@@ -78,6 +78,14 @@ export function getActiveSuggestions(
      * recommendation is shown only after structured validation succeeds.
      */
     .filter((row) => row.validatedAt !== null)
+    /*
+     * Active means still waiting for the person's answer (plan 4.11). A
+     * suggestion the person accepted, modified or rejected, or one the system
+     * recorded as executed or expired, is read by `getAnsweredSuggestions`
+     * instead, so the header count, Home and the dock's open list all leave
+     * an answered suggestion behind at the same moment.
+     */
+    .filter((row) => row.disposition === "new" || row.disposition === "reviewed")
     .sort(
       (a, b) =>
         (priorityOrder[a.priority] ?? 9) - (priorityOrder[b.priority] ?? 9) ||
@@ -85,6 +93,33 @@ export function getActiveSuggestions(
     )
     .slice(0, options.limit ?? 8)
     .map((row) => toSuggestionView(row, runId));
+}
+
+/**
+ * Suggestions the person has answered, or the system has closed, by the
+ * moment: the dock's Handled list. Newest answer first.
+ */
+export function getAnsweredSuggestions(
+  roleId: RoleId,
+  atMoment: string,
+  options: { limit?: number; runId?: string } = {},
+): AISuggestionView[] {
+  const runId = options.runId ?? DEFAULT_RUN_ID;
+  const minutes = momentToMinutes(atMoment);
+  try {
+    return db()
+      .select()
+      .from(aiSuggestions)
+      .where(and(eq(aiSuggestions.runId, runId), eq(aiSuggestions.roleId, roleId)))
+      .all()
+      .filter((row) => row.validatedAt !== null && momentToMinutes(row.atMoment) <= minutes)
+      .filter((row) => row.disposition !== "new" && row.disposition !== "reviewed")
+      .sort((a, b) => (b.dispositionAt ?? "").localeCompare(a.dispositionAt ?? "") || b.id.localeCompare(a.id))
+      .slice(0, options.limit ?? 12)
+      .map((row) => toSuggestionView(row, runId));
+  } catch {
+    return [];
+  }
 }
 
 function toSuggestionView(
@@ -119,6 +154,7 @@ function toSuggestionView(
     confidence: row.confidence,
     uncertainty: row.uncertainty ?? [],
     decisionRequired: row.decisionRequired,
+    disposition: row.disposition,
   };
 }
 

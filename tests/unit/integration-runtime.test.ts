@@ -585,7 +585,9 @@ describe("the runtime against a database", () => {
     ({ requireScenarioState } = await import("@/scenario/engine/state"));
     ({ grantApproval } = await import("@/scenario/engine/decide"));
     ({ fingerprintPayload } = await import("@/server/security/authority"));
-  });
+    // The seed graph now includes every process stage implementation; a cold import
+    // takes close to a minute on a loaded machine, well past the 30 s default.
+  }, 180_000);
 
   afterAll(() => {
     destroyTemporaryDatabase();
@@ -596,7 +598,7 @@ describe("the runtime against a database", () => {
     seedIntegrations();
     simulated.resetExternalStore();
     runtime.clearInboundHooks();
-  });
+  }, 120_000);
 
   it("refuses an operation the connector does not declare, in the runtime", () => {
     const instance = runtime.requireConnectorInstance(ids.CI_PROCESS_INTELLIGENCE);

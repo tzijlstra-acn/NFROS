@@ -19,9 +19,18 @@
  * counted from rows and are labelled as measured in this simulation. Cost is
  * derived from an indicative price table held in this repository, so it is
  * labelled illustrative and never presented as a bill.
+ *
+ * This is also the one home of presenter runtime state. The entry page used
+ * to carry AI mode, key state, verification, configuration source, database
+ * state, the mode selector, the setup commands and the reset control beside
+ * the proposition. All of them now live here, merged into the sections that
+ * already reported them rather than repeated, and the entry page links here
+ * from its footer.
  */
 
+import Link from "next/link";
 import { ModeSelector } from "@/components/shell/ModeSelector";
+import { ResetButton } from "@/components/shell/controls";
 import { Caveat, KeyValue, ReportSection, ReportShell, SeedNotice } from "@/components/shell/ReportShell";
 import { Chip, ObjectId, type Tone } from "@/components/evidence/primitives";
 import { ValueMetric } from "@/components/evidence/figures";
@@ -60,6 +69,102 @@ const MODEL_ROLE_PURPOSE: Record<ModelRole, string> = {
   realtime: "Speech to speech meeting simulation. Degrades to the typed fallback.",
   embedding: "Retrieval embeddings over the synthetic evidence corpus.",
 };
+
+/**
+ * Copy for the presenter runtime and the controls that moved here from the
+ * entry page.
+ *
+ * Bilingual because every string added to the product is, and the runtime
+ * section is translated whole so a German session does not read one row in
+ * each language. The trace sections below predate that rule and are English
+ * only. Mode names (live, safe, offline) are identifiers and stay as they are.
+ */
+const PRESENTER_COPY = {
+  runtimeTitle: { en: "Demonstration mode and runtime", de: "Demonstrationsmodus und Laufzeit" },
+  runtimeQuestion: {
+    en: "What is running, and was the requested mode honoured?",
+    de: "Was laeuft, und wurde der angeforderte Modus eingehalten?",
+  },
+  runtimeAnswerDowngraded: {
+    en: 'The requested mode was "{requested}" and the effective mode is "{mode}". The request was downgraded rather than failed.',
+    de: 'Angefordert war der Modus "{requested}", wirksam ist "{mode}". Die Anforderung wurde herabgestuft statt abgelehnt.',
+  },
+  runtimeAnswerAsRequested: {
+    en: 'The effective mode is "{mode}", which is the mode that was requested. No downgrade was applied.',
+    de: 'Wirksam ist der Modus "{mode}", wie angefordert. Es wurde nicht herabgestuft.',
+  },
+  requestedMode: { en: "Requested mode", de: "Angeforderter Modus" },
+  effectiveMode: { en: "Effective mode", de: "Wirksamer Modus" },
+  downgraded: { en: "Downgraded", de: "Herabgestuft" },
+  liveCalls: { en: "Live calls permitted", de: "Live-Aufrufe erlaubt" },
+  voice: { en: "Voice", de: "Sprache" },
+  voiceAvailable: { en: "available", de: "verfuegbar" },
+  voiceTyped: { en: "typed fallback only", de: "nur Texteingabe" },
+  keyResolved: { en: "Key resolved", de: "Schluessel gefunden" },
+  scenarioSeeded: { en: "Scenario seeded", de: "Szenario geladen" },
+  scenarioClock: { en: "Scenario clock", de: "Szenariouhr" },
+  actingRole: { en: "Acting role", de: "Handelnde Rolle" },
+  autonomy: { en: "Autonomy level in force", de: "Geltende Autonomiestufe" },
+  changeMode: { en: "Change the mode", de: "Modus wechseln" },
+  whyMode: { en: "Why the mode is what it is", de: "Warum dieser Modus gilt" },
+  yes: { en: "true", de: "ja" },
+  no: { en: "false", de: "nein" },
+  autonomyCaveat: {
+    en: "Autonomy level {label}: {detail} This value is read by the authority gate on every call, so changing it changes behaviour rather than wording.",
+    de: "Autonomiestufe {label}: {detail} Die Befugnispruefung liest diesen Wert bei jedem Aufruf; eine Aenderung aendert also das Verhalten, nicht nur die Formulierung.",
+  },
+  keyCaveat: {
+    en: "The key is read at runtime from a file outside this repository. This page reports only that a key was resolved and which file supplied it. No part of the value is displayed, logged, exported or sent to the browser, and no length, prefix or masked form of it exists anywhere in this application.",
+    de: "Der Schluessel wird zur Laufzeit aus einer Datei ausserhalb dieses Repositorys gelesen. Diese Seite meldet nur, dass ein Schluessel gefunden wurde und welche Datei ihn geliefert hat. Kein Teil des Werts wird angezeigt, protokolliert, exportiert oder an den Browser gesendet, und weder Laenge, Praefix noch eine maskierte Form existieren in dieser Anwendung.",
+  },
+  liveVerified: { en: "Live AI verified", de: "Live-KI verifiziert" },
+  verifiedTrue: { en: "true", de: "ja" },
+  verifiedRejected: { en: "key rejected", de: "Schluessel abgelehnt" },
+  verifiedNotAttempted: { en: "not yet attempted", de: "noch nicht versucht" },
+  configurationSource: { en: "Configuration source", de: "Konfigurationsquelle" },
+  setupTitle: { en: "Scenario setup and reset", de: "Szenario einrichten und zuruecksetzen" },
+  setupQuestion: {
+    en: "Is the scenario in place, and how is it rebuilt?",
+    de: "Ist das Szenario geladen, und wie wird es neu aufgebaut?",
+  },
+  setupAnswerSeeded: {
+    en: "The scenario is seeded and the clock stands at {moment}. Resetting discards every decision, approval and audit event recorded in this run and restores the seeded morning.",
+    de: "Das Szenario ist geladen und die Uhr steht auf {moment}. Das Zuruecksetzen verwirft alle in diesem Lauf erfassten Entscheidungen, Genehmigungen und Audit-Ereignisse und stellt den geladenen Morgen wieder her.",
+  },
+  setupAnswerNotSeeded: {
+    en: "The scenario has not been seeded. Run the setup commands below in the repository, then reload this page.",
+    de: "Das Szenario wurde nicht geladen. Fuehren Sie die folgenden Befehle im Repository aus und laden Sie die Seite neu.",
+  },
+  setupFirstRun: { en: "First run on a new machine", de: "Erster Start auf einem neuen Rechner" },
+  setupRebuild: {
+    en: "Rebuild the seeded day from the command line",
+    de: "Den geladenen Tag ueber die Kommandozeile neu aufbauen",
+  },
+  resetInPage: { en: "Reset from this page", de: "Auf dieser Seite zuruecksetzen" },
+  resetUnavailable: {
+    en: "Unavailable until the scenario is seeded.",
+    de: "Nicht verfuegbar, bis das Szenario geladen ist.",
+  },
+  related: {
+    en: "Operational health is reported in {ops}. Product configuration is in {settings}.",
+    de: "Der Betriebszustand steht unter {ops}. Die Produktkonfiguration steht unter {settings}.",
+  },
+  ops: { en: "Operations", de: "Betrieb" },
+  settings: { en: "Settings", de: "Einstellungen" },
+} as const;
+
+function pick(pair: { en: string; de: string }, language: Language): string {
+  return language === "de" ? pair.de : pair.en;
+}
+
+function yesNo(value: boolean, language: Language): string {
+  return pick(value ? PRESENTER_COPY.yes : PRESENTER_COPY.no, language);
+}
+
+/** Replaces `{name}` placeholders. */
+function fill(template: string, values: Record<string, string>): string {
+  return template.replace(/\{(\w+)\}/g, (match, key: string) => values[key] ?? match);
+}
 
 export default function ControlRoomPage() {
   const runtime = getRuntimeStatus();
@@ -101,60 +206,85 @@ export default function ControlRoomPage() {
           this page depends on which mode produced it.
          ------------------------------------------------------------------ */}
       <ReportSection
-        title="Demonstration mode and runtime"
-        question="What is running, and was the requested mode honoured?"
-        answer={
-          runtime.demoMode.downgraded
-            ? `The requested mode was "${runtime.demoMode.requested}" and the effective mode is "${runtime.demoMode.mode}". The request was downgraded rather than failed.`
-            : `The effective mode is "${runtime.demoMode.mode}", which is the mode that was requested. No downgrade was applied.`
-        }
+        title={pick(PRESENTER_COPY.runtimeTitle, language)}
+        question={pick(PRESENTER_COPY.runtimeQuestion, language)}
+        answer={fill(
+          pick(
+            runtime.demoMode.downgraded
+              ? PRESENTER_COPY.runtimeAnswerDowngraded
+              : PRESENTER_COPY.runtimeAnswerAsRequested,
+            language,
+          ),
+          { requested: runtime.demoMode.requested, mode: runtime.demoMode.mode },
+        )}
         tone={runtime.demoMode.downgraded ? "amber" : "cyan"}
       >
-        <div className="grid grid-2">
+        <div className="grid grid-2" data-testid="runtime-state">
           <div className="stack stack-3">
-            <KeyValue label="Requested mode">
+            <KeyValue label={pick(PRESENTER_COPY.requestedMode, language)}>
               <Chip tone="neutral">{runtime.demoMode.requested}</Chip>
             </KeyValue>
-            <KeyValue label="Effective mode">
+            <KeyValue label={pick(PRESENTER_COPY.effectiveMode, language)}>
               <Chip tone={runtime.demoMode.mode === "live" ? "green" : "cyan"}>
                 {runtime.demoMode.mode}
               </Chip>
             </KeyValue>
-            <KeyValue label="Downgraded">
+            <KeyValue label={pick(PRESENTER_COPY.downgraded, language)}>
               <Chip tone={runtime.demoMode.downgraded ? "amber" : "neutral"}>
-                {runtime.demoMode.downgraded ? "true" : "false"}
+                {yesNo(runtime.demoMode.downgraded, language)}
               </Chip>
             </KeyValue>
-            <KeyValue label="Live calls permitted">
+            <KeyValue label={pick(PRESENTER_COPY.liveCalls, language)}>
               <Chip tone={runtime.liveCallsPermitted ? "green" : "neutral"}>
-                {runtime.liveCallsPermitted ? "true" : "false"}
+                {yesNo(runtime.liveCallsPermitted, language)}
               </Chip>
             </KeyValue>
-            <KeyValue label="Voice">
+            <KeyValue label={pick(PRESENTER_COPY.voice, language)}>
               <Chip tone={health.voiceAvailable ? "green" : "neutral"}>
-                {health.voiceAvailable ? "available" : "typed fallback only"}
+                {pick(health.voiceAvailable ? PRESENTER_COPY.voiceAvailable : PRESENTER_COPY.voiceTyped, language)}
               </Chip>
             </KeyValue>
-            <KeyValue label="Key resolved">
+            <KeyValue label={pick(PRESENTER_COPY.keyResolved, language)}>
               <Chip tone={runtime.openai.configured ? "green" : "amber"}>
-                {runtime.openai.configured ? "true" : "false"}
+                {yesNo(runtime.openai.configured, language)}
               </Chip>
             </KeyValue>
-            <KeyValue label="File that supplied the key">
-              <span className="mono meta">{runtime.openai.source}</span>
+            {/*
+              * Configured and verified are different claims. A key can be
+              * present and well formed and still be revoked or wrong, and a
+              * presenter needs to know which of the two they have.
+              */}
+            <KeyValue label={pick(PRESENTER_COPY.liveVerified, language)}>
+              <Chip
+                tone={
+                  health.liveAiVerified === null ? "neutral" : health.liveAiVerified ? "green" : "red"
+                }
+              >
+                {pick(
+                  health.liveAiVerified === null
+                    ? PRESENTER_COPY.verifiedNotAttempted
+                    : health.liveAiVerified
+                      ? PRESENTER_COPY.verifiedTrue
+                      : PRESENTER_COPY.verifiedRejected,
+                  language,
+                )}
+              </Chip>
             </KeyValue>
-            <KeyValue label="Scenario seeded">
-              <Chip tone={seeded ? "green" : "red"}>{seeded ? "true" : "false"}</Chip>
+            <KeyValue label={pick(PRESENTER_COPY.configurationSource, language)}>
+              <span className="mono meta">{health.configurationSource}</span>
+            </KeyValue>
+            <KeyValue label={pick(PRESENTER_COPY.scenarioSeeded, language)}>
+              <Chip tone={seeded ? "green" : "red"}>{yesNo(seeded, language)}</Chip>
             </KeyValue>
             {state ? (
               <>
-                <KeyValue label="Scenario clock">
+                <KeyValue label={pick(PRESENTER_COPY.scenarioClock, language)}>
                   <span className="mono meta">{state.currentMoment}</span>
                 </KeyValue>
-                <KeyValue label="Acting role">
+                <KeyValue label={pick(PRESENTER_COPY.actingRole, language)}>
                   <span className="mono meta">{state.activeRoleId}</span>
                 </KeyValue>
-                <KeyValue label="Autonomy level in force">
+                <KeyValue label={pick(PRESENTER_COPY.autonomy, language)}>
                   <Chip tone="amber">{AUTONOMY_DESCRIPTIONS[state.autonomyLevel].label}</Chip>
                 </KeyValue>
               </>
@@ -162,14 +292,14 @@ export default function ControlRoomPage() {
           </div>
 
           <div className="stack stack-4">
-            <div className="stack stack-2">
-              <span className="label">Change the mode</span>
+            <div className="stack stack-2" data-testid="mode-selector">
+              <span className="label">{pick(PRESENTER_COPY.changeMode, language)}</span>
               <ModeSelector current={runtime.demoMode.mode} liveAvailable={runtime.openai.configured} />
             </div>
             {runtime.demoMode.reason ? (
               <div className="card card-edge" data-tone="amber">
                 <div className="stack stack-2">
-                  <span className="label">Why the mode is what it is</span>
+                  <span className="label">{pick(PRESENTER_COPY.whyMode, language)}</span>
                   <p style={{ fontSize: "var(--text-sm)" }}>{runtime.demoMode.reason}</p>
                 </div>
               </div>
@@ -177,18 +307,84 @@ export default function ControlRoomPage() {
             {runtime.openai.reason ? (
               <Caveat>{runtime.openai.reason}</Caveat>
             ) : null}
+            {runtime.openai.configured ? <Caveat>{health.liveAiConfiguredMeaning}</Caveat> : null}
             {state ? (
               <Caveat>
-                Autonomy level {AUTONOMY_DESCRIPTIONS[state.autonomyLevel].label}:{" "}
-                {AUTONOMY_DESCRIPTIONS[state.autonomyLevel].detail} This value is read by the
-                authority gate on every call, so changing it changes behaviour rather than wording.
+                {fill(pick(PRESENTER_COPY.autonomyCaveat, language), {
+                  label: AUTONOMY_DESCRIPTIONS[state.autonomyLevel].label,
+                  detail: AUTONOMY_DESCRIPTIONS[state.autonomyLevel].detail,
+                })}
               </Caveat>
             ) : null}
+            <Caveat>{pick(PRESENTER_COPY.keyCaveat, language)}</Caveat>
+          </div>
+        </div>
+      </ReportSection>
+
+      {/* ------------------------------------------------------------------
+          Scenario setup and reset. Moved here from the entry page, which
+          is now the product entrance and carries no presenter controls.
+          The commands are shown whether or not the scenario is seeded,
+          because a presenter rebuilding a machine needs them either way.
+         ------------------------------------------------------------------ */}
+      <ReportSection
+        title={pick(PRESENTER_COPY.setupTitle, language)}
+        question={pick(PRESENTER_COPY.setupQuestion, language)}
+        answer={
+          state
+            ? pick(PRESENTER_COPY.setupAnswerSeeded, language).replace("{moment}", state.currentMoment)
+            : pick(PRESENTER_COPY.setupAnswerNotSeeded, language)
+        }
+        tone={state ? "cyan" : "amber"}
+      >
+        <div className="grid grid-2">
+          <div className="stack stack-3">
+            <div className="stack stack-2">
+              <span className="label">{pick(PRESENTER_COPY.setupFirstRun, language)}</span>
+              <pre
+                className="mono"
+                data-testid="setup-commands"
+                style={{
+                  background: "var(--surface-0)",
+                  border: "1px solid var(--border-1)",
+                  borderRadius: "var(--radius-md)",
+                  padding: "var(--space-3)",
+                  fontSize: "var(--text-sm)",
+                  margin: 0,
+                }}
+              >
+                {"npm run db:migrate\nnpm run db:seed"}
+              </pre>
+            </div>
+            <div className="stack stack-2">
+              <span className="label">{pick(PRESENTER_COPY.setupRebuild, language)}</span>
+              <pre
+                className="mono"
+                style={{
+                  background: "var(--surface-0)",
+                  border: "1px solid var(--border-1)",
+                  borderRadius: "var(--radius-md)",
+                  padding: "var(--space-3)",
+                  fontSize: "var(--text-sm)",
+                  margin: 0,
+                }}
+              >
+                {"npm run demo:reset"}
+              </pre>
+            </div>
+          </div>
+
+          <div className="stack stack-3">
+            <div className="stack stack-2" data-testid="reset-control">
+              <span className="label">{pick(PRESENTER_COPY.resetInPage, language)}</span>
+              {state ? (
+                <ResetButton language={language} />
+              ) : (
+                <p className="meta">{pick(PRESENTER_COPY.resetUnavailable, language)}</p>
+              )}
+            </div>
             <Caveat>
-              The key is read at runtime from a file outside this repository. This page reports only
-              that a key was resolved and which file supplied it. No part of the value is displayed,
-              logged, exported or sent to the browser, and no length, prefix or masked form of it
-              exists anywhere in this application.
+              <RelatedSurfaces language={language} />
             </Caveat>
           </div>
         </div>
@@ -996,6 +1192,26 @@ function SeededControlRoom() {
 /* ==========================================================================
    Local components
    ========================================================================== */
+
+/**
+ * Links to the adjacent operator surfaces.
+ *
+ * Linked rather than summarised: operations and settings are owned by their
+ * own pages, and a second rendering of their state here would drift.
+ */
+function RelatedSurfaces({ language }: { language: Language }) {
+  const [beforeOps, afterOps = ""] = pick(PRESENTER_COPY.related, language).split("{ops}");
+  const [between, afterSettings = ""] = afterOps.split("{settings}");
+  return (
+    <>
+      {beforeOps}
+      <Link href="/ops">{pick(PRESENTER_COPY.ops, language)}</Link>
+      {between}
+      <Link href="/settings">{pick(PRESENTER_COPY.settings, language)}</Link>
+      {afterSettings}
+    </>
+  );
+}
 
 /** A refused, held or failed call, rendered at full width with the reason. */
 function GateCard({ call }: { call: ToolCallRow }) {

@@ -78,28 +78,28 @@ async function scrubTo(page: Page, moment: string): Promise<void> {
    ========================================================================== */
 
 test.describe("the entry screen", () => {
-  test("renders the proposition, the synthetic data label and the runtime status", async ({
+  test("renders the proposition and the synthetic data label, and leaves runtime state to the control room", async ({
     page,
   }) => {
     await open(page, "/");
 
-    await expect(page.getByRole("heading", { level: 1, name: /Live the NFR day/i })).toBeVisible();
+    await expect(
+      page.getByRole("heading", { level: 1, name: /Run NFR work from one governed environment/i }),
+    ).toBeVisible();
 
     // The synthetic data label is mandatory on every surface that shows
     // Arcadia content, and this is the first one an executive sees.
     await expect(page.getByText("Synthetic institution and data").first()).toBeVisible();
 
-    // The runtime status has to be honest about the mode in force.
-    await expect(page.getByText("Runtime status")).toBeVisible();
-    await expect(page.getByText("AI mode", { exact: true })).toBeVisible();
-    await expect(page.getByText("Live AI configured", { exact: true })).toBeVisible();
-    await expect(page.getByText("Scenario seeded", { exact: true })).toBeVisible();
+    // The runtime status moved to the control room, which the entry links to.
+    await expect(page.getByText("Runtime status")).toHaveCount(0);
+    await expect(page.getByRole("link", { name: "Control room" })).toBeVisible();
   });
 
   test("offers both the presentation and the interactive day", async ({ page }) => {
     await open(page, "/");
-    await expect(page.getByRole("link", { name: /Open the presentation/i })).toBeVisible();
-    await expect(page.getByRole("link", { name: /Enter the interactive day/i })).toBeVisible();
+    await expect(page.getByRole("link", { name: /View the presentation/i })).toBeVisible();
+    await expect(page.getByRole("link", { name: /Explore the product/i })).toBeVisible();
   });
 
   test("states that the institution and the regulatory context are illustrative", async ({
