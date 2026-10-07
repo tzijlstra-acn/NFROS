@@ -22,6 +22,7 @@ import { workdayLiveEvents } from "@/db/schema/live";
 import { markEventRead } from "@/scenario/engine/live-events";
 import { gateForRole } from "@/workday/role-gate";
 import { revalidateWorkday } from "@/workday/revalidate";
+import { markRoutineNotificationRead } from "@/features/partner/notifications";
 
 export interface MarkUpdateReadResult {
   ok: boolean;
@@ -34,6 +35,13 @@ export async function actionMarkUpdateRead(roleId: string, eventId: string): Pro
   if (gateForRole(roleId).kind !== "open") return { ok: false };
   if (typeof eventId !== "string" || !EVENT_ID.test(eventId)) return { ok: false };
   if (!isDatabaseReady()) return { ok: false };
+
+  /* A routine's new work is a message too; its read mark is the notification ledger's. */
+  if (eventId.startsWith("NTF-")) {
+    const marked = markRoutineNotificationRead(roleId as RoleId, eventId);
+    if (marked) revalidateWorkday(roleId as RoleId, "routine");
+    return { ok: marked };
+  }
 
   const row = getDb()
     .select({ id: workdayLiveEvents.id, roleIds: workdayLiveEvents.roleIds })

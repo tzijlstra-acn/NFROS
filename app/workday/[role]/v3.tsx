@@ -34,6 +34,7 @@ import { readHomeView } from "@/features/home";
 import { getScenarioState } from "@/scenario/engine/state";
 import { RoleHome } from "@/components/workday-v3/RoleHome";
 import { NotSeeded } from "@/components/shell/WorkdayShell";
+import { ExperienceBeacon } from "@/features/product/experience/ExperienceBeacon";
 import type { RouteQuery } from "@/workday/dispatch";
 
 function parseRole(value: string): RoleId {
@@ -65,5 +66,11 @@ export default async function RoleHomeV3({
   if (!state) return <NotSeeded />;
   if (!getRole(roleId)) return <NotSeeded />;
 
-  return <RoleHome view={readHomeView(roleId, state)} />;
+  /* The beacon records "workday opened" for experience analytics: no user, one row per visit. */
+  return (
+    <>
+      <RoleHome view={readHomeView(roleId, state)} />
+      <ExperienceBeacon kind="workday-opened" roleId={roleId} />
+    </>
+  );
 }

@@ -24,6 +24,7 @@ import { isDatabaseReady } from "@/db/client";
 import { ROLE_IDS, type RoleId } from "@/db/schema/core";
 import { getScenarioState } from "@/scenario/engine/state";
 import { parseSelectionParam } from "@/workday/selection-url";
+import { buildPartnerExtras, emptyPartnerExtras } from "@/features/partner/view";
 import type { Language } from "@/i18n/labels";
 
 export const dynamic = "force-dynamic";
@@ -59,7 +60,18 @@ export async function GET(request: NextRequest) {
       state,
       selection,
     );
-    return NextResponse.json({ ...data, initialThreadId: threadId });
+    /*
+     * The lifecycle, feedback, routine lineage and durable context
+     * (`buildPartnerExtras`). Read separately and degraded to empty, so a
+     * failure there never costs the person the dock itself.
+     */
+    let extras = emptyPartnerExtras();
+    try {
+      extras = buildPartnerExtras(role as RoleId, state);
+    } catch {
+      extras = emptyPartnerExtras();
+    }
+    return NextResponse.json({ ...data, initialThreadId: threadId, extras });
   } catch {
     /*
      * The message is withheld deliberately. A failure in here can have come

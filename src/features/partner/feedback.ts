@@ -55,7 +55,7 @@ function resolveTarget(roleId: RoleId, kind: PartnerFeedbackTarget, id: string, 
     const run = findRoutineRunsForObject("suggestion", id, runId)[0];
     return {
       roleId,
-      taskKind: run ? routineTaskKind(run.routineId, run.summary) : "suggestion",
+      taskKind: run ? (routineKindOf(run.routineId, runId) ?? "suggestion") : "suggestion",
       sourceRefs: [...new Set([...(row.evidenceIds ?? []), ...(row.sourceConnectorIds ?? [])])].slice(0, 40),
     };
   }
@@ -76,7 +76,7 @@ function resolveTarget(roleId: RoleId, kind: PartnerFeedbackTarget, id: string, 
   if (!run || run.runId !== runId || run.roleId !== roleId) return null;
   return {
     roleId,
-    taskKind: routineTaskKind(run.routineId, run.summary),
+    taskKind: routineKindOf(run.routineId, runId) ?? "suggestion",
     sourceRefs: getRoutineRunOutputs(run.id).map((output) => output.objectId).slice(0, 40),
   };
 }

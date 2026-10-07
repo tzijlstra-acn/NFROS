@@ -38,7 +38,8 @@ import {
   actionRunReleaseGate,
 } from "./actions";
 import { readMigrationState } from "./migrations";
-import { proposeApprovePilotRelease, proposeDeploy, proposeReleaseRollBack, readReleaseView, rollbackPlan } from "./release";
+import { gateRunInProgress, proposeApprovePilotRelease, proposeDeploy, proposeReleaseRollBack, readReleaseView, rollbackPlan } from "./release";
+import { GateRunFollow } from "./GateRunFollow";
 
 const COPY = {
   title: { en: "Releases", de: "Releases" },
@@ -65,6 +66,11 @@ const COPY = {
     de: "Fuehrt jede Pruefung jetzt aus, gegen diesen Build und diese Datenbank. Die Text- und Geheimnispruefungen nutzen die Skripte des Repositorys; nur ihr Rueckgabewert wird gespeichert.",
   },
   noGate: { en: "No gate run is recorded for this version.", de: "Fuer diese Version ist keine Pruefung erfasst." },
+  running: { en: "Running", de: "Laeuft" },
+  interrupted: {
+    en: "The last gate run did not complete: the server stopped while it ran. It does not count as a pass. Run the gate again.",
+    de: "Die letzte Pruefung wurde nicht abgeschlossen: Der Server wurde waehrend des Laufs beendet. Sie gilt nicht als bestanden. Fuehren Sie die Pruefung erneut aus.",
+  },
   check: { en: "Check", de: "Pruefung" },
   mandatory: { en: "mandatory", de: "Pflicht" },
   optional: { en: "not mandatory", de: "keine Pflicht" },
@@ -188,9 +194,13 @@ export async function ReleasesConsole({ language }: { language: Language }) {
         trailing={
           gate ? (
             <span data-testid="release-gate-status" data-status={gate.status}>
-              <Chip tone={gate.status === "passed" ? "success" : "danger"}>
-                {gate.status === "passed" ? say(COPY.passed) : say(COPY.failed)} {gate.mandatoryTotal - gate.mandatoryFailed}/{gate.mandatoryTotal}
-              </Chip>
+              {gate.status === "running" ? (
+                <Chip tone="info">{say(COPY.running)}</Chip>
+              ) : (
+                <Chip tone={gate.status === "passed" ? "success" : "danger"}>
+                  {gate.status === "passed" ? say(COPY.passed) : say(COPY.failed)} {gate.mandatoryTotal - gate.mandatoryFailed}/{gate.mandatoryTotal}
+                </Chip>
+              )}
             </span>
           ) : undefined
         }
@@ -205,7 +215,17 @@ export async function ReleasesConsole({ language }: { language: Language }) {
             tone="primary"
             testId="release-run-gate"
           />
-          {gate ? (
+          {gate && gateRunInProgress(gate) ? (
+            <div className="app-row app-row-wrap" data-testid="release-gate-running">
+              <Chip tone="info">{say(COPY.running)}</Chip>
+              <span className="app-meta">
+                {say(COPY.ranAt)} <Data>{gate.startedAt.slice(0, 16).replace("T", " ")}</Data> {say(COPY.by)} {gate.triggeredByLabel}.
+              </span>
+              <GateRunFollow language={language} />
+            </div>
+          ) : gate && gate.status === "running" ? (
+            <Notice tone="warning">{say(COPY.interrupted)}</Notice>
+          ) : gate ? (
             <div className="app-stack-2" data-testid="release-gate-results">
               <span className="app-meta">
                 {say(COPY.ranAt)} <Data>{(gate.completedAt ?? gate.startedAt).slice(0, 16).replace("T", " ")}</Data> {say(COPY.by)} {gate.triggeredByLabel}.{" "}

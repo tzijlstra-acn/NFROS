@@ -1,12 +1,15 @@
 /**
- * Product Owner Console: overview. Being built by os-console-core.
+ * Product Owner Console: Overview (plan 7.1).
+ *
+ * Thin: the figures and the four questions are read by
+ * `src/features/product/overview/model.ts`.
  */
 
 import { readAdminLanguage } from "@/product/status/sources";
-import { InPreparation } from "@/features/product/shell/InPreparation";
+import { OverviewConsole } from "@/features/product/overview/OverviewConsole";
 
 export const dynamic = "force-dynamic";
 
-export default function ConsoleSectionInPreparation() {
-  return <InPreparation sectionId="overview" language={readAdminLanguage()} />;
+export default function ProductOverviewPage() {
+  return <OverviewConsole language={readAdminLanguage()} />;
 }

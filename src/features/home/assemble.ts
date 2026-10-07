@@ -51,6 +51,8 @@ import {
   lineage,
   meetingHref,
   objectHref,
+  outputHref,
+  lineageKindOfOutput,
   stageHref,
 } from "./lineage";
 import type {
@@ -281,6 +283,11 @@ export interface RoutineInput {
   subjectKind: string | null;
   subjectId: string | null;
   activityEntryId: string | null;
+  /**
+   * What the run produced, from `ai_routine_run_outputs` (AI Partner, Wave
+   * 3): the routine lineage, each linked to where it opens.
+   */
+  outputs?: ReadonlyArray<{ kind: string; id: string }>;
 }
 
 export interface ReceiptInput {
@@ -465,12 +472,17 @@ function routineStatements(input: PartnerInputs): PartnerStatement[] {
     // A routine run with no subject has nothing to link to, so it is not stated.
     if (!row.subjectKind || !row.subjectId) continue;
     const href = objectHref(input.roleId, row.subjectKind, row.subjectId);
+    // Each thing the run prepared, then the run's event: the lineage the plan asks to be visible.
+    const produced = (row.outputs ?? [])
+      .filter((output) => output.kind !== "suggestion")
+      .map((output) => lineage(lineageKindOfOutput(output.kind), output.id, output.id, outputHref(input.roleId, output.kind, output.id) ?? href));
+    const subjectRefs = produced.some((ref) => ref.id === row.subjectId) ? [] : [lineage("object", row.subjectId, row.subjectId, href)];
     const made = statement(
       "routine",
       row.id,
       fill(pick(C.statementRoutine, input.language), { title: shortTitle(row.summary) }),
       row.atMoment || null,
-      [lineage("object", row.subjectId, row.subjectId, href), lineage("event", row.id, row.id, href)],
+      [...produced, ...subjectRefs, lineage("event", row.id, row.id, href)],
     );
     if (made) out.push(made);
   }

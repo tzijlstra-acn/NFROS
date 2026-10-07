@@ -25,11 +25,12 @@
  * release does not include would be interactive work by another route.
  */
 
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import {
   IconAdjustmentsHorizontal,
   IconBell,
+  IconMessage2,
   IconMoon,
   IconSearch,
   IconSettings,
@@ -39,6 +40,7 @@ import {
   IconUserCircle,
 } from "@tabler/icons-react";
 import type { Language } from "@/i18n/labels";
+import { WorkdayFeedbackDialog } from "@/features/product/feedback/WorkdayFeedbackDialog";
 import { useWorkdayChrome } from "./ChromeContext";
 
 const LABELS = {
@@ -78,6 +80,13 @@ export function WorkdayHeaderClientActions({
   const chrome = useWorkdayChrome();
   const [userOpen, setUserOpen] = useState(false);
   const [demoOpen, setDemoOpen] = useState(false);
+  /* Product feedback (os-console-quality): a dialog from the account menu, not a navigation item. */
+  const [feedbackOpen, setFeedbackOpen] = useState(false);
+  const accountButton = useRef<HTMLButtonElement | null>(null);
+  const closeFeedback = useCallback(() => {
+    setFeedbackOpen(false);
+    accountButton.current?.focus();
+  }, []);
 
   /* Escape closes whichever menu is open. */
   useEffect(() => {
@@ -257,10 +266,12 @@ export function WorkdayHeaderClientActions({
 
       <div style={{ position: "relative" }}>
         <button
+          ref={accountButton}
           type="button"
           className="wd-icon-btn"
           aria-expanded={userOpen}
           aria-haspopup="menu"
+          data-testid="header-account"
           onClick={() => {
             setUserOpen((open) => !open);
             setDemoOpen(false);
@@ -291,9 +302,24 @@ export function WorkdayHeaderClientActions({
               <IconSettings size={16} stroke={1.8} aria-hidden="true" />
               {language === "de" ? "Einstellungen" : "Settings"}
             </Link>
+            {gated ? null : (
+              <button
+                type="button"
+                className="wd-menu-item"
+                data-testid="header-feedback"
+                onClick={() => {
+                  setUserOpen(false);
+                  setFeedbackOpen(true);
+                }}
+              >
+                <IconMessage2 size={16} stroke={1.8} aria-hidden="true" />
+                {language === "de" ? "Produktrueckmeldung senden" : "Send product feedback"}
+              </button>
+            )}
           </Menu>
         ) : null}
       </div>
+      {feedbackOpen ? <WorkdayFeedbackDialog open onClose={closeFeedback} language={language} /> : null}
     </div>
   );
 }

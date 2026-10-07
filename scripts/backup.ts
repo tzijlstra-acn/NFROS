@@ -4,24 +4,31 @@
  *
  * Manages point-in-time backups of the NFROS SQLite database.
  *
- * create  -- copies the database to ./backups/ with a timestamped name and
- *            writes a manifest containing the SHA-256 hash.
- * verify  -- re-hashes the most recent backup and confirms it matches the
- *            recorded hash.
- * restore -- verifies the most recent backup and copies it over the live
- *            database.
+ * create:  takes a consistent online backup of the database (the one
+ *          NFR_DB_PATH names, or the default) into ./backups/ with a
+ *          timestamped name, and writes a manifest with its SHA-256 hash.
+ * verify:  re-hashes the most recent backup and confirms it matches the
+ *          recorded hash.
+ * restore: verifies the most recent backup and copies it over the database
+ *          it was taken from. It refuses to restore over a different file.
+ *
+ * The backup uses SQLite's online backup API rather than a file copy: with
+ * write-ahead logging and a running server, committed transactions can sit in
+ * the -wal file, and a plain copy of the main file would miss them.
  *
  * No API keys, session tokens, or runtime secrets are stored in the database;
  * they live in environment variables only.
  */
 
-import { existsSync, copyFileSync, readFileSync, writeFileSync, mkdirSync } from "node:fs";
+import { existsSync, copyFileSync, readFileSync, writeFileSync, mkdirSync, rmSync } from "node:fs";
 import { readdirSync } from "node:fs";
-import { join } from "node:path";
+import { dirname, join } from "node:path";
 import { createHash } from "node:crypto";
+import Database from "better-sqlite3";
 import { PRODUCT_RELEASE } from "../src/product/release/product-release";
+import { resolveDbPath } from "../src/db/client";
 
-const DB_PATH = join(process.cwd(), "data", "nfr-workos.db");
+const DB_PATH = resolveDbPath();
 const BACKUP_DIR = join(process.cwd(), "backups");
 const SCHEMA_VERSION = "V3+runtime";
 /** Read from the release registry, so a backup manifest names the real release. */
@@ -71,7 +78,12 @@ async function create(): Promise<void> {
   const timestamp = getTimestamp();
   const backupPath = join(BACKUP_DIR, `nfr-workos-${timestamp}.db`);
 
-  copyFileSync(DB_PATH, backupPath);
+  const source = new Database(DB_PATH, { readonly: true, fileMustExist: true });
+  try {
+    await source.backup(backupPath);
+  } finally {
+    source.close();
+  }
 
   const hash = hashFile(backupPath);
 
@@ -138,9 +150,22 @@ async function restore(): Promise<void> {
     process.exit(1);
   }
 
-  mkdirSync(join(process.cwd(), "data"), { recursive: true });
+  // A backup is restored only over the database it was taken from.
+  if (manifest.originalPath !== DB_PATH) {
+    console.error("Cannot restore: the latest backup was taken from a different database.");
+    console.error("  Backup of:", manifest.originalPath);
+    console.error("  Target:   ", DB_PATH);
+    console.error("Set NFR_DB_PATH to the backup's database, or create a backup of the target first.");
+    process.exit(1);
+  }
+
+  mkdirSync(dirname(DB_PATH), { recursive: true });
+  // Stale write-ahead files would be replayed over the restored database.
+  rmSync(`${DB_PATH}-wal`, { force: true });
+  rmSync(`${DB_PATH}-shm`, { force: true });
   copyFileSync(manifest.backupPath, DB_PATH);
   console.log("Database restored from:", manifest.backupPath);
+  console.log("Stop the dev server before a restore, and restart it afterwards.");
   console.log("Run db:seed to re-seed if needed");
 }
 

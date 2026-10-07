@@ -3,7 +3,8 @@
  *
  * The Q4 2026 cycle of payment repair and manual override (ARC-DE) is taken
  * from Evidence Refresh to Monitoring and Reassessment, and the event-driven
- * reassessment it opens is taken through Scope and Trigger. At each stage the
+ * reassessment it opens is taken through Scope and Trigger and through
+ * Evidence Refresh, on a decision of its own (migration 0007). At each stage the
  * durable AI preparation reaches Completed, Continue stays disabled with its
  * reasons until the criteria pass, the person records the stage's own input
  * and decision (nothing is preselected), approves the governed changes, and
@@ -166,11 +167,13 @@ async function decide(page: Page, decisionKey: string, optionId: string, label: 
   await expect(decision.locator('input[name="optionId"]:checked')).toHaveCount(0);
   await decision.locator(`input[name="optionId"][value="${optionId}"]`).check();
   await confirmIn(page, `decision-${decisionKey}`, `${label}: my decision on the record in front of me.`);
+  /* Recorded and final: the form gives way to the record, which on a loaded machine can take a while. */
+  await expect(page.getByTestId(`decision-${decisionKey}`)).toHaveCount(0, { timeout: 180_000 });
   await expect(page.getByTestId("stage-decisions")).toContainText(label, { timeout: 90_000 });
 }
 
 async function approveChanges(page: Page, toolKeys: string[]): Promise<void> {
-  for (const key of toolKeys) await expect(page.getByTestId(`tool-${key}`)).toContainText("Proposed");
+  for (const key of toolKeys) await expect(page.getByTestId(`tool-${key}`)).toContainText("Proposed", { timeout: 90_000 });
   await confirmIn(page, "execute-tools", "I approve the changes this decision implies.");
   for (const key of toolKeys) {
     await expect(page.getByTestId(`tool-${key}`)).toContainText(/Confirmed by the target system|Executed/, { timeout: 90_000 });
@@ -393,11 +396,23 @@ test("RCSA Cycle Assistant, Stages 5 to 8, and the event-driven reassessment it 
   await decide(page, "scope-and-trigger", "scope-off-cycle", "Confirm an off-cycle scope");
   await completeStage(page, /Stage 2 of 8/);
 
-  /* ---- Stage 2 of the reassessment stops honestly: the cycle's decisions are not its own ---- */
+  /* ---- Stage 2 of the reassessment runs on a decision of its own, never on the Q4 cycle's ---- */
+  const ownDecision = `DEC-${(reassessmentRun ?? "").replace(/^RUN-/, "")}-S2`;
+  await openStage(page, reassessment, "evidence-refresh", "Evidence Refresh");
+  await expect(page.getByTestId("stage-decisions")).toContainText(ownDecision);
+  await expect(page.getByTestId("stage-decisions")).not.toContainText("DEC-2026-0771");
+  await capture(page, "stage2-reassessment-own-decision");
+  await recordTask(page, "evidence-sufficiency", async (task) => {
+    for (const key of ["kri-readings", "incidents", "losses", "open-actions", "prior-assessment", "control-tests"]) {
+      await task.locator(`input[name="sufficiency:${key}"][value="sufficient"]`).check();
+    }
+  });
+  await decide(page, "investigation-strategy", `${ownDecision}-O01`, "One causal investigation");
+  await approveChanges(page, ["register-investigation"]);
+  await completeStage(page, /Stage 3 of 8/);
   await page.goto(`${reassessment}&stage=evidence-refresh`, { timeout: 180_000 });
-  await expect(page.getByTestId("preparation-state")).toHaveText(/Completed/, { timeout: 180_000 });
-  await expect(page.getByTestId("continue-disabled-reasons")).toContainText("Q4 2026 cycle");
-  await capture(page, "stage2-reassessment-stops");
+  await expect(page.getByTestId("stage-status")).toHaveText("Completed");
+  await capture(page, "stage2-reassessment-completed");
 
   /* ---- The completed cycle stays reachable, and survives a reload ---- */
   await page.goto(`${PROCESS}?run=${CYCLE_RUN}&stage=monitoring-reassessment`, { timeout: 180_000 });

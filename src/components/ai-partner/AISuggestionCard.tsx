@@ -47,12 +47,15 @@ import { Menu, type MenuItemDefinition } from "@/components/workday-v2/interacti
 import {
   CONFIDENCE_LABEL_KEYS,
   CONFIDENCE_TONE,
+  DISPOSITION_LABELS,
   SUGGESTION_ACTION_LABEL_KEYS,
   confidenceBand,
   partnerLabel,
   selectSuggestionActions,
   type SuggestionActionId,
 } from "./labels";
+import { isOpenDisposition } from "@/features/partner/rules";
+import { AIFeedbackControl, type FeedbackHandler } from "./AIFeedbackControl";
 
 /* ==========================================================================
    Progressive reveal
@@ -121,6 +124,31 @@ export interface AISuggestionCardProps {
    */
   onAction?: (action: SuggestionActionId, suggestion: AISuggestionView) => void;
   onOpenEvidence?: (evidenceId: string) => void;
+  /**
+   * Records a modification or a rejection, each with the person's reason
+   * (plan 4.11). Returns false when the answer was not recorded.
+   */
+  onAnswer?: AnswerHandler;
+  /** The suggestion's disposition history, oldest first. */
+  history?: readonly DispositionStep[];
+  /** The routine that prepared it, when one did. */
+  preparedBy?: string | null;
+  feedbackKinds?: readonly string[];
+  onFeedback?: FeedbackHandler;
+}
+
+export type AnswerHandler = (
+  answer: "modify" | "reject",
+  suggestion: AISuggestionView,
+  extra: { recommendation?: string; reason: string },
+) => Promise<boolean>;
+
+/** Plain data, mirrored from `src/features/partner/view.ts` so this client file imports no server module. */
+export interface DispositionStep {
+  to: keyof typeof DISPOSITION_LABELS;
+  atMoment: string;
+  actor: "person" | "system";
+  reason: string;
 }
 
 export function AISuggestionCard({
@@ -130,8 +158,20 @@ export function AISuggestionCard({
   progressive = false,
   onAction,
   onOpenEvidence,
+  onAnswer,
+  history = [],
+  preparedBy = null,
+  feedbackKinds = [],
+  onFeedback,
 }: AISuggestionCardProps) {
   const [visibleSections, setVisibleSections] = useState(progressive ? 1 : SECTION_COUNT);
+  const [form, setForm] = useState<"modify" | "reject" | null>(null);
+  const [recommendation, setRecommendation] = useState(suggestion.recommendedAction ?? "");
+  const [reason, setReason] = useState("");
+  const [answerError, setAnswerError] = useState(false);
+  const disposition = suggestion.disposition ?? "new";
+  const open = isOpenDisposition(disposition);
+  const lastStep = history.length > 0 ? history[history.length - 1] : undefined;
 
   useEffect(() => {
     if (!progressive || prefersReducedMotion()) {
@@ -151,13 +191,20 @@ export function AISuggestionCard({
   const shown = (section: number) => section <= visibleSections;
 
   const { band, value } = confidenceBand(suggestion.confidence, suggestion.constrained);
-  const plan = selectSuggestionActions({
+  const fullPlan = selectSuggestionActions({
     status: suggestion.status,
     authorityClass: suggestion.authorityClass,
     constrained: suggestion.constrained,
     decisionRequired: suggestion.decisionRequired,
     hasRecommendation: Boolean(suggestion.recommendedAction),
   });
+  /*
+   * An answered suggestion keeps only the read paths. Answering twice is how
+   * one recommendation would end up accepted and rejected at once.
+   */
+  const plan = open
+    ? fullPlan
+    : { primary: "open-object" as SuggestionActionId, overflow: (["ask-why"] as SuggestionActionId[]) };
 
   // Held in a local const so the narrowing survives into the click handler.
   const primary = plan.primary;
@@ -165,11 +212,35 @@ export function AISuggestionCard({
   const actionLabel = (id: SuggestionActionId) =>
     partnerLabel(SUGGESTION_ACTION_LABEL_KEYS[id], language);
 
+  /* Modify and Reject need the person's words, so they open a form in the card. */
+  const choose = (id: SuggestionActionId) => {
+    if (id === "modify" && onAnswer) {
+      setForm("modify");
+      return;
+    }
+    if (id === "dismiss" && onAnswer) {
+      setForm("reject");
+      return;
+    }
+    onAction?.(id, suggestion);
+  };
+
+  const submitAnswer = async () => {
+    if (!onAnswer || !form || reason.trim().length === 0) return;
+    if (form === "modify" && recommendation.trim().length === 0) return;
+    const ok = await onAnswer(form === "modify" ? "modify" : "reject", suggestion, {
+      reason: reason.trim(),
+      ...(form === "modify" ? { recommendation: recommendation.trim() } : {}),
+    });
+    setAnswerError(!ok);
+    if (ok) setForm(null);
+  };
+
   const menuItems: MenuItemDefinition[] = plan.overflow.map((id) => ({
     id,
     label: actionLabel(id),
     danger: id === "dismiss",
-    ...(onAction ? { onSelect: () => onAction(id, suggestion) } : {}),
+    ...(onAction || onAnswer ? { onSelect: () => choose(id) } : {}),
   }));
 
   const regulatoryText = `${suggestion.headline} ${suggestion.changeSummary} ${suggestion.whyItMatters} ${suggestion.recommendedAction ?? ""}`;
@@ -179,12 +250,17 @@ export function AISuggestionCard({
       className="app-suggestion"
       data-priority={suggestion.priority}
       data-constrained={suggestion.constrained || undefined}
+      data-disposition={disposition}
+      data-suggestion-id={suggestion.id}
       aria-label={suggestion.headline}
     >
-      {/* ---- head: state, authority, provenance, age ---- */}
+      {/* ---- head: state, answer, authority, provenance, age ---- */}
       <div className="app-row app-row-wrap">
         <Chip tone={suggestion.status === "needs-user" ? "warning" : "ai"}>
           {pick(SUGGESTION_STATUS_LABELS[suggestion.status], language)}
+        </Chip>
+        <Chip tone={DISPOSITION_LABELS[disposition].tone} title={partnerLabel("dispositionLabel", language)}>
+          {pick(DISPOSITION_LABELS[disposition], language)}
         </Chip>
         <AuthorityChip authorityClass={suggestion.authorityClass} language={language} />
         <span className="app-grow" />
@@ -206,6 +282,11 @@ export function AISuggestionCard({
       </div>
 
       <h3 className="app-suggestion-headline">{suggestion.headline}</h3>
+      {preparedBy ? (
+        <span className="app-meta">
+          {partnerLabel("preparedByRoutine", language)}: {preparedBy}
+        </span>
+      ) : null}
 
       {/* ---- 1. what changed ---- */}
       {shown(1) ? (
@@ -377,7 +458,7 @@ export function AISuggestionCard({
                   ? "app-btn app-btn-primary app-btn-sm"
                   : "app-btn app-btn-secondary app-btn-sm"
               }
-              onClick={() => onAction?.(primary, suggestion)}
+              onClick={() => choose(primary)}
               disabled={!onAction}
             >
               {actionLabel(primary)}
@@ -410,7 +491,70 @@ export function AISuggestionCard({
 
       {primary === "approve" ? (
         <span className="app-meta">{partnerLabel("approvalRoutingNote", language)}</span>
+      ) : primary === "accept" ? (
+        <span className="app-meta">{partnerLabel("acceptRoutingNote", language)}</span>
       ) : null}
+
+      {/* ---- the person's words, for a modification or a rejection ---- */}
+      {form ? (
+        <form
+          className="app-stack-1"
+          data-answer-form={form}
+          onSubmit={(event) => {
+            event.preventDefault();
+            void submitAnswer();
+          }}
+        >
+          {form === "modify" ? (
+            <label className="app-stack-1">
+              <span className="app-part-label">{partnerLabel("answerYourVersion", language)}</span>
+              <textarea
+                className="app-input"
+                rows={3}
+                value={recommendation}
+                maxLength={1600}
+                onChange={(event) => setRecommendation(event.target.value)}
+              />
+            </label>
+          ) : null}
+          <label className="app-stack-1">
+            <span className="app-part-label">{partnerLabel("answerReason", language)}</span>
+            <input
+              className="app-input"
+              value={reason}
+              maxLength={600}
+              placeholder={partnerLabel("answerReasonHint", language)}
+              onChange={(event) => setReason(event.target.value)}
+            />
+          </label>
+          <span className="app-row" style={{ gap: "var(--app-2)" }}>
+            <button type="submit" className="app-btn app-btn-primary app-btn-sm" disabled={reason.trim().length === 0}>
+              {partnerLabel(form === "modify" ? "answerSaveModified" : "answerConfirmReject", language)}
+            </button>
+            <button type="button" className="app-btn app-btn-quiet app-btn-sm" onClick={() => setForm(null)}>
+              {partnerLabel("answerCancel", language)}
+            </button>
+          </span>
+          {answerError ? <span className="app-meta app-tone-warning">{partnerLabel("answerFailed", language)}</span> : null}
+        </form>
+      ) : null}
+
+      {/* ---- what was answered, and by whom ---- */}
+      {lastStep && disposition !== "new" ? (
+        <span className="app-meta" data-disposition-history={history.length}>
+          {pick(DISPOSITION_LABELS[lastStep.to], language)} {lastStep.atMoment}
+          {", "}
+          {lastStep.actor === "person" ? partnerLabel("answeredByYou", language) : partnerLabel("answeredBySystem", language)}
+          {lastStep.reason ? `. ${lastStep.reason}` : ""}
+        </span>
+      ) : null}
+
+      <AIFeedbackControl
+        target={{ kind: "suggestion", id: suggestion.id }}
+        given={feedbackKinds}
+        language={language}
+        {...(onFeedback ? { onFeedback } : {})}
+      />
     </article>
   );
 }

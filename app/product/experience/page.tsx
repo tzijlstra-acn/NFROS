@@ -1,12 +1,20 @@
 /**
- * Product Owner Console: experience. Being built by os-console-core.
+ * Product Owner Console: Experience (plan 7.4).
+ *
+ * Thin: the filters are parsed and the aggregates read in
+ * `src/features/product/experience/analytics.ts`.
  */
 
 import { readAdminLanguage } from "@/product/status/sources";
-import { InPreparation } from "@/features/product/shell/InPreparation";
+import { ExperienceConsole } from "@/features/product/experience/ExperienceConsole";
+import { parseExperienceFilters } from "@/features/product/experience/analytics";
 
 export const dynamic = "force-dynamic";
 
-export default function ConsoleSectionInPreparation() {
-  return <InPreparation sectionId="experience" language={readAdminLanguage()} />;
+export default async function ProductExperiencePage({
+  searchParams,
+}: {
+  searchParams: Promise<Record<string, string | string[] | undefined>>;
+}) {
+  return <ExperienceConsole language={readAdminLanguage()} filters={parseExperienceFilters(await searchParams)} />;
 }

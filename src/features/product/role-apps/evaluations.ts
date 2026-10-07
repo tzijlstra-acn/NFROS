@@ -8,10 +8,9 @@
  * mandatory evaluation fails" reads `mandatory_failed` on those runs.
  *
  * Running an evaluation belongs to the AI quality workstream
- * (os-console-quality), which builds the evaluation service on the Quality
- * page. This module only asks whether that service is connected, and reads
- * what it recorded. Until it is connected, "Run evaluations" is Unavailable
- * and says so; nothing here fabricates a run, a pass or a score.
+ * (os-console-quality), whose service grades a configuration and records the
+ * run. This module calls it for each configuration of a version and reads
+ * what it recorded; nothing here fabricates a run, a pass or a score.
  *
  * Server only.
  */
@@ -19,6 +18,7 @@
 import { listEvaluationRuns, type AIEvaluationRun } from "@/db/repositories/ai-evaluations";
 import type { RoleAppVersion } from "@/db/repositories/role-app-release";
 import type { Bilingual } from "../permissions";
+import { runEvaluation } from "../quality/api";
 
 export interface EvaluationCapability {
   available: boolean;
@@ -34,12 +34,34 @@ export interface EvaluationCapability {
  */
 export function roleAppEvaluationCapability(): EvaluationCapability {
   return {
-    available: false,
+    available: true,
     reason: {
-      en: "Unavailable: the AI quality evaluation service is not connected to Role App versions yet. Evaluations recorded on the Quality page for this version appear here.",
-      de: "Nicht verfuegbar: Der Evaluationsdienst der KI-Qualitaet ist noch nicht mit Rollen-App-Versionen verbunden. Auf der Seite Qualitaet fuer diese Version erfasste Evaluationen erscheinen hier.",
+      en: "Runs the AI quality evaluation service (grounding mode) once for each AI configuration of this version.",
+      de: "Fuehrt den Evaluationsdienst der KI-Qualitaet (Modus Fundierung) einmal je KI-Konfiguration dieser Version aus.",
     },
   };
+}
+
+/** The mode a Role App version is evaluated in: grounding, which grades prepared output against its sources. */
+export const ROLE_APP_EVALUATION_MODE = "grounding" as const;
+
+/**
+ * Runs the version's evaluations through the quality workstream's service
+ * (`runEvaluation` in `src/features/product/quality/api.ts`), one run per
+ * configuration, each recorded with the version's id. Returns the run ids,
+ * or the service's reason when a configuration cannot be evaluated.
+ */
+export function startVersionEvaluations(
+  version: Pick<RoleAppVersion, "id" | "evaluations">,
+  triggeredBy: { label: string; userId: string | null },
+): { ok: true; runIds: string[] } | { ok: false; reason: Bilingual } {
+  const runIds: string[] = [];
+  for (const configurationId of version.evaluations.configurationIds) {
+    const result = runEvaluation({ configurationId, mode: ROLE_APP_EVALUATION_MODE, triggeredBy, roleAppVersionId: version.id });
+    if (!result.ok) return { ok: false, reason: result.reason };
+    runIds.push(result.run.id);
+  }
+  return { ok: true, runIds };
 }
 
 export type EvaluationVerdict =

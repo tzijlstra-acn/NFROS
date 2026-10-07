@@ -534,19 +534,31 @@ export function seededChatDecline(params: {
 }): ChatTurnPart[] {
   const { language } = params;
 
+  /*
+   * Plain language, one account of what happened (audit J26). The earlier
+   * opening told a reader in Safe mode that "a live call was attempted and
+   * failed", which was neither true nor useful, and it named the internals.
+   * The mode is named with the product's own status words.
+   */
+  const modeWord =
+    params.mode === "offline"
+      ? language === "de" ? "Offline" : "Offline"
+      : params.mode === "safe"
+        ? language === "de" ? "Sicher" : "Safe"
+        : language === "de" ? "Live" : "Live";
   const opening =
-    params.liveFailureReason != null
+    params.liveFailureReason != null && params.mode === "live"
       ? language === "de"
-        ? `Ein Live-Aufruf wurde versucht und ist fehlgeschlagen, daher wurde diese Antwort nicht von einem Modell erzeugt. Gemeldeter Grund: ${params.liveFailureReason}`
-        : `A live call was attempted and failed, so this answer was not produced by a model. Reported reason: ${params.liveFailureReason}`
+        ? "Die Antwort konnte gerade nicht vorbereitet werden, daher wurde nichts erfunden. Unten stehen die Themen mit vorbereiteten, belegten Antworten."
+        : "The answer could not be prepared just now, so nothing was made up. The topics with prepared, cited answers are listed below."
       : language === "de"
-        ? `Diese Frage wurde nicht von einem Modell beantwortet. Die Anwendung laeuft im Modus ${params.mode}, es wurde kein Live-Aufruf gemacht.`
-        : `This question was not answered by a model. The application is running in ${params.mode} mode, so no live call was made.`;
+        ? `Zu dieser Frage liegt im Modus ${modeWord} keine vorbereitete, belegte Antwort vor, daher wurde nichts erfunden.`
+        : `There is no prepared, cited answer to this question in ${modeWord} mode, so nothing was made up.`;
 
   const capability =
     language === "de"
-      ? `Alles Uebrige bleibt nutzbar: die Entscheidungsvorlage, der Nachweiskorpus, das Arbeitsobjekt fuer ${params.roleTitle}, die Besprechungsskripte und der regelgebundene Ausfuehrungspfad lesen aus dem Szenario und nicht aus einem Modell.`
-      : `Everything else remains usable: the decision brief, the evidence corpus, the work object for ${params.roleTitle}, the meeting scripts and the governed execution path all read from the seeded scenario rather than from a model.`;
+      ? `Alles Uebrige bleibt nutzbar: die Entscheidungsvorlage, die Nachweise, die Arbeit fuer ${params.roleTitle}, die Besprechungsvorbereitung und die geregelten Arbeitsschritte lesen aus dem erfassten Tag.`
+      : `Everything else remains usable: the decision brief, the evidence, the work for ${params.roleTitle}, the meeting preparation and the governed steps all read from the recorded day.`;
 
   const topics =
     language === "de"

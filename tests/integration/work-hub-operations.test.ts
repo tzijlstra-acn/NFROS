@@ -215,7 +215,7 @@ describe("reminders and escalation", () => {
 
     const sent = await sendReminder({ roleId: "tprm", actionId: WITH_SUPPLIER, subject: draft.draft?.subject ?? "", body: draft.draft?.body ?? "" });
     expect(sent.ok, sent.message).toBe(true);
-    expect(count("select count(*) as n from collaboration_messages where related_object_kind = 'action' and related_object_id = ? and simulated_only = 1", WITH_SUPPLIER)).toBe(1);
+    expect(count("select count(*) as n from collaboration_messages where related_object_kind = 'action' and related_object_id = ? and simulated_only = 1 and kind = 'follow-up'", WITH_SUPPLIER)).toBe(1);
     expect(entries(WITH_SUPPLIER)[0]?.id.startsWith("AUP-RMD-")).toBe(true);
   });
 

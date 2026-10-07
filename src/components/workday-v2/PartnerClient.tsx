@@ -38,6 +38,9 @@ import {
 } from "@/components/ai-partner/AIPartnerDock";
 import type { AIGenerationProgress } from "@/components/ai-partner/AIGenerationView";
 import type { SuggestionActionId } from "@/components/ai-partner/labels";
+import type { FeedbackHandler } from "@/components/ai-partner/AIFeedbackControl";
+import { isFeedbackKind } from "@/features/partner/rules";
+import type { PartnerExtras } from "@/features/partner/view";
 import {
   AI_STAGE_LABELS,
   AI_STAGE_ORDER,
@@ -73,6 +76,25 @@ export interface PartnerClientProps {
    * user opened the work object it was about.
    */
   initialThreadId?: string | null;
+  /** The lifecycle, feedback, routine lineage and durable context (AI Partner, Wave 3). */
+  extras?: PartnerExtras | null;
+  /** Called after an answer or feedback was recorded, so the host can re-read the dock's data. */
+  onPartnerChanged?: () => void;
+}
+
+/** POSTs one Partner write and returns the parsed body, or null when it did not succeed. */
+async function postPartner(path: string, body: Record<string, unknown>): Promise<Record<string, unknown> | null> {
+  try {
+    const response = await fetch(path, {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify(body),
+    });
+    if (!response.ok) return null;
+    return (await response.json()) as Record<string, unknown>;
+  } catch {
+    return null;
+  }
 }
 
 /**
@@ -168,66 +190,113 @@ export function PartnerClient({
   initialTab = "suggestions",
   showPosture = true,
   initialThreadId = null,
+  extras = null,
+  onPartnerChanged,
 }: PartnerClientProps) {
   const shell = useShell();
   const router = useRouter();
   const [, start] = useTransition();
   const subscribe = useWorkdaySubscribe(context.roleId);
 
+  /*
+   * The suggestion lifecycle (plan 4.11). Every answer is recorded by
+   * `/api/workday/partner/suggestion` before anything else happens, and none
+   * of them executes anything: Accept on a material suggestion records the
+   * acceptance and opens the decision record, where the rationale, the
+   * confirmation and the payload bound approval are captured and the gate
+   * decides. Approve is not a shortcut past that, and never was.
+   */
+  const fallbackHref = useCallback(
+    (suggestion: AISuggestionView) =>
+      extras?.hrefs[suggestion.id] ??
+      (suggestion.decisionId
+        ? `/workday/${context.roleId}/decisions#${suggestion.decisionId}`
+        : `/workday/${context.roleId}/decisions`),
+    [context.roleId, extras],
+  );
+
+  const answer = useCallback(
+    async (
+      kind: "review" | "accept" | "modify" | "reject" | "snooze",
+      suggestion: AISuggestionView,
+      extra: { recommendation?: string; reason?: string } = {},
+    ) => {
+      const body = await postPartner("/api/workday/partner/suggestion", {
+        roleId: context.roleId,
+        suggestionId: suggestion.id,
+        answer: kind,
+        ...extra,
+      });
+      const ok = body?.["ok"] === true;
+      if (ok) {
+        onPartnerChanged?.();
+        start(() => router.refresh());
+      }
+      const next = body?.["next"] as { href?: unknown } | null | undefined;
+      return { ok, href: typeof next?.href === "string" ? next.href : null };
+    },
+    [context.roleId, onPartnerChanged, router, start],
+  );
+
   const onSuggestionAction = useCallback(
     (action: SuggestionActionId, suggestion: AISuggestionView) => {
       switch (action) {
-        case "review":
         case "approve":
-          /*
-           * Both route to the decision flow. Approve is not a shortcut past
-           * it: a material change requires the accountable person to record a
-           * rationale and confirm it is their own, and the gate checks that
-           * independently of anything the interface believes.
-           */
-          if (suggestion.decisionId) {
-            router.push(`/workday/${context.roleId}/decisions#${suggestion.decisionId}`);
-          } else {
-            router.push(`/workday/${context.roleId}/decisions`);
-          }
+        case "accept":
+          void answer("accept", suggestion).then((result) => router.push(result.href ?? fallbackHref(suggestion)));
+          break;
+
+        case "review":
+          void answer("review", suggestion).then((result) => router.push(result.href ?? fallbackHref(suggestion)));
           break;
 
         case "open-object":
-          router.push(
-            `/workday/${context.roleId}/workbench?select=${encodeURIComponent(
-              `${suggestion.objectType}:${suggestion.objectId}`,
-            )}`,
-          );
+          router.push(fallbackHref(suggestion));
           break;
 
         case "ask-why":
-          // Handled inside the dock, which switches to the chat tab and seeds
-          // the composer. Nothing to do here.
+          // The dock switches to the chat tab and seeds the composer; reading why is a review.
+          void answer("review", suggestion);
           break;
 
         case "modify":
-          router.push(`/workday/${context.roleId}/workbench`);
+          // The card asks for the person's version and reason; without the form, open the work.
+          router.push(fallbackHref(suggestion));
           break;
 
         case "snooze":
+          void answer("snooze", suggestion);
+          break;
+
         case "dismiss":
-          start(() => {
-            void fetch("/api/workday/suggestion", {
-              method: "POST",
-              headers: { "content-type": "application/json" },
-              body: JSON.stringify({
-                roleId: context.roleId,
-                objectType: suggestion.objectType,
-                objectId: suggestion.objectId,
-                suggestionId: suggestion.id,
-                action,
-              }),
-            }).then(() => router.refresh());
-          });
+          // A rejection needs the person's reason, which the card's form collects.
           break;
       }
     },
-    [context.roleId, router, start],
+    [answer, fallbackHref, router],
+  );
+
+  const onAnswer = useCallback(
+    async (kind: "modify" | "reject", suggestion: AISuggestionView, extra: { recommendation?: string; reason: string }) => {
+      const result = await answer(kind, suggestion, extra);
+      if (result.ok && kind === "modify") router.push(result.href ?? fallbackHref(suggestion));
+      return result.ok;
+    },
+    [answer, fallbackHref, router],
+  );
+
+  const onFeedback = useCallback<FeedbackHandler>(
+    async (target, kind) => {
+      const body = await postPartner("/api/workday/partner/feedback", {
+        roleId: context.roleId,
+        targetKind: target.kind,
+        targetId: target.id,
+        kind,
+      });
+      if (!body || body["ok"] !== true || !Array.isArray(body["kinds"])) return null;
+      return (body["kinds"] as unknown[]).filter(isFeedbackKind);
+    },
+    [context.roleId],
   );
 
   const onOpenEvidence = useCallback(() => {
@@ -290,6 +359,8 @@ export function PartnerClient({
   const [generation, setGeneration] = useState<AIGenerationProgress>({ state: "idle" });
   const [livesuggestion, setLiveSuggestion] = useState<AISuggestionView | null>(null);
   const askedFor = useRef<string | null>(null);
+  const knownIds = useRef<Set<string>>(new Set());
+  knownIds.current = new Set([...suggestions, ...(extras?.answered ?? [])].map((entry) => entry.id));
 
   const target = useMemo(
     () => ({
@@ -356,6 +427,12 @@ export function PartnerClient({
         if (body.suggestion && body.generation?.state === "ready") {
           setLiveSuggestion(body.suggestion);
           setGeneration({ state: "ready", completedStages: walk, label: undefined });
+          /*
+           * A suggestion the server list did not hold was just prepared. The
+           * header counts the server's rows, so the route is refreshed for
+           * the header to count it too: the two counts stay equal.
+           */
+          if (!knownIds.current.has(body.suggestion.id)) router.refresh();
           return;
         }
 
@@ -376,7 +453,7 @@ export function PartnerClient({
       cancelled = true;
       for (const timer of timers) window.clearTimeout(timer);
     };
-  }, [contextKey, context.roleId, context.language, context.viewedMoment, target]);
+  }, [contextKey, context.roleId, context.language, context.viewedMoment, target, router]);
 
   /*
    * The server rendered cards, with any newly prepared one at the front and
@@ -408,6 +485,9 @@ export function PartnerClient({
       onOpenAudit={onOpenAudit}
       onApprovalRequest={onApprovalRequest}
       onRetryGeneration={onRetryGeneration}
+      extras={extras}
+      onAnswer={onAnswer}
+      onFeedback={onFeedback}
     />
   );
 }

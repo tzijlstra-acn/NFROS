@@ -1,16 +1,14 @@
 /**
- * Product Owner Console: quality.
+ * Product Owner Console: Quality (plan 7.5).
  *
- * In preparation. This section is built by another console workstream, which
- * replaces this file with its page. Until then the console shows an honest
- * "In preparation" page rather than a page that looks finished.
+ * Thin: the section is `src/features/product/quality/QualityConsole.tsx`.
  */
 
 import { readAdminLanguage } from "@/product/status/sources";
-import { InPreparation } from "@/features/product/shell/InPreparation";
+import { QualityConsole } from "@/features/product/quality/QualityConsole";
 
 export const dynamic = "force-dynamic";
 
-export default function ConsoleSectionInPreparation() {
-  return <InPreparation sectionId="quality" language={readAdminLanguage()} existing={{ href: "/settings/ai-quality", label: { en: "AI quality settings", de: "Einstellungen KI-Qualitaet" } }} />;
+export default function ProductQualityPage() {
+  return <QualityConsole language={readAdminLanguage()} />;
 }

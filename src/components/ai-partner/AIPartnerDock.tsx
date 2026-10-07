@@ -46,13 +46,17 @@ import { AIExecutionReceipt } from "./AIExecutionReceipt";
 import { AIGenerationView, IDLE_GENERATION, type AIGenerationProgress } from "./AIGenerationView";
 import { AIPartnerHeader } from "./AIPartnerHeader";
 import { AIPartnerMark } from "./AIStatus";
-import { AISuggestionCard } from "./AISuggestionCard";
+import { AISuggestionCard, type AnswerHandler } from "./AISuggestionCard";
+import type { FeedbackHandler } from "./AIFeedbackControl";
+import { AIRoutineRuns } from "./AIRoutineRuns";
 import {
   canRevealSuggestion,
   partnerLabel,
   selectPromptIds,
   type SuggestionActionId,
 } from "./labels";
+import { countNeedingYou, isOpenDisposition } from "@/features/partner/rules";
+import type { PartnerExtras } from "@/features/partner/view";
 
 export type AIPartnerTabId = "suggestions" | "activity" | "chat";
 
@@ -117,6 +121,16 @@ export interface AIPartnerDockProps {
   onRetryGeneration?: () => void;
   /** Trace metadata, rendered only inside the header disclosure. */
   details?: ReactNode;
+  /**
+   * The lifecycle, feedback, routine lineage and durable context
+   * (`src/features/partner/view.ts`). Absent means none of them render, so
+   * an older caller keeps the dock it had.
+   */
+  extras?: PartnerExtras | null;
+  /** Records a modification or a rejection with the person's reason. */
+  onAnswer?: AnswerHandler;
+  /** Gives or takes back one kind of feedback on an output. */
+  onFeedback?: FeedbackHandler;
 }
 
 /* ==========================================================================
@@ -146,6 +160,9 @@ export function AIPartnerDock({
   onApprovalRequest,
   onRetryGeneration,
   details,
+  extras = null,
+  onAnswer,
+  onFeedback,
 }: AIPartnerDockProps) {
   const language: Language = context.language;
   const offline = context.demoMode === "offline";
@@ -293,14 +310,36 @@ export function AIPartnerDock({
    * and it is applied here rather than inside the card so that the generation
    * view can hold the slot in the meantime.
    */
+  /*
+   * Only suggestions still waiting for an answer are in the open list. An
+   * answered one moves to Handled below, with its disposition, which is the
+   * same rule the header count applies (`suggestionNeedsYou`).
+   */
   const visibleSuggestions = useMemo(
     () =>
       mergedSuggestions.filter(
         (suggestion) =>
-          suggestion.status !== "dismissed" && canRevealSuggestion(suggestion, activeGeneration),
+          suggestion.status !== "dismissed" &&
+          isOpenDisposition(suggestion.disposition) &&
+          canRevealSuggestion(suggestion, activeGeneration),
       ),
     [mergedSuggestions, activeGeneration],
   );
+
+  const handledSuggestions = useMemo(() => {
+    const seen = new Set(visibleSuggestions.map((suggestion) => suggestion.id));
+    const answered = [
+      ...mergedSuggestions.filter((suggestion) => !isOpenDisposition(suggestion.disposition)),
+      ...(extras?.answered ?? []),
+    ];
+    const out: AISuggestionView[] = [];
+    for (const suggestion of answered) {
+      if (seen.has(suggestion.id)) continue;
+      seen.add(suggestion.id);
+      out.push(suggestion);
+    }
+    return out;
+  }, [mergedSuggestions, visibleSuggestions, extras]);
 
   const mergedActivity = useMemo(() => {
     const seen = new Set<string>();
@@ -323,9 +362,8 @@ export function AIPartnerDock({
   }, [receiptLines, streamReceipts]);
 
   /* ---- derived state ---- */
-  const needsYou = visibleSuggestions.filter(
-    (suggestion) => suggestion.status === "needs-user" || suggestion.decisionRequired,
-  ).length;
+  // The header's rule, over the same rows: the two counts cannot disagree.
+  const needsYou = countNeedingYou(visibleSuggestions);
 
   const partnerState = partnerStateFromGeneration(activeGeneration.state, {
     decisionRequired: needsYou > 0,
@@ -457,7 +495,7 @@ export function AIPartnerDock({
   ];
 
   return (
-    <aside className="app-partner" aria-label={partnerLabel("dockLabel", language)}>
+    <aside className="app-partner" aria-label={partnerLabel("dockLabel", language)} data-needs-you={needsYou}>
       <AIPartnerHeader
         state={partnerState}
         language={language}
@@ -499,6 +537,11 @@ export function AIPartnerDock({
                 currentMoment={context.currentMoment}
                 progressive={arrivedLive.current.has(suggestion.id)}
                 onAction={handleSuggestionAction}
+                history={extras?.history[suggestion.id] ?? []}
+                preparedBy={extras?.preparedBy[suggestion.id] ?? null}
+                feedbackKinds={extras?.feedback[`suggestion:${suggestion.id}`] ?? []}
+                {...(onAnswer ? { onAnswer } : {})}
+                {...(onFeedback ? { onFeedback } : {})}
                 {...(onOpenEvidence ? { onOpenEvidence } : {})}
               />
             ))}
@@ -509,10 +552,45 @@ export function AIPartnerDock({
                 detail={partnerLabel("suggestionsEmptyDetail", language)}
               />
             ) : null}
+
+            {/* ---- answered suggestions keep their lifecycle, one click away ---- */}
+            {handledSuggestions.length > 0 ? (
+              <details className="app-stack-2" data-partner-region="handled-suggestions">
+                <summary className="app-part-label" style={{ cursor: "pointer" }}>
+                  {partnerLabel("handledTitle", language)} ({handledSuggestions.length})
+                </summary>
+                <div className="app-stack-3" style={{ marginTop: "var(--app-2)" }}>
+                  {handledSuggestions.map((suggestion) => (
+                    <AISuggestionCard
+                      key={suggestion.id}
+                      suggestion={suggestion}
+                      language={language}
+                      currentMoment={context.currentMoment}
+                      onAction={handleSuggestionAction}
+                      history={extras?.history[suggestion.id] ?? []}
+                      preparedBy={extras?.preparedBy[suggestion.id] ?? null}
+                      feedbackKinds={extras?.feedback[`suggestion:${suggestion.id}`] ?? []}
+                      {...(onFeedback ? { onFeedback } : {})}
+                      {...(onOpenEvidence ? { onOpenEvidence } : {})}
+                    />
+                  ))}
+                </div>
+              </details>
+            ) : null}
           </div>
         </TabPanel>
 
         <TabPanel id="activity" active={tab === "activity"}>
+          {extras ? (
+            <div style={{ padding: "var(--app-3) var(--app-3) 0" }}>
+              <AIRoutineRuns
+                runs={extras.routineRuns}
+                language={language}
+                feedback={extras.feedback}
+                {...(onFeedback ? { onFeedback } : {})}
+              />
+            </div>
+          ) : null}
           {mergedReceipts.length > 0 ? (
             <div style={{ padding: "var(--app-3) var(--app-3) 0" }}>
               <AIExecutionReceipt
@@ -537,6 +615,9 @@ export function AIPartnerDock({
             selection={context.selection}
             demoMode={context.demoMode}
             receiptLines={mergedReceipts}
+            workingContext={extras?.context ?? null}
+            feedback={extras?.feedback ?? {}}
+            {...(onFeedback ? { onFeedback } : {})}
             {...(onOpenEvidence ? { onOpenEvidence } : {})}
             {...(onApprovalRequest ? { onApprove: onApprovalRequest } : {})}
             {...(onOpenAudit ? { onOpenAudit } : {})}

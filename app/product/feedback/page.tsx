@@ -1,16 +1,15 @@
 /**
- * Product Owner Console: feedback.
+ * Product Owner Console: the feedback inbox (plan 7.8).
  *
- * In preparation. This section is built by another console workstream, which
- * replaces this file with its page. Until then the console shows an honest
- * "In preparation" page rather than a page that looks finished.
+ * Thin: the inbox is `src/features/product/feedback/FeedbackInbox.tsx`.
  */
 
 import { readAdminLanguage } from "@/product/status/sources";
-import { InPreparation } from "@/features/product/shell/InPreparation";
+import { FeedbackInbox } from "@/features/product/feedback/FeedbackInbox";
 
 export const dynamic = "force-dynamic";
 
-export default function ConsoleSectionInPreparation() {
-  return <InPreparation sectionId="feedback" language={readAdminLanguage()} />;
+export default async function ProductFeedbackPage({ searchParams }: { searchParams: Promise<{ status?: string }> }) {
+  const { status } = await searchParams;
+  return <FeedbackInbox language={readAdminLanguage()} showAll={status === "all"} />;
 }

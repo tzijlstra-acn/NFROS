@@ -43,6 +43,8 @@ import {
 } from "./AIResponseParts";
 import { partnerLabel } from "./labels";
 import type { DemoMode } from "./AIPartnerHeader";
+import { AIFeedbackControl, type FeedbackHandler } from "./AIFeedbackControl";
+import type { PartnerContextView } from "@/features/partner/context";
 
 /* ==========================================================================
    The view model
@@ -225,7 +227,14 @@ export function useWorkdayChat(options: UseWorkdayChatOptions): WorkdayChatState
         const restored = rows
           .map((row, index) => turnFromPayload(row, `restored-${index}`))
           .filter((turn): turn is ChatTurnView => turn !== null);
-        setTurns(restored);
+        /*
+         * Restoring is for a transcript that is empty, after a reload. When
+         * the thread identifier arrives while a conversation is already on
+         * screen (the dock re-reads its data after the first answer created
+         * the thread), replacing or appending would show the question and
+         * the answer twice (audit J26), so the screen is kept.
+         */
+        setTurns((existing) => (existing.length > 0 ? existing : restored));
       } catch {
         // A failed restore leaves an empty thread, which is honest and usable.
       }
@@ -299,7 +308,8 @@ export function useWorkdayChat(options: UseWorkdayChatOptions): WorkdayChatState
             ...existing.map((turn) =>
               turn.id === userTurnId ? { ...turn, pending: false } : turn,
             ),
-            partnerTurn,
+            // Never twice: a restore that raced this answer may already hold it.
+            ...(existing.some((turn) => turn.id === partnerTurn.id) ? [] : [partnerTurn]),
           ]);
 
           const blockedReason = row?.["blocked"];
@@ -389,6 +399,10 @@ export interface AIChatPanelProps {
   onOpenAudit?: (auditEventId: string) => void;
   /** Receipt lines for a receipt part that arrived without them inline. */
   receiptLines?: ExecutionReceiptLineView[];
+  /** The durable working context the Partner keeps outside the transcript. */
+  workingContext?: PartnerContextView | null;
+  feedback?: Readonly<Record<string, readonly string[]>>;
+  onFeedback?: FeedbackHandler;
 }
 
 export function AIChatPanel({
@@ -400,13 +414,44 @@ export function AIChatPanel({
   onApprove,
   onOpenAudit,
   receiptLines = [],
+  workingContext = null,
+  feedback = {},
+  onFeedback,
 }: AIChatPanelProps) {
   const pinnedElsewhere =
     chat.pinnedSelection !== null && chat.pinnedSelection.objectId !== (selection?.objectId ?? "");
 
+  /*
+   * What the next question is about. The live selection first; with none on
+   * screen, the object the durable context holds, so a question asked after
+   * navigating away is still about the work the person left.
+   */
   const contextLabel = chat.effectiveSelection
     ? `${partnerLabel("chatAskingAbout", language)} ${chat.effectiveSelection.label}`
-    : partnerLabel("chatNoSelection", language);
+    : workingContext?.selected
+      ? `${partnerLabel("chatAskingAbout", language)} ${workingContext.selected.label}`
+      : partnerLabel("chatNoSelection", language);
+
+  const contextFacts = workingContext
+    ? [
+        workingContext.entityLabel,
+        workingContext.stage ? `${partnerLabel("contextStage", language)}: ${workingContext.stage.label}` : null,
+        workingContext.meetingId,
+        workingContext.actionId,
+        workingContext.inboxMessageId,
+        workingContext.decisionId,
+        workingContext.sources.current + workingContext.sources.stale + workingContext.sources.unavailable > 0
+          ? `${partnerLabel("contextSources", language)}: ${partnerLabel("contextSourcesValue", language)
+              .replace("{current}", String(workingContext.sources.current))
+              .replace("{stale}", String(workingContext.sources.stale))
+              .replace("{unavailable}", String(workingContext.sources.unavailable))}`
+          : null,
+        workingContext.priorDecisionIds.length > 0
+          ? `${partnerLabel("contextPrior", language)}: ${workingContext.priorDecisionIds.join(", ")}`
+          : null,
+        workingContext.userEditCount > 0 ? `${partnerLabel("contextEdits", language)}: ${workingContext.userEditCount}` : null,
+      ].filter((fact): fact is string => typeof fact === "string" && fact.length > 0)
+    : [];
 
   return (
     <div className="app-chat">
@@ -439,6 +484,17 @@ export function AIChatPanel({
           ) : null}
         </span>
       </div>
+
+      {contextFacts.length > 0 ? (
+        <span
+          className="app-faint"
+          data-partner-context-version={workingContext?.version ?? 0}
+          title={partnerLabel("contextTitle", language)}
+          style={{ fontSize: "var(--app-text-2xs)", overflowWrap: "anywhere" }}
+        >
+          {partnerLabel("contextTitle", language)}: {contextFacts.join(", ")}
+        </span>
+      ) : null}
 
       {chat.turns.length === 0 ? (
         <Empty
@@ -496,6 +552,14 @@ export function AIChatPanel({
                 ) : null}
                 {turn.atMoment ? <Data>{turn.atMoment}</Data> : null}
               </span>
+              {/^CHT-/.test(turn.id) ? (
+                <AIFeedbackControl
+                  target={{ kind: "chat-turn", id: turn.id }}
+                  given={feedback[`chat-turn:${turn.id}`] ?? []}
+                  language={language}
+                  {...(onFeedback ? { onFeedback } : {})}
+                />
+              ) : null}
             </div>
           </div>
         ),

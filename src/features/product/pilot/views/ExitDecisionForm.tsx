@@ -14,7 +14,7 @@
  * decision reviewed against one state cannot be recorded against another.
  */
 
-import { useActionState, useState } from "react";
+import { useEffect, useState, useTransition, type FormEvent } from "react";
 import type { ConsoleFormState } from "@/features/product/governance";
 import { consoleInputStyle, consoleLabelStyle, consolePanelStyle, consoleTextareaStyle, consoleWrapStyle } from "@/features/product/shell/styles";
 import type { ExitProposalState } from "../actions";
@@ -80,10 +80,38 @@ export function ExitDecisionForm({
   blockedReason: string | null;
 }) {
   const say = (pair: Pair) => (language === "de" ? pair.de : pair.en);
-  const [proposal, proposeAction, proposing] = useActionState<ExitProposalState | null, FormData>(propose, null);
-  const [result, recordAction, recording] = useActionState<ConsoleFormState | null, FormData>(record, null);
+  /*
+   * Submitted with onSubmit and a transition rather than `<form action>`,
+   * because a form action resets its uncontrolled fields when it settles: a
+   * refused draft would lose everything the person wrote.
+   */
+  const [proposal, setProposal] = useState<ExitProposalState | null>(null);
+  const [result, setResult] = useState<ConsoleFormState | null>(null);
+  const [proposing, startProposing] = useTransition();
+  const [recording, startRecording] = useTransition();
   const [editing, setEditing] = useState(true);
+  /* Until hydrated, the buttons stay disabled: without script the forms would submit as a plain GET. */
+  const [ready, setReady] = useState(false);
+  useEffect(() => setReady(true), []);
   const reviewed = proposal?.ok && proposal.proposal && !editing ? proposal.proposal : null;
+
+  const onPropose = (event: FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    const data = new FormData(event.currentTarget);
+    startProposing(async () => {
+      const next = await propose(null, data);
+      setProposal(next);
+      setResult(null);
+      setEditing(!next.ok);
+    });
+  };
+  const onRecord = (event: FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    const data = new FormData(event.currentTarget);
+    startRecording(async () => {
+      setResult(await record(null, data));
+    });
+  };
 
   const status = (state: { ok: boolean; message: string } | null, testId: string) =>
     state ? (
@@ -95,10 +123,7 @@ export function ExitDecisionForm({
   return (
     <div className="app-stack app-stack-3" data-testid="exit-decision">
       <form
-        action={(data) => {
-          setEditing(false);
-          proposeAction(data);
-        }}
+        onSubmit={onPropose}
         className="app-stack app-stack-3"
         hidden={reviewed !== null}
         data-testid="exit-draft-form"
@@ -155,7 +180,7 @@ export function ExitDecisionForm({
           </div>
         </fieldset>
         <div className="app-row app-row-wrap">
-          <button type="submit" className="app-btn app-btn-primary app-btn-sm" disabled={!permitted || blockedReason !== null || proposing} data-testid="exit-review">
+          <button type="submit" className="app-btn app-btn-primary app-btn-sm" disabled={!ready || !permitted || blockedReason !== null || proposing} data-testid="exit-review">
             {proposing ? say(COPY.working) : say(COPY.review)}
           </button>
           {blockedReason ? (
@@ -168,7 +193,7 @@ export function ExitDecisionForm({
       </form>
 
       {reviewed ? (
-        <form action={recordAction} style={consolePanelStyle} className="app-stack app-stack-3" data-testid="exit-approval">
+        <form onSubmit={onRecord} style={consolePanelStyle} className="app-stack app-stack-3" data-testid="exit-approval">
           <input type="hidden" name="payload" value={reviewed.payload} />
           <input type="hidden" name="fingerprint" value={reviewed.fingerprint} />
           <span className="app-strong" style={{ fontSize: "var(--app-text-sm)" }}>{say(COPY.approvalTitle)}</span>
@@ -192,7 +217,7 @@ export function ExitDecisionForm({
             <span style={consoleWrapStyle}>{say(COPY.confirm)}</span>
           </label>
           <div className="app-row app-row-wrap">
-            <button type="submit" className="app-btn app-btn-primary app-btn-sm" disabled={recording || result?.ok === true} data-testid="exit-record">
+            <button type="submit" className="app-btn app-btn-primary app-btn-sm" disabled={!ready || recording || result?.ok === true} data-testid="exit-record">
               {recording ? say(COPY.working) : say(COPY.record)}
             </button>
             {result?.ok ? null : (

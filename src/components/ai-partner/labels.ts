@@ -53,7 +53,8 @@ export const PARTNER_LABELS: Record<string, LabelPair> = {
   autonomyLabel: { en: "Autonomy", de: "Autonomie" },
   modeLabel: { en: "Mode", de: "Modus" },
   modeLive: { en: "Live", de: "Live" },
-  modeSafe: { en: "Presenter safe", de: "Praesentationssicher" },
+  // The product's status vocabulary (plan 9.2): Safe, not "Presenter safe" (audit R04).
+  modeSafe: { en: "Safe", de: "Sicher" },
   modeOffline: { en: "Offline", de: "Offline" },
   needsYouCount: { en: "Waiting for you", de: "Wartet auf Sie" },
 
@@ -100,15 +101,63 @@ export const PARTNER_LABELS: Record<string, LabelPair> = {
   actionReview: { en: "Review", de: "Pruefen" },
   actionOpenObject: { en: "Open object", de: "Objekt oeffnen" },
   actionAskWhy: { en: "Ask why", de: "Warum fragen" },
-  actionApprove: { en: "Approve", de: "Genehmigen" },
+  actionApprove: { en: "Accept", de: "Uebernehmen" },
+  actionAccept: { en: "Accept", de: "Uebernehmen" },
   actionModify: { en: "Modify", de: "Anpassen" },
   actionSnooze: { en: "Snooze", de: "Zurueckstellen" },
-  actionDismiss: { en: "Dismiss", de: "Verwerfen" },
+  actionDismiss: { en: "Reject", de: "Ablehnen" },
   moreActions: { en: "More actions", de: "Weitere Aktionen" },
   approvalRoutingNote: {
-    en: "Approving opens the decision record. Nothing is sent before you confirm there.",
-    de: "Genehmigen oeffnet den Entscheidungsdatensatz. Vorher wird nichts gesendet.",
+    en: "Accepting opens the decision record. Nothing changes before you confirm there.",
+    de: "Uebernehmen oeffnet den Entscheidungsdatensatz. Vorher aendert sich nichts.",
   },
+  acceptRoutingNote: {
+    en: "Accepting records your answer and opens the work. Nothing is sent or changed by accepting.",
+    de: "Uebernehmen erfasst Ihre Antwort und oeffnet die Arbeit. Dadurch wird nichts gesendet oder geaendert.",
+  },
+
+  /* ---- the suggestion lifecycle ---- */
+  dispositionLabel: { en: "Your answer", de: "Ihre Antwort" },
+  answerReason: { en: "Reason", de: "Begruendung" },
+  answerReasonHint: { en: "One sentence is enough.", de: "Ein Satz genuegt." },
+  answerYourVersion: { en: "Your version of the recommendation", de: "Ihre Fassung der Empfehlung" },
+  answerSaveModified: { en: "Accept with my changes", de: "Mit meinen Aenderungen uebernehmen" },
+  answerConfirmReject: { en: "Reject", de: "Ablehnen" },
+  answerCancel: { en: "Cancel", de: "Abbrechen" },
+  answerFailed: { en: "Your answer was not recorded. Nothing changed.", de: "Ihre Antwort wurde nicht erfasst. Es hat sich nichts geaendert." },
+  answeredBySystem: { en: "Recorded by the product", de: "Vom Produkt erfasst" },
+  answeredByYou: { en: "You", de: "Sie" },
+  preparedByRoutine: { en: "Prepared by", de: "Vorbereitet von" },
+  handledTitle: { en: "Handled", de: "Erledigt" },
+  handledEmpty: { en: "Nothing answered yet.", de: "Noch nichts beantwortet." },
+
+  /* ---- feedback ---- */
+  feedbackLabel: { en: "Feedback", de: "Rueckmeldung" },
+  feedbackGiven: { en: "Feedback recorded", de: "Rueckmeldung erfasst" },
+  feedbackNote: {
+    en: "Feedback goes to the product team with what produced this output. It changes nothing in your work.",
+    de: "Die Rueckmeldung geht mit der Herkunft dieser Ausgabe an das Produktteam. An Ihrer Arbeit aendert sie nichts.",
+  },
+
+  /* ---- routine runs ---- */
+  routineRunsTitle: { en: "Routine runs today", de: "Routinelaeufe heute" },
+  routineRunsEmpty: {
+    en: "No routine has run yet today. Routines run as the day reaches their trigger.",
+    de: "Heute ist noch keine Routine gelaufen. Routinen laufen, sobald der Tag ihren Ausloeser erreicht.",
+  },
+  routineCreated: { en: "Prepared work", de: "Arbeit vorbereitet" },
+  routineNoChange: { en: "No change", de: "Keine Aenderung" },
+  routineNeedsHuman: { en: "Needs you", de: "Benoetigt Sie" },
+  routineFailed: { en: "Failed", de: "Fehlgeschlagen" },
+  routineRunning: { en: "Running", de: "Laeuft" },
+
+  /* ---- working context ---- */
+  contextTitle: { en: "Working context", de: "Arbeitskontext" },
+  contextStage: { en: "Stage", de: "Stufe" },
+  contextSources: { en: "Sources", de: "Quellen" },
+  contextSourcesValue: { en: "{current} current, {stale} stale, {unavailable} unavailable", de: "{current} aktuell, {stale} veraltet, {unavailable} nicht verfuegbar" },
+  contextPrior: { en: "Prior decisions", de: "Fruehere Entscheidungen" },
+  contextEdits: { en: "Your edits", de: "Ihre Aenderungen" },
 
   /* ---- suggestions tab ---- */
   suggestionsEmptyTitle: { en: "Nothing prepared right now", de: "Derzeit nichts vorbereitet" },
@@ -310,18 +359,50 @@ export const AI_PART_KINDS = [
 
 export type AIPartKind = (typeof AI_PART_KINDS)[number];
 
+/*
+ * The plan's nine typed outputs (4.11) by their own names, plus the two the
+ * contract adds (an alternative and a source status). A proposed action says
+ * on its face that it was not carried out, and a receipt that it was.
+ */
 export const AI_PART_LABELS: Record<AIPartKind, LabelPair> = {
   answer: { en: "Answer", de: "Antwort" },
-  evidence: { en: "Cited evidence", de: "Angegebene Nachweise" },
+  evidence: { en: "Evidence", de: "Nachweise" },
   uncertainty: { en: "Uncertainty", de: "Unsicherheit" },
   recommendation: { en: "Recommendation", de: "Empfehlung" },
   alternative: { en: "Alternative", de: "Alternative" },
-  "proposed-action": { en: "Proposed, not carried out", de: "Vorgeschlagen, nicht ausgefuehrt" },
-  "approval-request": { en: "Approval required", de: "Genehmigung erforderlich" },
-  "execution-receipt": { en: "Executed", de: "Ausgefuehrt" },
-  blocked: { en: "Not permitted", de: "Nicht zulaessig" },
-  "follow-up": { en: "Question for you", de: "Frage an Sie" },
+  "proposed-action": { en: "Proposed action, not carried out", de: "Vorgeschlagene Aktion, nicht ausgefuehrt" },
+  "approval-request": { en: "Approval request", de: "Genehmigungsanfrage" },
+  "execution-receipt": { en: "Execution receipt", de: "Ausfuehrungsnachweis" },
+  blocked: { en: "Blocked action", de: "Blockierte Aktion" },
+  "follow-up": { en: "Follow-up question", de: "Rueckfrage" },
   "source-status": { en: "Source status", de: "Quellenstatus" },
+};
+
+/** The suggestion lifecycle states (plan 4.11), by their own names. */
+export const DISPOSITION_LABELS: Record<
+  "new" | "reviewed" | "accepted" | "modified" | "rejected" | "executed" | "expired",
+  LabelPair & { tone: "neutral" | "info" | "success" | "warning" | "danger" | "ai" }
+> = {
+  new: { en: "New", de: "Neu", tone: "ai" },
+  reviewed: { en: "Reviewed", de: "Geprueft", tone: "info" },
+  accepted: { en: "Accepted", de: "Uebernommen", tone: "success" },
+  modified: { en: "Modified", de: "Angepasst", tone: "success" },
+  rejected: { en: "Rejected", de: "Abgelehnt", tone: "neutral" },
+  executed: { en: "Executed", de: "Ausgefuehrt", tone: "success" },
+  expired: { en: "Expired", de: "Abgelaufen", tone: "neutral" },
+};
+
+/** The six feedback kinds (plan 4.11), in its order. */
+export const FEEDBACK_LABELS: Record<
+  "useful" | "not-useful" | "wrong-source" | "wrong-interpretation" | "missing-context" | "too-verbose",
+  LabelPair
+> = {
+  useful: { en: "Useful", de: "Hilfreich" },
+  "not-useful": { en: "Not useful", de: "Nicht hilfreich" },
+  "wrong-source": { en: "Wrong source", de: "Falsche Quelle" },
+  "wrong-interpretation": { en: "Wrong interpretation", de: "Falsch ausgelegt" },
+  "missing-context": { en: "Missing context", de: "Kontext fehlt" },
+  "too-verbose": { en: "Too verbose", de: "Zu ausfuehrlich" },
 };
 
 export function isAIPartKind(value: unknown): value is AIPartKind {
@@ -515,6 +596,7 @@ export const SUGGESTION_ACTION_IDS = [
   "open-object",
   "ask-why",
   "approve",
+  "accept",
   "modify",
   "snooze",
   "dismiss",
@@ -527,6 +609,7 @@ export const SUGGESTION_ACTION_LABEL_KEYS: Record<SuggestionActionId, string> = 
   "open-object": "actionOpenObject",
   "ask-why": "actionAskWhy",
   approve: "actionApprove",
+  accept: "actionAccept",
   modify: "actionModify",
   snooze: "actionSnooze",
   dismiss: "actionDismiss",
@@ -585,10 +668,21 @@ export function selectSuggestionActions(input: SuggestionActionInput): Suggestio
   const approvable = open && hasRecommendation && !constrained && gatedAuthority;
   const modifiable = open && hasRecommendation && (gatedAuthority || authorityClass === "DRAFT");
 
+  /*
+   * Accept, for an open suggestion a human does not gate (a draft, a read, a
+   * proposal of work rather than of a record change). Accepting records the
+   * person's answer and opens the work; it carries out nothing, so it is not
+   * Approve, and it is never offered on a constrained suggestion or on a
+   * prohibited one.
+   */
+  const acceptable =
+    open && hasRecommendation && !constrained && !approvable && authorityClass !== "PROHIBITED";
+
   let primary: SuggestionActionId | null;
   if (status === "dismissed") primary = "open-object";
   else if (status === "completed" || status === "executing") primary = "review";
   else if (approvable) primary = "approve";
+  else if (acceptable) primary = "accept";
   else if (open) primary = "review";
   else if (watching) primary = "open-object";
   else primary = null;

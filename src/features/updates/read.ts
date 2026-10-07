@@ -48,6 +48,7 @@ import { createLogger } from "@/server/logging/redact";
 import { momentToMinutes } from "@/domain/nfr/calculators";
 import type { Language } from "@/i18n/labels";
 import { applyBudget, NOTIFICATION_BUDGET } from "./budget";
+import { applyRoutineLedger } from "@/features/partner/notifications";
 import { classifyArrivals, classifyBackbone, deadlineUpdates, type ClassifyContext } from "./classify";
 import type { UpdatesView } from "./types";
 
@@ -218,7 +219,14 @@ export function readUpdates(roleId: RoleId, state: ScenarioState): UpdatesView {
     );
 
     const candidates = [...classifyBackbone(events, ctx), ...classifyArrivals(events, ctx), ...deadlines];
-    const { raised, heldBack } = applyBudget(candidates, NOTIFICATION_BUDGET);
+    /*
+     * The proactive Partner's daily budget for new work from routines, kept in
+     * the 0006 notification ledger (`src/features/partner/notifications.ts`):
+     * a routine update the ledger held back is listed as held back, one the
+     * person read is gone, one it raised can be marked read.
+     */
+    const ledger = applyRoutineLedger(candidates, roleId, runId);
+    const { raised, heldBack } = applyBudget(ledger.candidates, NOTIFICATION_BUDGET);
 
     return {
       roleId,
@@ -226,7 +234,7 @@ export function readUpdates(roleId: RoleId, state: ScenarioState): UpdatesView {
       atMoment,
       state: raised.length > 0 ? "present" : "empty",
       raised,
-      heldBack,
+      heldBack: [...heldBack, ...ledger.heldBack],
       budget: NOTIFICATION_BUDGET,
     };
   } catch (error) {

@@ -63,6 +63,8 @@ import {
 import { computeStateDigest } from "@/agents/suggestions/digest";
 import { recordActivity, recordToolCallActivity } from "@/agents/activity/record";
 import type { WorkdaySelection } from "@/workday/contracts";
+import { isSelectionType } from "@/workday/selection-url";
+import { getPartnerContext, savePartnerContext } from "@/db/repositories/partner-context";
 import {
   answerPart,
   blockedPart,
@@ -255,6 +257,35 @@ function writeTurn(params: {
   return written;
 }
 
+/** The selected object the Partner's durable context holds for the role, as a chat selection. */
+function contextSelection(roleId: RoleId, runId: string): WorkdaySelection | null {
+  try {
+    const row = getPartnerContext(ROLE_HOLDERS[roleId], roleId, runId);
+    if (!row?.selectedObjectKind || !row.selectedObjectId || !isSelectionType(row.selectedObjectKind)) return null;
+    return { objectType: row.selectedObjectKind, objectId: row.selectedObjectId, label: row.selectedObjectId };
+  } catch {
+    return null;
+  }
+}
+
+/** Records the open thread on the durable context, once. */
+function rememberThread(roleId: RoleId, threadId: string, atMoment: string, runId: string): void {
+  try {
+    const row = getPartnerContext(ROLE_HOLDERS[roleId], roleId, runId);
+    if (row?.chatThreadId === threadId) return;
+    savePartnerContext({
+      userId: ROLE_HOLDERS[roleId],
+      roleId,
+      fields: { chatThreadId: threadId },
+      updatedAt: new Date().toISOString(),
+      updatedAtMoment: atMoment,
+      runId,
+    });
+  } catch {
+    // The conversation does not depend on the context row; the thread itself is durable.
+  }
+}
+
 /* ==========================================================================
    Tool intent
 
@@ -438,7 +469,14 @@ export async function postChatTurn(request: PostChatTurnRequest): Promise<PostCh
     threadId: request.threadId ?? null,
   });
 
-  const selection = request.selection ?? null;
+  /*
+   * The question is about what is on screen; with nothing selected there, it
+   * is about what the durable context holds (plan 4.11: context is kept
+   * outside the transcript, and survives navigation). The thread is recorded
+   * on that context, so the dock reopens on the same conversation.
+   */
+  const selection = request.selection ?? contextSelection(request.roleId, runId);
+  rememberThread(request.roleId, thread.id, state.currentMoment, runId);
   const context = buildWorkdayContext({
     roleId: request.roleId,
     runId,
@@ -831,7 +869,12 @@ async function produceAnswer(params: {
    * would make safe mode less capable than it is entitled to be. Offline
    * makes no network call at all.
    */
-  if (params.mode !== "offline") {
+  /*
+   * Only in live mode. Safe and offline never reach a model, and saying a
+   * live call was attempted when the mode does not permit one is the
+   * contradiction audit J26 found.
+   */
+  if (params.mode === "live") {
     const live = await attemptLiveAnswer({
       context,
       request,

@@ -31,6 +31,8 @@ coverage/
 AGENTS.md
 CLAUDE.md
 .next-verify/
+# Database backups hold scenario data and must never be committed
+backups/
 # Isolated dev builds (NFR_DIST_DIR=.next-<id>) used by parallel test stacks
 .next-*/
 

@@ -25,7 +25,7 @@ import Database from "better-sqlite3";
 import { expect, test, type Locator, type Page, type TestInfo } from "@playwright/test";
 
 const UI = "ui=v3.3";
-const SHOTS = "docs/screenshots/os-excellence/os-inbox";
+const SHOTS = process.env.NFR_SHOTS_DIR ?? "docs/screenshots/os-excellence/os-inbox";
 
 function base(): string {
   return process.env.NFR_BASE_URL ?? "http://localhost:3000";
@@ -268,6 +268,14 @@ test.describe("Third-Party Risk inbox", () => {
     await expect(events).toContainText("IMSG-2026-0006");
     await events.getByText("IMSG-2026-0006", { exact: false }).first().scrollIntoViewIfNeeded();
     await shot(page, "after-en-tprm-stage-shows-message", testInfo);
+
+    /* The message is a stage input the stage reads itself, listed beside its sources (migration 0008). */
+    const inputs = page.getByTestId("stage-inputs");
+    await expect(inputs).toContainText("IMSG-2026-0006");
+    await expect(inputs).toContainText("Inbox message");
+    await inputs.scrollIntoViewIfNeeded();
+    await shot(page, "after-en-tprm-stage-inputs", testInfo);
+    expect(query<{ kind: string }>("select conversion_kind as kind from inbox_messages where id = 'IMSG-2026-0006'")?.kind).toBe("process");
   });
 
   test("delegates a message, drafts and sends a simulated reply, and handled messages stay searchable", async ({ page }) => {
@@ -277,10 +285,10 @@ test.describe("Third-Party Risk inbox", () => {
     await form.locator('textarea[name="note"]').fill("Commercial indexation notice for the A2 schedule. Please take it in the Friday review.");
     await submitOk(detail, form);
     await expect(detail.getByTestId("inbox-lineage").locator('[data-conversion="delegated"]')).toContainText("Lukas Wiesinger");
-    const sent = query<{ simulated: number; channel: string }>(
-      "select simulated_only as simulated, channel_name as channel from collaboration_messages where related_object_id = 'IMSG-2026-0011'",
+    const sent = query<{ simulated: number; channel: string; kind: string }>(
+      "select simulated_only as simulated, channel_name as channel, kind from collaboration_messages where related_object_id = 'IMSG-2026-0011'",
     );
-    expect(sent).toStrictEqual({ simulated: 1, channel: "Inbox delegation" });
+    expect(sent).toStrictEqual({ simulated: 1, channel: "Inbox delegation", kind: "delegation" });
 
     detail = await openMessage(page, "tprm", "IMSG-2026-0003", "converted");
     await expect(detail.getByTestId("primary-action").locator('[data-operation="draft-reply"]')).toBeVisible();
@@ -351,6 +359,9 @@ test.describe("Operational Risk inbox", () => {
     await expect(events).toBeVisible({ timeout: 60_000 });
     await events.locator("summary").click();
     await expect(events).toContainText("IMSG-2026-0023");
+    await expect(page.getByTestId("stage-inputs")).toContainText("IMSG-2026-0023");
+    await page.getByTestId("stage-inputs").scrollIntoViewIfNeeded();
+    await shot(page, "after-en-rcsa-stage-inputs", testInfo);
 
     await open(page, "/workday/rcsa/work?view=inbox&iview=converted");
     const converted = page.getByTestId("work-queue");

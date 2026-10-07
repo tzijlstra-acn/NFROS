@@ -59,7 +59,7 @@ import {
 import type { Bilingual, ConsoleActionId } from "../permissions";
 import { readMigrationState } from "../releases/migrations";
 import { sameDefinition } from "./compare";
-import { roleAppEvaluationCapability, verdictReason, versionEvaluationVerdict } from "./evaluations";
+import { roleAppEvaluationCapability, startVersionEvaluations, verdictReason, versionEvaluationVerdict } from "./evaluations";
 
 export interface LifecycleProposal {
   actionId: ConsoleActionId;
@@ -294,10 +294,10 @@ export async function createCandidateVersion(roleAppId: string, input: Candidate
    Run evaluations
    ========================================================================== */
 
-export async function runVersionEvaluations(versionId: string): Promise<ConsoleActionResult<null>> {
+export async function runVersionEvaluations(versionId: string): Promise<ConsoleActionResult<string[]>> {
   const version = getRoleAppVersion(versionId);
   const capability = roleAppEvaluationCapability();
-  return governConsoleAction({
+  return governConsoleAction<undefined, string[]>({
     actionId: "role-app.run-evaluations",
     target: { kind: "role-app-version", id: versionId },
     payload: { versionId },
@@ -307,9 +307,22 @@ export async function runVersionEvaluations(versionId: string): Promise<ConsoleA
         ? { en: `There is no version ${versionId}.`, de: `Es gibt keine Version ${versionId}.` }
         : !capability.available
           ? capability.reason
-          : null,
-    execute: () => null,
-    success: () => ({ en: "Evaluations requested.", de: "Evaluationen angefordert." }),
+          : !OPEN_CANDIDATE_STATES.has(version.lifecycleState)
+            ? { en: "Only a candidate or pilot version is evaluated here.", de: "Hier werden nur Kandidaten- oder Pilotversionen evaluiert." }
+            : null,
+    execute: (context) => {
+      if (!version) throw new Error("The version disappeared.");
+      const result = startVersionEvaluations(version, { label: context.actor.label, userId: context.actor.userId });
+      if (!result.ok) throw new Error(result.reason.en);
+      return result.runIds;
+    },
+    success: (runIds) => {
+      const verdict = version ? verdictReason(versionEvaluationVerdict(version)) : null;
+      return {
+        en: `${runIds.length} evaluation run(s) recorded. ${verdict?.en ?? ""}`.trim(),
+        de: `${runIds.length} Evaluationslauf bzw. -laeufe erfasst. ${verdict?.de ?? ""}`.trim(),
+      };
+    },
   });
 }
 

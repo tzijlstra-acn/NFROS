@@ -24,6 +24,11 @@ import type { BackgroundJob } from "@/db/repositories/background-jobs";
  */
 import "@/features/process/implementations";
 import { isStagePreparationJob, processPreparationJob } from "@/features/process/preparation";
+/*
+ * The AI Partner's routines (Wave 3): due windows are queued from the
+ * scenario clock on every poll, and a routine job runs the real runner.
+ */
+import { isRoutineJob, processRoutineJob, scheduleDueRoutines } from "@/features/routines/runner";
 
 const WORKER_ID = `worker-${process.pid}-${Date.now()}`;
 const LEASE_SECONDS = 30;
@@ -34,8 +39,13 @@ async function processJob(job: BackgroundJob): Promise<void> {
 
   switch (job.jobKind) {
     case "ai-routine":
-      await new Promise<void>((resolve) => setTimeout(resolve, 100));
-      completeJob(job.id, `Routine completed: ${job.relatedObjectKind ?? "unknown"}`);
+      if (isRoutineJob(job)) {
+        // Records the run, its lineage and its event, or retries and fails it, itself.
+        const result = await processRoutineJob(job);
+        console.log(`[worker] Routine ${job.id}: ${result.outcome}, ${result.created} created`);
+        break;
+      }
+      failJob(job.id, "NOT_A_ROUTINE_RUN", "The job payload names no routine run, so nothing was done.");
       break;
 
     case "ai-preparation":
@@ -109,6 +119,9 @@ async function runWorkerLoop(): Promise<void> {
       if (released > 0) {
         console.log(`[worker] Released ${released} expired leases`);
       }
+
+      const due = scheduleDueRoutines().filter((queued) => queued.status === "pending").length;
+      if (due > 0) console.log(`[worker] ${due} routine window(s) due`);
 
       const job = leaseNextJob(WORKER_ID, LEASE_SECONDS);
 

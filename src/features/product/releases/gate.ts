@@ -233,14 +233,23 @@ function runScript(args: string[], timeoutMs: number): Promise<{ code: number | 
   });
 }
 
-async function scriptCheck(gateKey: string, label: string, script: string, viaTsx: boolean, rerun: string): Promise<Omit<ReleaseGateResult, "durationMs">> {
+async function scriptCheck(
+  gateKey: string,
+  label: string,
+  script: string,
+  viaTsx: boolean,
+  rerun: string,
+  timeoutMinutes = 3,
+): Promise<Omit<ReleaseGateResult, "durationMs">> {
   const root = process.cwd();
   const path = join(root, script);
   if (!existsSync(path)) return { gateKey, label, mandatory: true, status: "failed", detail: `${script} is missing.`, evidenceRef: null };
   const tsx = join(root, "node_modules", "tsx", "dist", "cli.mjs");
   if (viaTsx && !existsSync(tsx)) return { gateKey, label, mandatory: true, status: "failed", detail: "tsx is not installed, so the check cannot run.", evidenceRef: script };
-  const outcome = await runScript(viaTsx ? [tsx, path] : [path], 180_000);
-  if (outcome.timedOut) return { gateKey, label, mandatory: true, status: "failed", detail: `${script} did not finish within three minutes.`, evidenceRef: script };
+  const outcome = await runScript(viaTsx ? [tsx, path] : [path], timeoutMinutes * 60_000);
+  if (outcome.timedOut) {
+    return { gateKey, label, mandatory: true, status: "failed", detail: `${script} did not finish within ${timeoutMinutes} minutes.`, evidenceRef: script };
+  }
   return outcome.code === 0
     ? { gateKey, label, mandatory: true, status: "passed", detail: `${script} exited 0.`, evidenceRef: script }
     : { gateKey, label, mandatory: true, status: "failed", detail: `${script} exited ${outcome.code ?? "abnormally"}. Run ${rerun} to see the findings.`, evidenceRef: script };
@@ -267,7 +276,8 @@ export async function runReleaseGateChecks(): Promise<ReleaseGateResult[]> {
   const scripts = await Promise.all([
     timed(() => scriptCheck("no-em-dash", "No em dash, en dash or double hyphen", "scripts/check-no-emdash.mjs", false, "node scripts/check-no-emdash.mjs")),
     timed(() => scriptCheck("user-copy", "User copy rules", "scripts/check-user-copy.ts", true, "npm run check:copy")),
-    timed(() => scriptCheck("secret-scan", "Secret scan", "scripts/scan-secrets.mjs", false, "npm run scan:secrets")),
+    /* The scan reads every source file and build bundle; on a full working tree it takes minutes. */
+    timed(() => scriptCheck("secret-scan", "Secret scan", "scripts/scan-secrets.mjs", false, "npm run scan:secrets", 10)),
   ]);
   return [...inProcess, ...scripts, ...NOT_RUN_HERE];
 }

@@ -77,7 +77,42 @@ export function stageHref(roleId: RoleId, processOrRoleAppId: string | null, sta
 export function objectHref(roleId: RoleId, objectKind: string, objectId: string): string {
   if (objectKind === "decision") return decisionHref(roleId, objectId);
   if (objectKind === "action") return actionHref(roleId, objectId);
+  // A meeting and a message open in the Work Hub, which is where their work is done.
+  if (objectKind === "meeting") return meetingHref(roleId, objectId);
+  if (objectKind === "message" || objectKind === "inbox-message") return inboxHref(roleId, objectId);
   return `/workday/${roleId}?${SELECTION_PARAM}=${encodeURIComponent(objectKind)}:${encodeURIComponent(objectId)}`;
+}
+
+/**
+ * Where a routine run's output opens (`ai_routine_run_outputs.object_kind`):
+ * the meeting a brief was prepared for, the action a reminder was drafted
+ * for, the message a classification was proposed for. Null for an output
+ * kind that names no workday object of its own.
+ */
+export function outputHref(roleId: RoleId, outputKind: string, objectId: string): string | null {
+  switch (outputKind) {
+    case "meeting-preparation":
+      return meetingHref(roleId, objectId);
+    case "action-reminder-draft":
+      return actionHref(roleId, objectId);
+    case "inbox-triage-proposal":
+      return inboxHref(roleId, objectId);
+    default:
+      return null;
+  }
+}
+
+export function lineageKindOfOutput(outputKind: string): LineageKind {
+  switch (outputKind) {
+    case "meeting-preparation":
+      return "meeting";
+    case "action-reminder-draft":
+      return "action";
+    case "inbox-triage-proposal":
+      return "message";
+    default:
+      return "event";
+  }
 }
 
 export function lineage(kind: LineageKind, id: string, label: string, href: string): LineageRef {

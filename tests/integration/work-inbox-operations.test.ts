@@ -44,6 +44,8 @@ import { readInboxSearchEntries } from "@/features/work/modules/inbox/search";
 import { buildWorkHub } from "@/features/work/hub";
 import { readHomeView } from "@/features/home/read";
 import { getScenarioState } from "@/scenario/engine/state";
+import { buildStageContext } from "@/features/process/context";
+import { buildStageView } from "@/features/process/view";
 
 function count(sql: string, ...args: unknown[]): number {
   return (getSqlite().prepare(sql).get(...args) as { n: number }).n;
@@ -94,6 +96,10 @@ describe("triage", () => {
     expect(published[0]).toMatchObject({ type: "tool-executed", subject_kind: "inbox-message", subject_id: "IMSG-2026-0003" });
     expect(published[0]?.audit_event_id).not.toBeNull();
     expect(JSON.parse(published[0]?.payload ?? "{}")).toMatchObject({ source: "inbox", operation: "triage", to: "evidence" });
+    /* The classification is stored with who confirmed it and when; a confirmation is no conversion. */
+    expect(row<{ by: string; at: string | null; reason: string | null; kind: string | null }>(
+      "select triage_confirmed_by_user_id as by, triage_confirmed_at as at, triage_reason as reason, conversion_kind as kind from inbox_messages where id = 'IMSG-2026-0003'",
+    )).toMatchObject({ by: "P-002", reason: null, kind: null });
     /* Confirming a classification that still needs work leaves the message in Needs me. */
     expect(inboxIds("tprm", "needs-triage")).toContain("IMSG-2026-0003");
   });
@@ -109,13 +115,24 @@ describe("triage", () => {
     const again = await changeTriage({ roleId: "tprm", messageId: "IMSG-2026-0002", classification: "information", reason: "Again." });
     expect(again.ok).toBe(false);
     expect(JSON.parse(events("IMSG-2026-0002")[0]?.payload ?? "{}")).toMatchObject({ from: "action", to: "information", reason: "Explained in the indicator pack already." });
+    expect(row<{ by: string; reason: string }>("select triage_confirmed_by_user_id as by, triage_reason as reason from inbox_messages where id = 'IMSG-2026-0002'")).toStrictEqual({
+      by: "P-002",
+      reason: "Explained in the indicator pack already.",
+    });
   });
 
   it("dismisses proposed noise without a reason, and a message it does not propose as noise only with one", async () => {
     expect((await dismissMessage({ roleId: "tprm", messageId: "IMSG-2026-0008", reason: "" })).ok).toBe(true);
     expect(inboxIds("tprm", "handled")).toContain("IMSG-2026-0008");
+    /* The dismissal is what the message became, attributed. */
+    expect(row<{ kind: string; by: string; at: string | null }>("select conversion_kind as kind, converted_by_user_id as by, converted_at as at from inbox_messages where id = 'IMSG-2026-0008'")).toMatchObject({ kind: "dismissed", by: "P-002" });
     expect((await dismissMessage({ roleId: "tprm", messageId: "IMSG-2026-0009", reason: "" })).ok).toBe(false);
     expect(row<{ t: string | null }>("select confirmed_triage as t from inbox_messages where id = 'IMSG-2026-0009'")?.t).toBeNull();
+
+    /* Taking the dismissal back clears it: nothing became of the message, so it returns to Needs me. */
+    expect((await changeTriage({ roleId: "tprm", messageId: "IMSG-2026-0008", classification: "action", reason: "It does need an owner after all." })).ok).toBe(true);
+    expect(row<{ kind: string | null }>("select conversion_kind as kind from inbox_messages where id = 'IMSG-2026-0008'")?.kind).toBeNull();
+    expect(inboxIds("tprm", "needs-triage")).toContain("IMSG-2026-0008");
   });
 });
 
@@ -152,11 +169,13 @@ describe("message to action", () => {
     const outcome = await createActionFromMessage(input);
     expect(outcome.ok, outcome.message).toBe(true);
 
-    const message = row<{ action: string; read: number; triage: string; by: string; at: string | null }>(
-      "select linked_action_id as action, is_read as read, confirmed_triage as triage, converted_by_user_id as by, converted_at as at from inbox_messages where id = 'IMSG-2026-0001'",
+    const message = row<{ action: string; read: number; triage: string; by: string; at: string | null; kind: string; triageBy: string; triageAt: string | null }>(
+      "select linked_action_id as action, is_read as read, confirmed_triage as triage, converted_by_user_id as by, converted_at as at, conversion_kind as kind, triage_confirmed_by_user_id as triageBy, triage_confirmed_at as triageAt from inbox_messages where id = 'IMSG-2026-0001'",
     );
-    expect(message).toMatchObject({ read: 1, triage: "action", by: "P-002" });
+    expect(message).toMatchObject({ read: 1, triage: "action", by: "P-002", kind: "action", triageBy: "P-002" });
     expect(message?.at).not.toBeNull();
+    /* The conversion confirmed the classification, so both carry the same attribution. */
+    expect(message?.triageAt).toBe(message?.at);
     const action = row<{ id: string; source: string; owner: string; due: string; kind: string; related: string }>(
       "select id, source_message_id as source, owner_user_id as owner, due_on as due, kind, related_object_id as related from actions where id = ?",
       message?.action,
@@ -208,6 +227,9 @@ describe("message to evidence", () => {
     expect(doc).toMatchObject({ source: "IMSG-2026-0003", type: "correspondence", provenance: "stakeholder-statement" });
     expect(JSON.parse(doc?.related ?? "[]")).toStrictEqual(["REG-2026-0031", "IMSG-2026-0003"]);
     expect(count("select count(*) as n from evidence_chunks_fts where document_id = 'EVD-IMSG-2026-0003'")).toBe(1);
+    expect(row<{ kind: string; doc: string; by: string; triage: string }>(
+      "select conversion_kind as kind, linked_evidence_document_id as doc, converted_by_user_id as by, confirmed_triage as triage from inbox_messages where id = 'IMSG-2026-0003'",
+    )).toStrictEqual({ kind: "evidence", doc: "EVD-IMSG-2026-0003", by: "P-002", triage: "evidence" });
     expect(inboxIds("tprm", "converted")).toContain("IMSG-2026-0003");
     expect(events("IMSG-2026-0003")[0]).toMatchObject({ type: "work-arrived", subject_kind: "evidence-document", subject_id: "EVD-IMSG-2026-0003" });
 
@@ -240,7 +262,22 @@ describe("message to process", () => {
     expect(stageTables()).toBe(before);
     expect(inboxIds("rcsa", "converted")).toContain("IMSG-2026-0023");
 
+    /* The attachment is a stage input, linked to its event and its audit row, and the stage context reads it. */
+    const input = row<{ id: string; stageRun: string; by: string; event: string; audit: string | null }>(
+      "select id, stage_run_id as stageRun, added_by_user_id as by, os_event_id as event, audit_event_id as audit from process_stage_inputs where source_kind = 'message' and source_id = 'IMSG-2026-0023'",
+    );
+    expect(input).toMatchObject({ by: "P-003" });
+    expect(input?.audit).not.toBeNull();
+    expect(count("select count(*) as n from os_events where id = ? and process_run_id = 'RUN-RCSA-PAYOPS-Q4-2026'", input?.event)).toBe(1);
+    expect(row<{ kind: string }>("select conversion_kind as kind from inbox_messages where id = 'IMSG-2026-0023'")?.kind).toBe("process");
+    const stage = buildStageContext({ processRunId: "RUN-RCSA-PAYOPS-Q4-2026", stageId: "evidence-refresh" });
+    expect(stage.inputs.map((entry) => [entry.sourceKind, entry.sourceId])).toStrictEqual([["message", "IMSG-2026-0023"]]);
+    expect(stage.inputs[0]?.label?.en.length).toBeGreaterThan(0);
+    const view = buildStageView(stage, "en", "/workday/rcsa/decisions");
+    expect(view.inputs[0]).toMatchObject({ sourceId: "IMSG-2026-0023", kind: "Inbox message" });
+
     expect((await addToProcess({ roleId: "rcsa", messageId: "IMSG-2026-0023", processRunId: "RUN-RCSA-PAYOPS-Q4-2026", stageId: "evidence-refresh" })).ok).toBe(false);
+    expect(count("select count(*) as n from process_stage_inputs where source_id = 'IMSG-2026-0023'")).toBe(1);
   });
 
   it("refuses a completed stage, and another role's process", async () => {
@@ -260,7 +297,13 @@ describe("delegate and reply", () => {
         "select simulated_only as simulated, to_user_ids as recipients from collaboration_messages where related_object_id = 'IMSG-2026-0011'",
       ),
     ).toStrictEqual({ simulated: 1, recipients: '["P-010"]' });
+    expect(row<{ kind: string }>("select kind from collaboration_messages where related_object_id = 'IMSG-2026-0011'")?.kind).toBe("delegation");
+    expect(row<{ kind: string; to: string; triage: string }>(
+      "select conversion_kind as kind, delegated_to_user_id as \"to\", confirmed_triage as triage from inbox_messages where id = 'IMSG-2026-0011'",
+    )).toStrictEqual({ kind: "delegated", to: "P-010", triage: "delegate" });
     expect(inboxIds("tprm", "converted")).toContain("IMSG-2026-0011");
+    /* A second delegation is refused by the stored kind. */
+    expect((await delegateMessage({ roleId: "tprm", messageId: "IMSG-2026-0011", toUserId: "P-010", note: "Again." })).ok).toBe(false);
   });
 
   it("drafts a reply that writes nothing, and records a sent reply as simulated", async () => {
@@ -273,7 +316,7 @@ describe("delegate and reply", () => {
 
     const sent = await sendReply({ roleId: "tprm", messageId: "IMSG-2026-0003", subject: drafted.draft?.subject ?? "", body: drafted.draft?.body ?? "" });
     expect(sent.ok, sent.message).toBe(true);
-    expect(count("select count(*) as n from collaboration_messages where channel_name = 'Inbox reply' and simulated_only = 1")).toBe(1);
+    expect(count("select count(*) as n from collaboration_messages where channel_name = 'Inbox reply' and kind = 'reply' and simulated_only = 1")).toBe(1);
     expect(inboxIds("tprm", "handled")).toContain("IMSG-2026-0003");
   });
 

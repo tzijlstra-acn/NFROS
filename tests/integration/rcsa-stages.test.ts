@@ -259,8 +259,9 @@ describe("the RCSA contracts", () => {
 describe("the eight-stage journey", () => {
   for (const mode of ["safe", "offline"] as const) {
     it(`runs Stages 2 to 8 in ${mode} mode and starts an event-driven reassessment that runs Stage 1`, async () => {
-      /* Stage 2, the reference stage, still runs. */
+      /* Stage 2, the reference stage, still runs. Its decision's validation request is stored as what it is. */
       expect((await stage2(mode)).ok).toBe(true);
+      expect(count("select count(*) as n from collaboration_messages where channel_name = 'Factual validation' and kind = 'validation-request'")).toBeGreaterThan(0);
 
       /* Stage 3: the change log and the seeded causal interpretation. */
       const s3 = await stage3(mode);
@@ -288,11 +289,19 @@ describe("the eight-stage journey", () => {
       /* A restart in the middle: the connection goes, the next one reads the same file. */
       closeDb();
 
+      /* A stale appetite position on the lines of the key risk, which the recorded residual must not leave behind. */
+      getSqlite().prepare("update assessment_lines set appetite_position = 'within' where risk_id = 'RSK-0211'").run();
+
       /* Stage 6: deterministic consequences, and the residual recorded on the line. */
       const s6 = await stage6(mode);
       expect(s6.ok, s6.message.en).toBe(true);
       const rating = JSON.parse(context("rating-appetite").artifacts.find((artifact) => artifact.artifactKey === "rating-record")?.content ?? "{}") as { facts?: Record<string, unknown> };
       expect(rating.facts).toMatchObject({ keyRiskId: "RSK-0211", effectiveness: "partially-effective", score: 12, rating: "high", appetite: "outside", path: "rating-remediation" });
+      /* The governed residual write sets the appetite position the matrix gives for the rating, not a value it was handed. */
+      const keyLine = getSqlite()
+        .prepare("select residual_rating as rating, appetite_position as appetite from assessment_lines where id = ?")
+        .get(String(rating.facts?.keyLineId)) as { rating: string; appetite: string };
+      expect(keyLine).toStrictEqual({ rating: "high", appetite: "outside" });
 
       /* Stage 7: one action with process lineage and its condition, registered in the GRC platform. */
       setMoment("15:00");
@@ -336,15 +345,47 @@ describe("the eight-stage journey", () => {
       expect(reassessmentRow).toMatchObject({ status: "in-progress", stage: "1 Scope and Trigger", trigger: `Event-driven, from ${RUN}`, selected: true });
       expect(portfolio.summary).toContain("2 assessment run(s): 1 in progress, 1 completed");
 
-      /* Stage 1 runs on the reassessment, which then opens Stage 2 and stops there honestly. */
+      /* Stage 1 runs on the reassessment, which then opens Stage 2 with a decision of its own. */
+      const q4Before = getSqlite().prepare("select status, chosen_option_id as chosen, process_run_id as run, process_stage_id as stage from decisions where id = 'DEC-2026-0771'").get();
       const s1 = await stage1(mode, reassessment.id);
       expect(s1.ok, s1.message.en).toBe(true);
       expect(context("scope-trigger", reassessment.id).artifacts.some((artifact) => artifact.artifactKey === "scope-record")).toBe(true);
-      const next = context("evidence-refresh", reassessment.id);
-      expect(next.stageRun?.status).not.toBe("completed");
-      const validation = engine.validateStage(next);
-      expect(validation.canComplete).toBe(false);
-      expect(validation.reasons.map((reason) => reason.en).join(" ")).toContain("Q4 2026 cycle");
+      const own = getSqlite()
+        .prepare("select id, reference, status, chosen_option_id as chosen, process_stage_id as stage from decisions where process_run_id = ?")
+        .all(reassessment.id) as Array<{ id: string; reference: string; status: string; chosen: string | null; stage: string }>;
+      expect(own).toHaveLength(1);
+      expect(own[0]).toMatchObject({ reference: "RCSA-D1", status: "open", chosen: null, stage: "evidence-refresh" });
+      const ownId = own[0]?.id ?? "";
+      expect(count("select count(*) as n from decision_options where decision_id = ?", ownId)).toBe(3);
+      expect(backbone.findOsEvent(`decision-requested:run:${reassessment.id}:${ownId}`)?.auditEventId).toBeTruthy();
+      /* The Q4 run keeps its seeded decision exactly as it was recorded. */
+      expect(getSqlite().prepare("select status, chosen_option_id as chosen, process_run_id as run, process_stage_id as stage from decisions where id = 'DEC-2026-0771'").get()).toStrictEqual(q4Before);
+
+      /* The engine binds the reassessment's Stage 2 to its own decision, and the stage completes on it. */
+      const opened = context("evidence-refresh", reassessment.id);
+      expect(opened.decisions.find((state) => state.spec.key === "investigation-strategy")).toMatchObject({ recordId: ownId, status: "pending" });
+      await prepare("evidence-refresh", mode, reassessment.id);
+      const entries: Record<string, string> = {};
+      for (const source of opened.stage.requiredSources) Object.assign(entries, { [`sufficiency:${source.key}`]: "sufficient", [`note:${source.key}`]: "" });
+      expect((await engine.submitHumanTask(reassessment.id, "evidence-refresh", "evidence-sufficiency", form(entries))).ok).toBe(true);
+      const decided = await decide("evidence-refresh", "investigation-strategy", `${ownId}-O01`, reassessment.id);
+      expect(decided.ok, decided.message.en).toBe(true);
+      const executed = await tools("evidence-refresh", reassessment.id);
+      expect(executed.ok, executed.message.en).toBe(true);
+      const s2 = await complete("evidence-refresh", reassessment.id);
+      expect(s2.ok, s2.message.en).toBe(true);
+      expect(count("select count(*) as n from decisions where id = ? and status = 'decided' and chosen_option_id = ?", ownId, `${ownId}-O01`)).toBe(1);
+      expect(getSqlite().prepare("select status, chosen_option_id as chosen, process_run_id as run, process_stage_id as stage from decisions where id = 'DEC-2026-0771'").get()).toStrictEqual(q4Before);
+      const pack = JSON.parse(context("evidence-refresh", reassessment.id).artifacts.find((artifact) => artifact.artifactKey === "evidence-pack")?.content ?? "{}") as { decision?: { decisionId?: string } };
+      expect(pack.decision?.decisionId).toBe(ownId);
+
+      /* Stage 3 opens with its own decision too, bound to the reassessment and never to the Q4 record. */
+      const riskStage = context("risk-control-change", reassessment.id);
+      const third = riskStage.decisions.find((state) => state.spec.key === "likelihood-inference");
+      expect(third?.recordId).not.toBe("DEC-2026-0744");
+      expect(third).toMatchObject({ status: "pending" });
+      expect(third?.options).toHaveLength(3);
+      expect(count("select count(*) as n from decisions where id = ? and process_run_id = ? and process_stage_id = 'risk-control-change'", third?.recordId ?? "", reassessment.id)).toBe(1);
 
       /* Every stage of the cycle wrote its record. */
       const records = getSqlite()

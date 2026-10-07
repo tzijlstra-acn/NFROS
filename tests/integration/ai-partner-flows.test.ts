@@ -615,7 +615,7 @@ describe("the contextual chat", () => {
     });
 
     const text = result.turn.parts.map((part) => part.text).join(" ");
-    expect(text).toContain("not answered by a model");
+    expect(text).toContain("no prepared, cited answer");
     expect(text).toContain("Your question was recorded");
   });
 

@@ -343,28 +343,28 @@ export const KNOWN_LIMITATIONS: readonly KnownLimitation[] = [
     area: "product-owner",
     status: "open",
     title: {
-      en: "Pilot management is readiness checks only",
-      de: "Pilotsteuerung umfasst nur Bereitschaftspruefungen",
+      en: "The pilot cohort holds local accounts only",
+      de: "Die Pilotkohorte enthaelt nur lokale Konten",
     },
     detail: {
-      en: "There is no pilot cohort, baseline, goal, success criterion, feedback log or go or stop decision.",
-      de: "Es gibt keine Pilotkohorte, keine Ausgangsbasis, keine Ziele, keine Erfolgskriterien, kein Feedback-Protokoll und keine Entscheidung ueber Fortsetzung oder Abbruch.",
+      en: "The pilot workspace manages setup, the cohort, the baseline, weekly readings, issues and the governed exit decision. The cohort can hold only the static pilot accounts, because there is no identity provider, and every figure the product measures in this environment comes from the synthetic institution.",
+      de: "Der Pilotbereich fuehrt Einrichtung, Kohorte, Ausgangslage, Wochenwerte, Themen und die gesteuerte Abschlussentscheidung. Die Kohorte kann nur die festen Pilotkonten enthalten, weil es keinen Identitaetsanbieter gibt, und jede Zahl, die das Produkt in dieser Umgebung misst, stammt aus der synthetischen Institution.",
     },
-    reference: "/settings/pilot",
+    reference: "/product/pilot",
   },
   {
     id: "evidence-exports-command-line",
     area: "operations",
     status: "open",
     title: {
-      en: "Evidence exports run from the command line",
-      de: "Nachweis-Exporte laufen ueber die Kommandozeile",
+      en: "Audit chain verification runs from the command line",
+      de: "Die Pruefung der Audit-Kette laeuft ueber die Kommandozeile",
     },
     detail: {
-      en: "The pilot evidence pack and audit chain verification are produced by npm scripts. The interface offers no download for either.",
-      de: "Das Pilot-Nachweispaket und die Pruefung der Audit-Kette werden durch npm-Skripte erzeugt. Die Oberflaeche bietet fuer beides keinen Download.",
+      en: "The pilot evidence pack downloads from the pilot workspace. Audit chain verification and the support bundle are still produced by npm scripts, and the backup script always reads data/nfr-workos.db.",
+      de: "Das Pilot-Nachweispaket wird im Pilotbereich heruntergeladen. Die Pruefung der Audit-Kette und das Supportpaket entstehen weiterhin durch npm-Skripte, und das Sicherungsskript liest immer data/nfr-workos.db.",
     },
-    reference: "npm run pilot:evidence-pack, npm run audit:verify-chain",
+    reference: "npm run audit:verify-chain, npm run support:bundle, scripts/backup.ts",
   },
   {
     id: "operations-not-linked",

@@ -116,46 +116,89 @@ function eventId(kind: string, at: string): string {
    Run release gate
    ========================================================================== */
 
-export async function runReleaseGate(): Promise<ConsoleActionResult<ReleaseGateRun>> {
+/**
+ * A gate run older than this that never completed was interrupted (the
+ * server stopped while it ran). It is shown as interrupted and a new run may
+ * start; it never counts as a pass.
+ */
+export const GATE_RUN_INTERRUPTED_AFTER_MS = 15 * 60 * 1000;
+
+export function gateRunInProgress(run: ReleaseGateRun | null, now: number = Date.now()): boolean {
+  return run !== null && run.status === "running" && now - Date.parse(run.startedAt) < GATE_RUN_INTERRUPTED_AFTER_MS;
+}
+
+/**
+ * Run release gate, part one: the governed start. The secret scan alone takes
+ * minutes on a full working tree, so the checks run after the response
+ * (`completeReleaseGate`, called by the server action with `after`), and the
+ * page follows the stored run until it completes.
+ */
+export async function startReleaseGate(): Promise<ConsoleActionResult<ReleaseGateRun>> {
   const version = PRODUCT_RELEASE.version;
-  return governConsoleAction<ReleaseGateResult[], ReleaseGateRun>({
+  const latest = (() => {
+    try {
+      return getLatestReleaseGateRun(version) ?? null;
+    } catch {
+      return null;
+    }
+  })();
+  return governConsoleAction<undefined, ReleaseGateRun>({
     actionId: "release.run-gate",
     target: { kind: "product-release", id: version },
     payload: { version },
     summary: { en: `Run the release gate for ${version}.`, de: `Release-Pruefung fuer ${version} ausfuehren.` },
-    prepare: () => runReleaseGateChecks(),
-    execute: (context, results) => {
+    rule: () =>
+      gateRunInProgress(latest)
+        ? { en: "A release gate run is already in progress. Wait for it to complete.", de: "Eine Release-Pruefung laeuft bereits. Warten Sie, bis sie abgeschlossen ist." }
+        : null,
+    execute: (context) => {
       const id = `RGR-${version}-${context.at.replace(/[^0-9]/g, "").slice(0, 17)}`;
-      startReleaseGateRun({ id, releaseVersion: version, startedAt: context.at, triggeredByLabel: context.actor.label });
-      const passed = gatePasses(results);
-      const mandatory = results.filter((entry) => entry.mandatory);
-      const failed = mandatory.filter((entry) => entry.status !== "passed");
-      const run = completeReleaseGateRun(id, {
-        status: passed ? "passed" : "failed",
-        results,
-        completedAt: new Date().toISOString(),
-        summary: passed
-          ? `${mandatory.length} of ${mandatory.length} mandatory checks passed.`
-          : `${failed.length} of ${mandatory.length} mandatory checks failed: ${failed.map((entry) => entry.label).join(", ")}.`,
-      });
-      if (!run) throw new Error("The gate run was not written.");
-      recordReleaseEvent({
-        id: eventId("gate", context.at),
-        releaseVersion: version,
-        kind: "gate-run-recorded",
-        gateRunId: id,
-        note: run.summary,
-        at: context.at,
-        actorLabel: context.actor.label,
-        actorUserId: context.actor.userId,
-      });
-      return run;
+      return startReleaseGateRun({ id, releaseVersion: version, startedAt: context.at, triggeredByLabel: context.actor.label });
     },
-    success: (run) =>
-      run.status === "passed"
-        ? { en: `Release gate passed: ${run.summary}`, de: `Release-Pruefung bestanden: ${run.mandatoryTotal} von ${run.mandatoryTotal} Pflichtpruefungen bestanden.` }
-        : { en: `Release gate failed: ${run.summary}`, de: `Release-Pruefung nicht bestanden: ${run.mandatoryFailed} von ${run.mandatoryTotal} Pflichtpruefungen fehlgeschlagen.` },
+    success: () => ({
+      en: "Release gate started. The checks run now; this page shows each result when the run completes.",
+      de: "Release-Pruefung gestartet. Die Pruefungen laufen jetzt; diese Seite zeigt jedes Ergebnis, sobald der Lauf abgeschlossen ist.",
+    }),
   });
+}
+
+/** Run release gate, part two: runs the checks and completes the stored run with its results. */
+export async function completeReleaseGate(runId: string): Promise<ReleaseGateRun | undefined> {
+  let results: ReleaseGateResult[];
+  try {
+    results = await runReleaseGateChecks();
+  } catch {
+    return completeReleaseGateRun(runId, {
+      status: "error",
+      results: [],
+      completedAt: new Date().toISOString(),
+      summary: "The gate checks could not run. The error is recorded in the server log.",
+    });
+  }
+  const passed = gatePasses(results);
+  const mandatory = results.filter((entry) => entry.mandatory);
+  const failed = mandatory.filter((entry) => entry.status !== "passed");
+  const run = completeReleaseGateRun(runId, {
+    status: passed ? "passed" : "failed",
+    results,
+    completedAt: new Date().toISOString(),
+    summary: passed
+      ? `${mandatory.length} of ${mandatory.length} mandatory checks passed.`
+      : `${failed.length} of ${mandatory.length} mandatory checks failed: ${failed.map((entry) => entry.label).join(", ")}.`,
+  });
+  if (run) {
+    recordReleaseEvent({
+      id: eventId("gate", run.completedAt ?? new Date().toISOString()),
+      releaseVersion: run.releaseVersion,
+      kind: "gate-run-recorded",
+      gateRunId: run.id,
+      note: run.summary,
+      at: run.completedAt ?? new Date().toISOString(),
+      actorLabel: run.triggeredByLabel,
+      actorUserId: null,
+    });
+  }
+  return run;
 }
 
 /* ==========================================================================

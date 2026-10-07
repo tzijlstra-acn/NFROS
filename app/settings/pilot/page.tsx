@@ -27,6 +27,7 @@
  * - Every regulatory reference carries the illustrative context disclaimer.
  */
 
+import Link from "next/link";
 import { getProductConfig } from "@/product";
 import { PILOT_USERS } from "@/identity/pilot-config";
 import { getProductMode } from "@/identity/product-mode";
@@ -94,9 +95,15 @@ const COPY = {
   generatedAt: { en: "Generated", de: "Erzeugt" },
   download: { en: "Download in the interface", de: "Download in der Oberflaeche" },
   downloadNote: {
-    en: "There is no download route in this build. Generate the pack from the command line; it is written to release/pilot-evidence.json.",
-    de: "In diesem Build gibt es keinen Downloadweg. Erzeugen Sie das Paket ueber die Kommandozeile; es wird nach release/pilot-evidence.json geschrieben.",
+    en: "The pilot evidence pack, with setup, baseline, measures, readiness, known limitations and the exit decision, is built on the server and downloaded from the pilot workspace, by the Pilot Lead or the Platform Product Owner.",
+    de: "Das Pilot-Nachweispaket mit Einrichtung, Ausgangslage, Kennzahlen, Bereitschaft, bekannten Einschraenkungen und Abschlussentscheidung wird auf dem Server erzeugt und im Pilotbereich heruntergeladen, von der Pilotleitung oder dem Platform Product Owner.",
   },
+  workspace: { en: "Pilot workspace", de: "Pilotbereich" },
+  workspaceNote: {
+    en: "Setup, cohort, baseline, the weekly view and the exit decision are managed in the pilot workspace of the Product Owner Console, which also reads the design-partner controls: role switching, reset, identity on approvals, integrations, backup and restore, and the support bundle.",
+    de: "Einrichtung, Kohorte, Ausgangslage, Wochenansicht und Abschlussentscheidung werden im Pilotbereich der Product-Owner-Konsole gefuehrt, der auch die Kontrollen fuer den Designpartner liest: Rollenwechsel, Zuruecksetzen, Identitaet bei Genehmigungen, Integrationen, Sicherung und Wiederherstellung sowie das Supportpaket.",
+  },
+  openWorkspace: { en: "Open the pilot workspace", de: "Pilotbereich oeffnen" },
 } as const;
 
 function fill(template: string, values: Record<string, string | number>): string {
@@ -117,6 +124,13 @@ export default function PilotReadinessPage() {
   return (
     <div className="app-stack app-stack-6">
       <SettingsHead eyebrow={say(COPY.eyebrow)} title={say(COPY.title)} lede={say(COPY.lede)} />
+
+      <Notice tone="info">
+        {say(COPY.workspaceNote)}{" "}
+        <Link href="/product/pilot" className="app-source-link" data-testid="settings-pilot-workspace-link">
+          {say(COPY.openWorkspace)}
+        </Link>
+      </Notice>
 
       <Notice tone={overall === "verified" ? "info" : "warning"}>
         {overall === "verified"
@@ -228,7 +242,9 @@ export default function PilotReadinessPage() {
             <Field
               label={say(COPY.download)}
               value={
-                <StatusBadge status="unavailable" language={language} detail={say(COPY.downloadNote)} />
+                <Link href="/product/pilot" className="app-source-link">
+                  {say(COPY.workspace)}
+                </Link>
               }
               note={say(COPY.downloadNote)}
             />

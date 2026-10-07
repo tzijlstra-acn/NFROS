@@ -264,7 +264,12 @@ function ConfigurationBlock({
           <Field
             label={say(COPY.gate)}
             value={
-              <span className="app-stack app-stack-1" data-testid={`${testId}-gate`} data-blocked={status.verdict.blocked ? "true" : "false"}>
+              <span
+                className="app-stack app-stack-1"
+                style={{ alignItems: "flex-start" }}
+                data-testid={`${testId}-gate`}
+                data-blocked={status.verdict.blocked ? "true" : "false"}
+              >
                 <Chip tone={status.verdict.blocked ? "danger" : "success"}>{status.verdict.blocked ? say(COPY.blocked) : say(COPY.gatePassed)}</Chip>
                 {status.verdict.reasons.map((reason) => (
                   <span key={reason.en} className="app-meta" style={consoleWrapStyle}>

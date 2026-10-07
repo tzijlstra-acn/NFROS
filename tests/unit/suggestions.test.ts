@@ -818,14 +818,13 @@ describe("the seeded chat answers", () => {
       roleTitle: "Operational Risk Partner",
     });
     const text = parts.map((part) => part.text).join(" ");
-    expect(text).toContain("not answered by a model");
+    expect(text).toContain("no prepared, cited answer");
+    expect(text).toContain("Offline mode");
     expect(text).toContain("Your question was recorded");
     expect(text).not.toMatch(/the residual risk is/i);
   });
 
-  it("names the live failure rather than blaming the mode", () => {
-    // Telling a presenter the wrong reason for a fallback is worse than
-    // telling them nothing, because they will look in the wrong place.
+  it("says plainly that a live answer could not be prepared, without the internals (J26)", () => {
     const parts = seededChatDecline({
       language: "en",
       mode: "live",
@@ -833,7 +832,15 @@ describe("the seeded chat answers", () => {
       roleTitle: "Operational Risk Partner",
       liveFailureReason: "the provider rejected the request",
     });
-    expect(parts[0]?.text).toContain("A live call was attempted and failed");
+    expect(parts[0]?.text).toContain("could not be prepared just now");
+    const text = parts.map((part) => part.text).join(" ");
+    expect(text).not.toMatch(/live call|\bmodel\b|seeded scenario/i);
+  });
+
+  it("never claims a live attempt in Safe mode (J26)", () => {
+    const parts = seededChatDecline({ language: "de", mode: "safe", input: "x", roleTitle: "R", liveFailureReason: "anything" });
+    expect(parts[0]?.text).toContain("Modus Sicher");
+    expect(parts.map((part) => part.text).join(" ")).not.toMatch(/Live-Aufruf|Modell/);
   });
 });
 

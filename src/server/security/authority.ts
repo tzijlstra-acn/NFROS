@@ -269,6 +269,16 @@ export const TOOL_REGISTRY: Readonly<Record<string, ToolDefinition>> = Object.fr
   delegateInboxMessage: a("delegateInboxMessage", ["action.create"], "Delegates an inbox message to a named colleague with a simulated internal message. Nothing leaves this machine."),
   draftInboxReply: d("draftInboxReply", ["draft.create"], "Drafts a reply to an inbox message from the message and what was done with it. Sending is a separate step."),
   sendInboxReply: a("sendInboxReply", ["action.create"], "Sends a reply to an inbox message as a simulated message. It never reaches a real recipient."),
+  /*
+   * AI Partner routines (Wave 3). Handlers live in
+   * `src/features/routines/tools.ts`. A routine reads, drafts and proposes;
+   * it never changes a record, so its steps are READ, DRAFT and PROPOSE and
+   * the autonomy level decides whether each may run at all. Meeting
+   * preparation uses `prepareChallengeQuestions` and action follow-up uses
+   * `draftActionReminder`, both above.
+   */
+  proposeInboxTriage: p("proposeInboxTriage", ["recommendation.create"], "Proposes a classification for newly arrived inbox messages, each with its reason, for a person to confirm."),
+  monitorWorkEvents: r("monitorWorkEvents", ["work.read"], "Reads the day's arrivals and source changes for the role, and the open work each one bears on."),
 
   /* ---- PROHIBITED: present so refusal is explicit and testable ---- */
   sendExternalEmail: x("sendExternalEmail", "Sending mail outside this machine is not implemented and is refused by design."),

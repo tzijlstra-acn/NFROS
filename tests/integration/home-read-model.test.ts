@@ -108,15 +108,14 @@ describe("Home at the opening moment", () => {
       const view = readHomeView(roleId, s);
       const rows = getSqlite()
         .prepare(
-          "select revealed_at_moment as m, is_read as r, proposed_triage as p, confirmed_triage as c, linked_action_id as a, linked_decision_id as d from inbox_messages where role_id = ?",
+          "select revealed_at_moment as m, is_read as r, proposed_triage as p, confirmed_triage as c, conversion_kind as k from inbox_messages where role_id = ?",
         )
-        .all(roleId) as Array<{ m: string; r: number; p: string; c: string | null; a: string | null; d: string | null }>;
+        .all(roleId) as Array<{ m: string; r: number; p: string; c: string | null; k: string | null }>;
       const expected = rows.filter(
         (row) =>
           momentToMinutes(row.m) <= momentToMinutes(s.currentMoment) &&
           row.r === 0 &&
-          !row.a &&
-          !row.d &&
+          !["action", "decision", "evidence", "process", "delegated"].includes(row.k ?? "") &&
           ["decision", "action"].includes(row.c ?? row.p),
       ).length;
       expect(view.yourDay.inbox.needsAttention).toBe(expected);
@@ -320,12 +319,17 @@ describe("Home after a change", () => {
     const action = getSqlite()
       .prepare("select id from actions where raised_by_role_id = 'tprm' limit 1")
       .get() as { id: string };
-    getSqlite().prepare("update inbox_messages set linked_action_id = ? where id = ?").run(action.id, message.id);
+    /* As the inbox's link handler records it: the link, and what the message became, by whom (migration 0008). */
+    getSqlite()
+      .prepare("update inbox_messages set linked_action_id = ?, conversion_kind = 'action', converted_by_user_id = 'P-002', converted_at = ? where id = ?")
+      .run(action.id, new Date().toISOString(), message.id);
 
     const after = readHomeView("tprm", s);
     expect(after.yourDay.inbox.needsAttention).toBe(before.yourDay.inbox.needsAttention - 1);
     const conversion = allStatements(after).find((statement) => statement.source === "conversion");
     expect(conversion?.lineage.map((ref) => ref.id)).toStrictEqual([action.id, message.id]);
+    /* P-002 holds the TPRM role, so the statement speaks to them. */
+    expect(conversion?.text).toBe("You converted 1 message into work");
   });
 });
 

@@ -191,8 +191,8 @@ export function integrationReading(counts: ConnectorCounts | null): StatusReadin
   }
   return reading(
     counts.simulated > 0 ? "simulated" : "unavailable",
-    `No connector reads a client system. Of ${total} connectors, ${counts.simulated} are simulated, ${counts.notVerified} are sandbox ready with no credential and ${counts.unavailable} are unavailable or planned.`,
-    `Kein Konnektor liest ein Kundensystem. Von ${total} Konnektoren sind ${counts.simulated} simuliert, ${counts.notVerified} ohne Anmeldedaten sandbox-bereit und ${counts.unavailable} nicht verfuegbar oder geplant.`,
+    `No connector reads a client system. Of ${total} connectors: simulated ${counts.simulated}, sandbox ready with no credential ${counts.notVerified}, unavailable or planned ${counts.unavailable}.`,
+    `Kein Konnektor liest ein Kundensystem. Von ${total} Konnektoren: simuliert ${counts.simulated}, ohne Anmeldedaten sandbox-bereit ${counts.notVerified}, nicht verfuegbar oder geplant ${counts.unavailable}.`,
   );
 }
 

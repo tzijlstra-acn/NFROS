@@ -119,7 +119,7 @@ export function OverviewView({
           <Field label={t(COPY.scope)} value={<Wrap>{say(workspace.businessArea, language)}</Wrap>} />
           <Field
             label={t(COPY.window)}
-            value={`${formatDate(pilot.plannedStartOn, language)} ${language === "de" ? "bis" : "to"} ${formatDate(pilot.plannedEndOn, language)}`}
+            value={pilot.plannedStartOn && pilot.plannedEndOn ? `${formatDate(pilot.plannedStartOn, language)} ${language === "de" ? "bis" : "to"} ${formatDate(pilot.plannedEndOn, language)}` : language === "de" ? "Nicht vereinbart" : "Not agreed"}
           />
           <Field label={t(COPY.cohort)} value={`${workspace.cohort?.userIds.length ?? 0} ${t(COPY.accounts)}`} />
           <Field

@@ -31,8 +31,10 @@
  * not carry them.
  */
 
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { IconSparkles, IconX } from "@tabler/icons-react";
+import { focusFromLocation, focusKey } from "@/features/partner/focus";
 import { PartnerClient, type PartnerClientProps } from "@/components/workday-v2/PartnerClient";
 import {
   ShellContextValue,
@@ -43,7 +45,7 @@ import type { AIPartnerTabId } from "@/components/ai-partner/AIPartnerDock";
 import type { Language } from "@/i18n/labels";
 import { useWorkdayChrome, type WdDrawerTab } from "./ChromeContext";
 import { useBoundContext } from "@/components/work/context-store";
-import { formatSelectionParam } from "@/workday/selection-url";
+import { formatSelectionParam, isSelectionType } from "@/workday/selection-url";
 
 /**
  * The V2 drawer's six tabs onto the V3 drawer's four.
@@ -61,7 +63,7 @@ const DRAWER_TAB_MAP: Record<DrawerTab, WdDrawerTab> = {
   audit: "audit",
 };
 
-type PartnerPayload = Omit<PartnerClientProps, "presence" | "initialTab">;
+type PartnerPayload = Omit<PartnerClientProps, "presence" | "initialTab" | "onPartnerChanged">;
 
 const COPY = {
   title: { en: "AI Partner", de: "KI Partner" },
@@ -101,8 +103,99 @@ export function WorkdayPartnerDock({
 
   /* The Work Hub's bound selection, and the selection the payload was read for. */
   const bound = useBoundContext(roleId);
-  const selectionParam = bound?.ai.selection ? formatSelectionParam(bound.ai.selection) : "";
+  const pathname = usePathname() ?? "";
+  const searchParams = useSearchParams();
+  const router = useRouter();
+  const [hash, setHash] = useState("");
+  const [reloadToken, setReloadToken] = useState(0);
+
+  /*
+   * What the person is looking at, from the workday's own addresses (plan
+   * 4.11: selection updates context). The Work Hub binds its item; Home,
+   * Processes and Decisions name theirs in the address, Decisions in the
+   * hash, which it rewrites without a navigation, so the hash is re-read
+   * after every click and hash change.
+   */
+  useEffect(() => {
+    const read = () => setHash(window.location.hash);
+    read();
+    const onClick = () => window.setTimeout(read, 0);
+    window.addEventListener("hashchange", read);
+    window.addEventListener("popstate", read);
+    document.addEventListener("click", onClick, true);
+    return () => {
+      window.removeEventListener("hashchange", read);
+      window.removeEventListener("popstate", read);
+      document.removeEventListener("click", onClick, true);
+    };
+  }, [pathname]);
+
+  const search = searchParams?.toString() ?? "";
+  const focus = useMemo(
+    () =>
+      focusFromLocation(
+        roleId,
+        { pathname, search: search ? `?${search}` : "", hash },
+        bound ? { kind: bound.kind, itemId: bound.itemId, selection: bound.ai.selection ? { objectType: bound.ai.selection.objectType, objectId: bound.ai.selection.objectId } : null } : null,
+        null,
+      ),
+    [roleId, pathname, search, hash, bound],
+  );
+
+  /*
+   * The selection the dock reads with. The Work Hub's bound selection, else a
+   * Home or Decisions selection, so the conversation and the suggestion
+   * follow the object on screen everywhere, not only in Work.
+   */
+  const selectionParam = bound?.ai.selection
+    ? formatSelectionParam(bound.ai.selection)
+    : focus.surface !== "work" && focus.selection && isSelectionType(focus.selection.objectType)
+      ? `${focus.selection.objectType}:${focus.selection.objectId}`
+      : "";
   const [loadedFor, setLoadedFor] = useState<string | null>(null);
+  const loadKey = `${selectionParam}|${reloadToken}`;
+
+  /*
+   * Keep the durable context, settle answered suggestions and run what the
+   * scenario clock has made due (`/api/workday/partner/sync`). On every focus
+   * change, and once a minute while the page is visible, because the clock
+   * can move without a navigation. Runs whether or not the dock was ever
+   * opened: routines are the product's work, not the panel's.
+   */
+  const focusSignature = focusKey(focus);
+  const lastSync = useRef<string | null>(null);
+  useEffect(() => {
+    let cancelled = false;
+    const sync = async (force: boolean) => {
+      if (!force && lastSync.current === focusSignature) return;
+      lastSync.current = focusSignature;
+      try {
+        const response = await fetch("/api/workday/partner/sync", {
+          method: "POST",
+          headers: { "content-type": "application/json" },
+          body: JSON.stringify({ roleId, focus }),
+          cache: "no-store",
+        });
+        if (!response.ok || cancelled) return;
+        const body = (await response.json()) as { changed?: boolean };
+        if (body.changed && !cancelled) {
+          setReloadToken((value) => value + 1);
+          router.refresh();
+        }
+      } catch {
+        // The frame keeps working without the Partner's sync; the next one catches up.
+      }
+    };
+    void sync(false);
+    const timer = window.setInterval(() => {
+      if (document.visibilityState === "visible") void sync(true);
+    }, 60_000);
+    return () => {
+      cancelled = true;
+      window.clearInterval(timer);
+    };
+    // The focus object is rebuilt on render; its signature is what changes.
+  }, [roleId, focusSignature, router]);
 
   /*
    * Fetched once and kept. Closing the dock and opening it again must not
@@ -152,7 +245,7 @@ export function WorkdayPartnerDock({
      * chat reads the selection at send time. The selection travels in the
      * `selection` parameter the partner route already parses.
      */
-    if (payload !== null && loadedFor === selectionParam) return;
+    if (payload !== null && loadedFor === loadKey) return;
     if (failed) return;
 
     const controller = new AbortController();
@@ -171,7 +264,7 @@ export function WorkdayPartnerDock({
         const body = (await response.json()) as PartnerPayload;
         if (cancelled) return;
         setPayload(body);
-        setLoadedFor(selectionParam);
+        setLoadedFor(loadKey);
         setFailed(false);
       } catch {
         /*
@@ -182,7 +275,7 @@ export function WorkdayPartnerDock({
          * the conversation on screen rather than replacing it with an error.
          */
         if (cancelled) return;
-        if (hadPayload) setLoadedFor(selectionParam);
+        if (hadPayload) setLoadedFor(loadKey);
         else setFailed(true);
       }
     })();
@@ -191,7 +284,10 @@ export function WorkdayPartnerDock({
       cancelled = true;
       controller.abort();
     };
-  }, [open, roleId, attempt, payload, failed, selectionParam, loadedFor]);
+  }, [open, roleId, attempt, payload, failed, selectionParam, loadedFor, loadKey]);
+
+  /* After an answer or feedback, the dock re-reads its data in place; the conversation stays. */
+  const onPartnerChanged = useCallback(() => setReloadToken((value) => value + 1), []);
 
   /*
    * The bridge. `openDrawer` is the only member the dock uses that has to
@@ -274,7 +370,7 @@ export function WorkdayPartnerDock({
           </div>
         ) : payload ? (
           <ShellContextValue.Provider value={bridged}>
-            <PartnerClient {...payload} initialTab={initialTab} showPosture={false} />
+            <PartnerClient {...payload} initialTab={initialTab} showPosture={false} onPartnerChanged={onPartnerChanged} />
           </ShellContextValue.Provider>
         ) : (
           <div className="wd-empty" aria-busy="true">

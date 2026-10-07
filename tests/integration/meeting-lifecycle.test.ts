@@ -347,11 +347,12 @@ describe("confirmation", () => {
     const minutes = getMinutesById(WORKSHOP_MINUTES);
     expect(minutes).toMatchObject({ status: "distributed", confirmedByUserId: "P-003", evidenceDocumentId: "EVD-MIN-2026-0005" });
     expect(minutes?.actionIds).toEqual(expect.arrayContaining(["MSN-2026-0005-A01", "MSN-2026-0005-A02", "MSN-2026-0166"]));
-    const message = row<{ recipients: string; simulated: number }>(
-      "select to_user_ids as recipients, simulated_only as simulated from collaboration_messages where related_object_kind = 'minutes' and related_object_id = ?",
+    const message = row<{ recipients: string; simulated: number; kind: string }>(
+      "select to_user_ids as recipients, simulated_only as simulated, kind from collaboration_messages where related_object_kind = 'minutes' and related_object_id = ?",
       WORKSHOP_MINUTES,
     );
     expect(message.simulated).toBe(1);
+    expect(message.kind).toBe("minutes-distribution");
     expect(JSON.parse(message.recipients)).toStrictEqual(["P-003", "P-007", "P-008", "P-004"]);
     expect(count("select count(*) as n from audit_events where action = 'distributeMeetingMinutes' and category = 'mutation'")).toBe(1);
 

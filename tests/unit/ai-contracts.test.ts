@@ -1,8 +1,14 @@
 /**
  * AI quality contract unit suite.
  *
- * Covers the envelope validator, the source completeness derivation, the
- * prompt registry lookup, and the two seeded offline responses.
+ * Covers the envelope validator, the source completeness derivation and the
+ * prompt registry lookup.
+ *
+ * The two hand written offline envelopes that used to live in
+ * `src/ai/offline-responses.ts` are gone: no screen or engine path read them,
+ * and their text ("BCA-CTRL-142", "4 of 7") contradicted the seeded day.
+ * Offline output is now composed from the records by the process engine,
+ * the meeting and inbox AI layers and the routines, and validated there.
  *
  * No rendering. The contract types and functions are pure, and they are
  * tested directly rather than through a DOM harness.
@@ -21,10 +27,6 @@ import {
   getReleasedConfig,
   AI_CONFIGURATION_REGISTRY,
 } from "@/ai/prompt-registry";
-import {
-  RCSA_EVIDENCE_REFRESH_OFFLINE_RESPONSE,
-  TPRM_EVIDENCE_REVIEW_OFFLINE_RESPONSE,
-} from "@/ai/offline-responses";
 
 /* ==========================================================================
    validateEnvelope
@@ -204,65 +206,36 @@ describe("getReleasedConfig", () => {
 });
 
 /* ==========================================================================
-   Seeded offline responses
+   A limited envelope
    ========================================================================== */
 
-describe("RCSA_EVIDENCE_REFRESH_OFFLINE_RESPONSE", () => {
-  it("validates cleanly", () => {
-    const errors = validateEnvelope(RCSA_EVIDENCE_REFRESH_OFFLINE_RESPONSE);
-    expect(errors).toEqual([]);
+describe("a limited envelope", () => {
+  const limited: AssistantResponseEnvelope = {
+    responseId: "RESP-TEST-LIMITED",
+    mode: "offline",
+    context: { roleId: "rcsa", subjectKind: "assessment", subjectId: "RCSA-ARC-DE-PAYOPS-2026-Q4", processRunId: null, stageRunId: null },
+    parts: [
+      { type: "answer", text: "Part of the evidence is available.", lang: "en" },
+      { type: "uncertainty", description: "A required source has not arrived.", requiredForCompletion: true },
+      { type: "recommendation", text: "Proceed with what is available and chase the rest.", basis: [], isLimited: true },
+    ],
+    sourceIds: [],
+    requiredSourceStatus: [{ sourceKind: "kri-data", sourceId: null, status: "unavailable" }],
+    isLimited: true,
+    generatedAt: "2026-10-06T07:45:00Z",
+  };
+
+  it("validates, and its completeness follows the unavailable source", () => {
+    expect(validateEnvelope(limited)).toEqual([]);
+    expect(computeSourceCompleteness(limited.requiredSourceStatus)).toBe("evidence-incomplete");
   });
 
-  it("is in offline mode", () => {
-    expect(RCSA_EVIDENCE_REFRESH_OFFLINE_RESPONSE.mode).toBe("offline");
-  });
-
-  it("is marked as limited due to missing sources", () => {
-    expect(RCSA_EVIDENCE_REFRESH_OFFLINE_RESPONSE.isLimited).toBe(true);
-  });
-
-  it("contains an answer, a fact, an inference, an uncertainty and a recommendation", () => {
-    const types = RCSA_EVIDENCE_REFRESH_OFFLINE_RESPONSE.parts.map((p) => p.type);
-    expect(types).toContain("answer");
-    expect(types).toContain("fact");
-    expect(types).toContain("inference");
-    expect(types).toContain("uncertainty");
-    expect(types).toContain("recommendation");
-  });
-
-  it("has at least one unavailable required source", () => {
-    const unavailable = RCSA_EVIDENCE_REFRESH_OFFLINE_RESPONSE.requiredSourceStatus.filter(
-      (s) => s.status === "unavailable"
-    );
-    expect(unavailable.length).toBeGreaterThan(0);
-  });
-});
-
-describe("TPRM_EVIDENCE_REVIEW_OFFLINE_RESPONSE", () => {
-  it("validates cleanly", () => {
-    const errors = validateEnvelope(TPRM_EVIDENCE_REVIEW_OFFLINE_RESPONSE);
-    expect(errors).toEqual([]);
-  });
-
-  it("is in offline mode", () => {
-    expect(TPRM_EVIDENCE_REVIEW_OFFLINE_RESPONSE.mode).toBe("offline");
-  });
-
-  it("is marked as limited due to missing sources", () => {
-    expect(TPRM_EVIDENCE_REVIEW_OFFLINE_RESPONSE.isLimited).toBe(true);
-  });
-
-  it("contains an answer part with tprm context", () => {
-    const answer = TPRM_EVIDENCE_REVIEW_OFFLINE_RESPONSE.parts.find(
-      (p) => p.type === "answer"
-    );
-    expect(answer).toBeDefined();
-  });
-
-  it("has at least one unavailable required source", () => {
-    const unavailable = TPRM_EVIDENCE_REVIEW_OFFLINE_RESPONSE.requiredSourceStatus.filter(
-      (s) => s.status === "unavailable"
-    );
-    expect(unavailable.length).toBeGreaterThan(0);
+  it("no obsolete offline envelope text remains in the AI layer", async () => {
+    const fs = await import("node:fs");
+    const path = await import("node:path");
+    const dir = path.resolve(__dirname, "../../src/ai");
+    const text = fs.readdirSync(dir).map((file) => fs.readFileSync(path.join(dir, file), "utf8")).join(" ");
+    expect(text).not.toContain("BCA-CTRL-142");
+    expect(text).not.toContain("4 of 7");
   });
 });

@@ -29,6 +29,7 @@ import {
   NEXT_LIMIT,
 } from "@/db/repositories/focus";
 import { getActiveSuggestions } from "@/db/repositories/partner";
+import { getOutputsForRoutineRuns } from "@/db/repositories/ai-routine-runs";
 import {
   getBackgroundWork,
   getCalendar,
@@ -220,7 +221,10 @@ export function readHomeView(roleId: RoleId, state: ScenarioState): HomeView {
     (decisions ?? []).filter((entry) => entry.decision.status !== "open").map((entry) => entry.decision.id),
   );
   // A suggestion whose decision has been made is history, stated in the Partner update, not a prompt.
-  const first = suggestions?.find((row) => row.decisionId === null || !settled.has(row.decisionId));
+  // A routine's suggestion (`SUG-RTN-`) is stated by its run in the Partner update, not as the inline line.
+  const first = suggestions?.find(
+    (row) => !row.id.startsWith("SUG-RTN-") && (row.decisionId === null || !settled.has(row.decisionId)),
+  );
   const lead = first ? (first.actionsCompleted[0] ?? first.checksCompleted[0] ?? null) : null;
   const suggestion =
     first && lead ? { id: first.id, body: firstClause(lead), href: `/workday/${roleId}/decisions` } : null;
@@ -325,11 +329,28 @@ export function readHomeView(roleId: RoleId, state: ScenarioState): HomeView {
         }))
     : null;
 
+  /*
+   * Routine lineage (AI Partner, Wave 3). A routine run states what it
+   * prepared, each output linked; the suggestions it prepared are stated by
+   * that run, not a second time as prepared suggestions.
+   */
+  const routineEvents = backbone?.filter((event) => event.type === "routine-completed") ?? null;
+  const routineOutputs =
+    guarded("routine runs", () =>
+      getOutputsForRoutineRuns(
+        (routineEvents ?? [])
+          .map((event) => event.payload["routineRunId"])
+          .filter((value): value is string => typeof value === "string"),
+      ),
+    ) ?? new Map<string, Array<{ objectKind: string; objectId: string }>>();
+  const routineSuggestions = new Set<string>();
+  for (const list of routineOutputs.values()) for (const output of list) if (output.objectKind === "suggestion") routineSuggestions.add(output.objectId);
+
   const partner = assemblePartnerUpdate({
     roleId,
     language,
     suggestions:
-      suggestions?.map((row) => ({
+      suggestions?.filter((row) => !routineSuggestions.has(row.id)).map((row) => ({
         id: row.id,
         headline: row.headline,
         status: row.status,
@@ -350,16 +371,17 @@ export function readHomeView(roleId: RoleId, state: ScenarioState): HomeView {
           activityEntryId: event.activityEntryId,
         })) ?? null,
     routines:
-      backbone
-        ?.filter((event) => event.type === "routine-completed")
-        .map((event) => ({
-          id: event.id,
-          summary: event.summary,
-          atMoment: event.atMoment,
-          subjectKind: event.subjectKind,
-          subjectId: event.subjectId,
-          activityEntryId: event.activityEntryId,
-        })) ?? null,
+      routineEvents?.map((event) => ({
+        id: event.id,
+        summary: event.summary,
+        atMoment: event.atMoment,
+        subjectKind: event.subjectKind,
+        subjectId: event.subjectId,
+        activityEntryId: event.activityEntryId,
+        outputs: (typeof event.payload["routineRunId"] === "string" ? (routineOutputs.get(event.payload["routineRunId"]) ?? []) : []).map(
+          (output) => ({ kind: output.objectKind, id: output.objectId }),
+        ),
+      })) ?? null,
     receipts,
     conversions:
       inbox?.map((row) => ({

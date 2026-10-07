@@ -1,12 +1,15 @@
 /**
- * Product Owner Console: operations. Being built by os-console-core.
+ * Product Owner Console: Operations, a summary of `/ops`.
+ *
+ * Thin: the readings come from `src/product/status/sources.ts`, the same
+ * functions the operations console uses.
  */
 
 import { readAdminLanguage } from "@/product/status/sources";
-import { InPreparation } from "@/features/product/shell/InPreparation";
+import { OperationsSummary } from "@/features/product/operations/OperationsSummary";
 
 export const dynamic = "force-dynamic";
 
-export default function ConsoleSectionInPreparation() {
-  return <InPreparation sectionId="operations" language={readAdminLanguage()} />;
+export default function ProductOperationsPage() {
+  return <OperationsSummary language={readAdminLanguage()} />;
 }

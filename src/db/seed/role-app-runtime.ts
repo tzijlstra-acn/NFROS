@@ -161,127 +161,39 @@ export const roleAppStageRunsData: NewStageRun[] = [
 
 const SCHEDULE_CONFIG = { frequency: "daily", time: "07:00" };
 const PRE_MEETING_CONFIG = { offsetMinutes: -30 };
+const HOURLY_CONFIG = { frequency: "hourly" };
+const ON_ARRIVAL_CONFIG = { on: "message-arrival" };
+const FOLLOW_UP_CONFIG = { frequency: "daily", time: "09:00" };
+
+/*
+ * The routines each role runs, and their triggers.
+ *
+ * No run time is seeded (audit T29). A routine has run only when the routine
+ * runner (`src/features/routines/runner.ts`) has recorded a run in
+ * `ai_routine_runs`; the runner then stamps `last_run_at` on the scenario
+ * clock. Before that the Processes list says the routine has not run, which
+ * is true. The morning brief, the calendar scan and the freshness check have
+ * no runner in this release and never run.
+ */
+function routine(row: Omit<NewAIRoutine, "runId" | "status" | "lastRunAt" | "nextRunAt">): NewAIRoutine {
+  return { ...row, runId: DEFAULT_RUN_ID, status: "active", lastRunAt: null, nextRunAt: null };
+}
 
 export const aiRoutinesData: NewAIRoutine[] = [
   /* ---- RCSA routines ---- */
-  {
-    id: "morning-brief-rcsa",
-    runId: DEFAULT_RUN_ID,
-    roleId: "rcsa",
-    name: "Morning Brief",
-    triggerType: "schedule",
-    triggerConfig: SCHEDULE_CONFIG,
-    status: "active",
-    authorityClass: "READ",
-    outputKind: "morning-brief",
-    lastRunAt: "2026-10-06T07:00:00.000Z",
-    nextRunAt: "2026-10-07T07:00:00.000Z",
-  },
-  {
-    id: "calendar-scan-rcsa",
-    runId: DEFAULT_RUN_ID,
-    roleId: "rcsa",
-    name: "Calendar Scan",
-    triggerType: "schedule",
-    triggerConfig: SCHEDULE_CONFIG,
-    status: "active",
-    authorityClass: "READ",
-    outputKind: "calendar-digest",
-    lastRunAt: "2026-10-06T07:05:00.000Z",
-    nextRunAt: "2026-10-07T07:05:00.000Z",
-  },
-  {
-    id: "pre-meeting-prep-rcsa",
-    runId: DEFAULT_RUN_ID,
-    roleId: "rcsa",
-    name: "Pre-Meeting Preparation",
-    triggerType: "before-meeting",
-    triggerConfig: PRE_MEETING_CONFIG,
-    status: "active",
-    authorityClass: "DRAFT",
-    outputKind: "meeting-preparation",
-    lastRunAt: "2026-10-06T10:00:00.000Z",
-    nextRunAt: null,
-  },
-  {
-    id: "kri-control-watch",
-    runId: DEFAULT_RUN_ID,
-    roleId: "rcsa",
-    name: "KRI and Control Watch",
-    triggerType: "schedule",
-    triggerConfig: { frequency: "hourly" },
-    status: "active",
-    authorityClass: "READ",
-    outputKind: "alert-digest",
-    lastRunAt: "2026-10-06T07:30:00.000Z",
-    nextRunAt: "2026-10-06T08:30:00.000Z",
-  },
-  {
-    id: "evidence-freshness-rcsa",
-    runId: DEFAULT_RUN_ID,
-    roleId: "rcsa",
-    name: "Evidence Freshness Check",
-    triggerType: "schedule",
-    triggerConfig: { frequency: "weekly", dayOfWeek: 1 },
-    status: "active",
-    authorityClass: "READ",
-    outputKind: "freshness-report",
-    lastRunAt: "2026-09-29T06:00:00.000Z",
-    nextRunAt: "2026-10-06T06:00:00.000Z",
-  },
+  routine({ id: "morning-brief-rcsa", roleId: "rcsa", name: "Morning Brief", triggerType: "schedule", triggerConfig: SCHEDULE_CONFIG, authorityClass: "READ", outputKind: "morning-brief" }),
+  routine({ id: "calendar-scan-rcsa", roleId: "rcsa", name: "Calendar Scan", triggerType: "schedule", triggerConfig: SCHEDULE_CONFIG, authorityClass: "READ", outputKind: "calendar-digest" }),
+  routine({ id: "pre-meeting-prep-rcsa", roleId: "rcsa", name: "Pre-Meeting Preparation", triggerType: "before-meeting", triggerConfig: PRE_MEETING_CONFIG, authorityClass: "DRAFT", outputKind: "meeting-preparation" }),
+  routine({ id: "kri-control-watch", roleId: "rcsa", name: "KRI and Control Watch", triggerType: "schedule", triggerConfig: HOURLY_CONFIG, authorityClass: "READ", outputKind: "alert-digest" }),
+  routine({ id: "evidence-freshness-rcsa", roleId: "rcsa", name: "Evidence Freshness Check", triggerType: "schedule", triggerConfig: { frequency: "weekly", dayOfWeek: 1 }, authorityClass: "READ", outputKind: "freshness-report" }),
+  routine({ id: "action-follow-up-rcsa", roleId: "rcsa", name: "Action Follow-up", triggerType: "schedule", triggerConfig: FOLLOW_UP_CONFIG, authorityClass: "DRAFT", outputKind: "follow-up-digest" }),
+  routine({ id: "inbox-triage-rcsa", roleId: "rcsa", name: "Inbox Triage", triggerType: "event", triggerConfig: ON_ARRIVAL_CONFIG, authorityClass: "PROPOSE", outputKind: "inbox-triage" }),
   /* ---- TPRM routines ---- */
-  {
-    id: "morning-brief-tprm",
-    runId: DEFAULT_RUN_ID,
-    roleId: "tprm",
-    name: "Morning Brief",
-    triggerType: "schedule",
-    triggerConfig: SCHEDULE_CONFIG,
-    status: "active",
-    authorityClass: "READ",
-    outputKind: "morning-brief",
-    lastRunAt: "2026-10-06T07:00:00.000Z",
-    nextRunAt: "2026-10-07T07:00:00.000Z",
-  },
-  {
-    id: "pre-meeting-prep-tprm",
-    runId: DEFAULT_RUN_ID,
-    roleId: "tprm",
-    name: "Pre-Meeting Preparation",
-    triggerType: "before-meeting",
-    triggerConfig: PRE_MEETING_CONFIG,
-    status: "active",
-    authorityClass: "DRAFT",
-    outputKind: "meeting-preparation",
-    lastRunAt: null,
-    nextRunAt: null,
-  },
-  {
-    id: "supplier-monitoring-watch",
-    runId: DEFAULT_RUN_ID,
-    roleId: "tprm",
-    name: "Supplier Monitoring Watch",
-    triggerType: "schedule",
-    triggerConfig: { frequency: "daily", time: "08:00" },
-    status: "active",
-    authorityClass: "READ",
-    outputKind: "supplier-alert-digest",
-    lastRunAt: "2026-10-06T08:00:00.000Z",
-    nextRunAt: "2026-10-07T08:00:00.000Z",
-  },
-  {
-    id: "evidence-request-followup",
-    runId: DEFAULT_RUN_ID,
-    roleId: "tprm",
-    name: "Evidence-Request Follow-up",
-    triggerType: "schedule",
-    triggerConfig: { frequency: "daily", time: "09:00" },
-    status: "active",
-    authorityClass: "DRAFT",
-    outputKind: "follow-up-digest",
-    lastRunAt: "2026-10-06T09:00:00.000Z",
-    nextRunAt: "2026-10-07T09:00:00.000Z",
-  },
+  routine({ id: "morning-brief-tprm", roleId: "tprm", name: "Morning Brief", triggerType: "schedule", triggerConfig: SCHEDULE_CONFIG, authorityClass: "READ", outputKind: "morning-brief" }),
+  routine({ id: "pre-meeting-prep-tprm", roleId: "tprm", name: "Pre-Meeting Preparation", triggerType: "before-meeting", triggerConfig: PRE_MEETING_CONFIG, authorityClass: "DRAFT", outputKind: "meeting-preparation" }),
+  routine({ id: "supplier-monitoring-watch", roleId: "tprm", name: "Supplier Monitoring Watch", triggerType: "schedule", triggerConfig: HOURLY_CONFIG, authorityClass: "READ", outputKind: "supplier-alert-digest" }),
+  routine({ id: "evidence-request-followup", roleId: "tprm", name: "Evidence-Request Follow-up", triggerType: "schedule", triggerConfig: FOLLOW_UP_CONFIG, authorityClass: "DRAFT", outputKind: "follow-up-digest" }),
+  routine({ id: "inbox-triage-tprm", roleId: "tprm", name: "Inbox Triage", triggerType: "event", triggerConfig: ON_ARRIVAL_CONFIG, authorityClass: "PROPOSE", outputKind: "inbox-triage" }),
 ];
 
 /* ==========================================================================
