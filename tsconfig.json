@@ -44,13 +44,16 @@
     ".next-verify/types/**/*.ts",
     ".next-verify/dev/types/**/*.ts",
     ".next-showcase/types/**/*.ts",
-    ".next-showcase/dev/types/**/*.ts"
+    ".next-showcase/dev/types/**/*.ts",
+    ".next-showcase-prod/types/**/*.ts",
+    ".next-showcase-prod/dev/types/**/*.ts"
   ],
   "exclude": [
     "node_modules",
     "exports",
     ".next",
     ".next-os-*",
-    ".next-showcase"
+    ".next-showcase",
+    ".next-showcase-prod"
   ]
 }
