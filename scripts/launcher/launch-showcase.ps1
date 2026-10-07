@@ -20,11 +20,20 @@ $stampFile = Join-Path $repo "$buildDir\nfros-build-stamp.txt"
 Set-Location $repo
 $Host.UI.RawUI.WindowTitle = "NFROS showcase (port $port)"
 
-if (Get-NetTCPConnection -State Listen -LocalPort $port -ErrorAction SilentlyContinue) {
+# A direct connection test: Get-NetTCPConnection takes several seconds per call on Windows
+function Test-Port([int]$p) {
+  $client = New-Object System.Net.Sockets.TcpClient
+  try { return $client.ConnectAsync("127.0.0.1", $p).Wait(300) } catch { return $false } finally { $client.Dispose() }
+}
+
+if (Test-Port $port) {
   Write-Host "NFROS is already running. Opening $url"
   Start-Process $url
   exit 0
 }
+
+# The browser opens at once on a local starting page, which switches to NFROS when it answers
+Start-Process (Join-Path $PSScriptRoot "starting.html")
 
 $env:NFR_DB_PATH = $db
 $env:NFR_DEMO_MODE = "safe"
@@ -64,19 +73,6 @@ if ($Dev) {
     }
   }
 }
-
-# Open the browser once the server answers
-Start-Job -ScriptBlock {
-  param($port, $url)
-  for ($i = 0; $i -lt 300; $i++) {
-    if (Get-NetTCPConnection -State Listen -LocalPort $port -ErrorAction SilentlyContinue) {
-      try { Invoke-WebRequest -Uri $url -UseBasicParsing -TimeoutSec 120 | Out-Null } catch {}
-      Start-Process $url
-      return
-    }
-    Start-Sleep -Seconds 2
-  }
-} -ArgumentList $port, $url | Out-Null
 
 Write-Host ""
 Write-Host "Starting NFROS on $url"

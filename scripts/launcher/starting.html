@@ -1,0 +1,44 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Starting NFROS</title>
+<style>
+  html, body { margin: 0; height: 100%; font-family: "Segoe UI", Arial, sans-serif; background: #f5f6f8; color: #171c24; }
+  main { height: 100%; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 16px; }
+  .mark { width: 56px; height: 56px; }
+  h1 { margin: 0; font-size: 22px; font-weight: 600; }
+  p { margin: 0; color: #5a6372; font-size: 14px; }
+  .bar { width: 220px; height: 3px; background: #e4e7ec; overflow: hidden; }
+  .bar span { display: block; width: 40%; height: 100%; background: #5b4ff5; animation: slide 1.2s ease-in-out infinite; }
+  @keyframes slide { from { transform: translateX(-100%); } to { transform: translateX(250%); } }
+  @media (prefers-reduced-motion: reduce) { .bar span { animation: none; width: 100%; } }
+</style>
+</head>
+<body>
+<main>
+  <svg class="mark" viewBox="0 0 32 32" aria-hidden="true">
+    <rect width="32" height="32" rx="7" fill="#0f1216" />
+    <path d="M9 23V13.5a7 7 0 0 1 14 0V23" fill="none" stroke="#f4f6f8" stroke-width="2.2" stroke-linecap="round" />
+    <circle cx="16" cy="8.6" r="2" fill="#8b82ff" />
+  </svg>
+  <h1>Starting NFROS</h1>
+  <p id="status">The workday opens here as soon as it is ready.</p>
+  <div class="bar"><span></span></div>
+  <p>Synthetic institution and data</p>
+</main>
+<script>
+  // Polls the local server and opens the product the moment it answers
+  const target = "http://localhost:3200/";
+  async function poll() {
+    try {
+      await fetch(target + "api/health/ai", { mode: "no-cors", cache: "no-store" });
+      window.location.replace(target);
+    } catch {
+      setTimeout(poll, 700);
+    }
+  }
+  poll();
+</script>
+</body>
+</html>
