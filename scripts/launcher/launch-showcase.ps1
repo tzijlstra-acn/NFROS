@@ -54,12 +54,13 @@ if ($Dev) {
   $env:NFR_DIST_DIR = ".next-showcase"
 } else {
   $env:NFR_DIST_DIR = $buildDir
-  # The code version: the commit plus a digest of any uncommitted changes
-  $head = (git rev-parse HEAD) 2>$null
+  # The code version: git's tree ids for the app's own code (unchanged by commits that touch only
+  # docs, tests or this launcher) plus a digest of any uncommitted changes to it
+  $head = (git rev-parse HEAD:app HEAD:src HEAD:public HEAD:next.config.ts HEAD:package.json) 2>$null | Out-String
   # Tracked changes only: a full status scan of this repo takes seconds
   $dirty = (git diff HEAD -- app src public next.config.ts package.json) 2>$null | Out-String
   $hasher = [System.Security.Cryptography.SHA256]::Create()
-  $stamp = "$head " + [BitConverter]::ToString($hasher.ComputeHash([Text.Encoding]::UTF8.GetBytes($dirty))).Replace("-", "")
+  $stamp = [BitConverter]::ToString($hasher.ComputeHash([Text.Encoding]::UTF8.GetBytes($head + $dirty))).Replace("-", "")
   $built = (Test-Path (Join-Path $repo "$buildDir\BUILD_ID")) -and (Test-Path $stampFile) -and ((Get-Content $stampFile -Raw).Trim() -eq $stamp)
   if (-not $built) {
     Write-Host "Building NFROS for fast loading (about 10 minutes, only after code changes)..."
