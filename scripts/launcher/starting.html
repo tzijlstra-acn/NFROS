@@ -32,7 +32,8 @@
   const target = "http://localhost:3200/";
   async function poll() {
     try {
-      await fetch(target + "api/health/ai", { mode: "no-cors", cache: "no-store" });
+      // The landing page itself, so the switch happens once it has rendered
+      await fetch(target, { mode: "no-cors", cache: "no-store" });
       window.location.replace(target);
     } catch {
       setTimeout(poll, 700);

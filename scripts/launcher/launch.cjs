@@ -116,4 +116,12 @@ function run(command, commandArgs) {
   say("");
   const server = spawn(process.execPath, [nextBin, mode, "-p", String(port)], { stdio: "inherit", env: process.env });
   server.on("exit", (code) => process.exit(code ?? 0));
+
+  // The first request after a start loads the server code and data; make it here, not in the
+  // presenter's first click. The starting page waits for the landing page to render.
+  while (!(await portAnswers())) await new Promise((r) => setTimeout(r, 500));
+  for (const path of ["/", "/workday", "/workday/rcsa", "/workday/tprm", "/workday/rcsa/work", "/workday/rcsa/processes/rcsa-cycle", "/workday/rcsa/decisions", "/product"]) {
+    try { await fetch(url.replace(/\/$/, "") + path); } catch {}
+  }
+  say("NFROS is warmed up and ready.");
 })();
