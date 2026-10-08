@@ -107,7 +107,7 @@ bank's legal, regulatory, security, and model-risk framework.
 
 ## Quick start
 
-Prerequisites: Node.js 20.9 or later. No Docker. No cloud account.
+Prerequisites: Node.js 20.9 or later. No Docker required. No cloud account.
 
 ```bash
 npm install
@@ -132,6 +132,10 @@ Then open:
 | Administration, AI quality | http://localhost:3000/settings/ai-quality |
 | Administration, pilot readiness | http://localhost:3000/settings/pilot |
 | Administration, audit integrity | http://localhost:3000/settings/audit-integrity |
+| Product Owner Console | http://localhost:3000/product |
+| Product Owner Console, Role Apps, Releases, Quality | http://localhost:3000/product/role-apps, /product/releases, /product/quality |
+| Product Owner Console, Integrations, Feedback | http://localhost:3000/product/integrations, /product/feedback |
+| Product Owner Console, Pilot and Value | http://localhost:3000/product/pilot, /product/value |
 | Operations console | http://localhost:3000/ops |
 | Control room, mode and reset | http://localhost:3000/control-room |
 | Trust and authority | http://localhost:3000/trust |
@@ -140,6 +144,32 @@ Then open:
 | AI health, JSON | http://localhost:3000/api/health/ai |
 
 If port 3000 is taken, pass another: `next dev -p 3001`.
+
+### Upgrading an existing database
+
+Pulling a newer release can add migrations. With the dev server stopped:
+
+```bash
+npm run db:migrate
+npm run demo:reset
+```
+
+### One-click showcase
+
+`Launch NFROS.cmd` (Windows; a desktop shortcut can point at it) starts a
+self-contained showcase on http://localhost:3200:
+
+- its own database, `data/showcase.db`, created and seeded on first launch;
+  the demonstration database and port 3000 are never touched;
+- a production build (`.next-showcase-prod`), built once and again only when
+  the app's code changes, so pages load in a fraction of a second rather than
+  compiling on first visit as `next dev` does;
+- a local starting page that opens at once and switches to the product when it
+  is ready, with the main pages warmed up in the background.
+
+Keep its window open while presenting; closing it stops the server. Delete
+`data/showcase.db` to start the showcase day again. `Launch NFROS.cmd --rebuild`
+forces a fresh build and `--dev` runs the development server instead.
 
 ### Which interface you get
 
@@ -585,6 +615,8 @@ the sources.
 | File | Contents |
 |---|---|
 | `docs/OS_PRODUCT_EXCELLENCE_PLAN.md` | **The current improvement programme for the two flagship Role Operating Systems** |
+| `docs/handoffs/os-excellence-audit.md` | The baseline audit the programme started from: 102 defects with evidence |
+| `docs/handoffs/os-excellence-*.md` | One handoff per workstream: what changed, acceptance evidence, tests, limitations |
 | `docs/SCENARIO_BIBLE.md` | The single source of truth for all synthetic content |
 | `docs/NFR_ROLE_AND_WORK_ATLAS.md` | The six roles, five lanes, and what is common versus function specific |
 | `docs/EXPERIENCE_MAP.md` | All sixty cells: ten moments by six roles, today versus future |
