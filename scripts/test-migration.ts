@@ -18,7 +18,7 @@
 import { getSqlite } from "@/db/client";
 import { ROLE_APP_REGISTRY } from "@/role-apps/registry";
 
-/** The tables migrations 0006 (AI Partner, Product Owner Console, personalisation) and 0008 create. */
+/** The tables migrations 0006 (AI Partner, Product Owner Console, personalisation), 0008 and 0009 create. */
 const tables0006 = [
   "ai_routine_runs", "ai_routine_run_outputs", "ai_suggestion_dispositions", "ai_feedback", "partner_contexts",
   "notifications", "role_app_versions", "role_app_lifecycle_events", "role_app_enablements", "product_cohorts",
@@ -28,6 +28,8 @@ const tables0006 = [
   "experience_events", "user_preferences", "saved_views", "user_object_lists",
   /* 0008 */
   "process_stage_inputs",
+  /* 0009 */
+  "skills",
 ];
 
 /** Columns migrations 0006, 0007 and 0008 add to existing tables. */
@@ -138,7 +140,7 @@ function main(): void {
   // 4. Migration 0006: tables, columns and the seeded product state
   const missingTables = tables0006.filter((table) => !existing.includes(table));
   if (missingTables.length === 0) {
-    console.log(`  [PASS] The ${tables0006.length} tables of migrations 0006 and 0008 exist`);
+    console.log(`  [PASS] The ${tables0006.length} tables of migrations 0006, 0008 and 0009 exist`);
     passed++;
   } else {
     console.error(`  [FAIL] Missing tables ${missingTables.join(", ")}: run npm run db:migrate`);

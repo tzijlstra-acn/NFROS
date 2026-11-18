@@ -64,6 +64,13 @@
       "when": 1791309137848,
       "tag": "0008_inbox_lineage_and_stage_inputs",
       "breakpoints": true
+    },
+    {
+      "idx": 9,
+      "version": "6",
+      "when": 1794931771355,
+      "tag": "0009_skills",
+      "breakpoints": true
     }
   ]
 }

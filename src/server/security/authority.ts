@@ -279,6 +279,13 @@ export const TOOL_REGISTRY: Readonly<Record<string, ToolDefinition>> = Object.fr
    */
   proposeInboxTriage: p("proposeInboxTriage", ["recommendation.create"], "Proposes a classification for newly arrived inbox messages, each with its reason, for a person to confirm."),
   monitorWorkEvents: r("monitorWorkEvents", ["work.read"], "Reads the day's arrivals and source changes for the role, and the open work each one bears on."),
+  /*
+   * Skills (Processes, Skills). A person's own saved query, drafted from a
+   * sentence and checked against the skills catalog. Handler in
+   * `src/features/skills/tools.ts`. It reads the role's records in the role's
+   * scope and returns rows; it never writes, so it is READ at every level.
+   */
+  runSkill: r("runSkill", ["work.read", "evidence.read"], "Runs a person's skill: a catalog-checked, read-only query over the role's records, scoped to the role's entity and the current moment."),
 
   /* ---- PROHIBITED: present so refusal is explicit and testable ---- */
   sendExternalEmail: x("sendExternalEmail", "Sending mail outside this machine is not implemented and is refused by design."),

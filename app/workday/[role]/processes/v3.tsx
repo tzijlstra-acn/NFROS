@@ -11,6 +11,10 @@
  * trigger, status and run times. The page does not compose a summary of what
  * a routine found, because that would be a static account of live work.
  *
+ * A third sub-view is Skills (?view=skills): the person's own read-only
+ * queries, drafted from a sentence and run through the authority gate
+ * (`src/components/workday-v3/skills/SkillsWorkspace.tsx`).
+ *
  * Synthetic institution and data.
  */
 
@@ -20,6 +24,7 @@ import { isDatabaseReady } from "@/db/client";
 import { getScenarioState } from "@/scenario/engine/state";
 import { getRoutines } from "@/db/repositories/role-app-runtime";
 import { AIRoutinesList } from "@/components/workday-v3/AIRoutinesList";
+import { SkillsWorkspace } from "@/components/workday-v3/skills/SkillsWorkspace";
 import { buildProcessCards } from "@/features/process/view";
 import { readRoleAppAvailability } from "@/role-apps/enablement";
 import type { Language } from "@/i18n/labels";
@@ -29,6 +34,7 @@ const LABELS = {
   title: { en: "Processes", de: "Prozesse" },
   processApps: { en: "Active processes", de: "Aktive Prozesse" },
   aiRoutines: { en: "AI Routines", de: "KI-Routinen" },
+  skills: { en: "Skills", de: "Skills" },
   noApps: { en: "No process apps installed", de: "Keine Prozess-Apps installiert" },
   open: { en: "Open", de: "Oeffnen" },
   synthetic: { en: "Synthetic institution and data", de: "Synthetische Institution und Daten" },
@@ -59,10 +65,13 @@ function stamp(iso: string | null, language: Language): string {
 }
 
 /** Compact sub-view tab row. */
-function ProcessesTabRow({ roleId, activeView, language }: { roleId: string; activeView: "processes" | "routines"; language: Language }) {
+type ProcessesView = "processes" | "routines" | "skills";
+
+function ProcessesTabRow({ roleId, activeView, language }: { roleId: string; activeView: ProcessesView; language: Language }) {
   const tabs = [
     { id: "processes" as const, label: pick(LABELS.processApps, language), href: `/workday/${roleId}/processes` },
     { id: "routines" as const, label: pick(LABELS.aiRoutines, language), href: `/workday/${roleId}/processes?view=routines` },
+    { id: "skills" as const, label: pick(LABELS.skills, language), href: `/workday/${roleId}/processes?view=skills` },
   ];
   return (
     <div style={{ display: "flex", gap: 0, borderBottom: "1px solid var(--wd-border)", marginBottom: "var(--wd-6)" }}>
@@ -72,6 +81,8 @@ function ProcessesTabRow({ roleId, activeView, language }: { roleId: string; act
           <a
             key={tab.id}
             href={tab.href}
+            data-testid={`processes-tab-${tab.id}`}
+            aria-current={isActive ? "page" : undefined}
             style={{
               padding: "var(--wd-2) var(--wd-4)",
               fontSize: "var(--wd-text-sm)",
@@ -191,6 +202,9 @@ export default async function ProcessesV3({
   const rawView = typeof searchParams?.view === "string" ? searchParams.view : undefined;
   const rawRoutine = typeof searchParams?.routine === "string" ? searchParams.routine : undefined;
   const showRoutines = rawView === "routines";
+  const showSkills = rawView === "skills" && ready && state !== null;
+  const activeView: ProcessesView = showSkills ? "skills" : showRoutines ? "routines" : "processes";
+  const text = (key: string) => (typeof searchParams?.[key] === "string" ? (searchParams[key] as string) : undefined);
 
   const cards = ready && state ? buildProcessCards(roleId, language) : [];
   const routines = showRoutines && ready ? getRoutines(roleId) : [];
@@ -201,10 +215,16 @@ export default async function ProcessesV3({
       <h1 className="wd-page-title">{pick(LABELS.title, language)}</h1>
 
       <div style={{ marginTop: "var(--wd-4)" }}>
-        <ProcessesTabRow roleId={roleId} activeView={showRoutines ? "routines" : "processes"} language={language} />
+        <ProcessesTabRow roleId={roleId} activeView={activeView} language={language} />
       </div>
 
-      {showRoutines ? (
+      {showSkills ? (
+        <SkillsWorkspace
+          roleId={roleId}
+          language={language}
+          query={{ ask: text("ask"), draft: text("draft"), via: text("via"), skill: text("skill"), notice: text("notice") }}
+        />
+      ) : showRoutines ? (
         <section className="wd-section" aria-label={pick(LABELS.aiRoutines, language)}>
           <p style={{ fontSize: "var(--wd-text-sm)", color: "var(--wd-text-secondary)", marginBottom: "var(--wd-5)" }}>
             {pick(LABELS.routinesDesc, language)}

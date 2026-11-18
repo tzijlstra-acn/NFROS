@@ -21,3 +21,4 @@ export * from "./ai-partner";
 export * from "./product-console";
 export * from "./personalisation";
 export * from "./process-inputs";
+export * from "./skills";
