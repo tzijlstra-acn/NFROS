@@ -181,7 +181,7 @@ export function buildDeterioration(context: BuildContext): InsightResponseInput 
       id: `finding-${trend.id}`,
       severity: trend.delta >= 20 ? "critical" : "warning",
       title: L(`${trend.name}: risk score up ${trend.delta} points`, `${trend.name}: Risikowert plus ${trend.delta} Punkte`),
-      detail: drivers.join("; ") + ".",
+      detail: capitalise(drivers.join("; ")) + ".",
       evidenceIds: ids.slice(0, 20),
       href: thirdPartyHref(context, trend.id),
     });
@@ -729,6 +729,10 @@ export function buildConcentration(context: BuildContext): InsightResponseInput 
       { label: L("Management summary", "Management-Zusammenfassung"), question: L("Create a one-page management summary of the top NFR concerns.", "Erstelle eine einseitige Management-Zusammenfassung der wichtigsten NFR-Themen.") },
     ],
   };
+}
+
+function capitalise(text: string): string {
+  return text.charAt(0).toUpperCase() + text.slice(1);
 }
 
 function workHrefSafe(roleId: string, serviceId: string): string {

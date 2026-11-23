@@ -34,7 +34,7 @@ const Q3 = ["2026-07", "2026-08", "2026-09"];
 const PAYMENT_KRIS = ["KRI-PAY-007", "KRI-PAY-003", "KRI-PAY-011", "KRI-PAY-016", "KRI-PAY-022", "KRI-RES-005", "KRI-TPR-002"];
 
 /* Attribution weights, in score points per unit of each recorded driver. */
-const WEIGHTS = { incident: 2.5, slaBreach: 2, redKri: 2, controlException: 1.5, staleAssurance: 6 };
+const WEIGHTS = { incident: 2, slaBreach: 1.5, redKri: 1.5, controlException: 1.5, staleAssurance: 4 };
 
 export function buildPaymentReviewChange(context: BuildContext): InsightResponseInput {
   const { language: lang, roleId, data } = context;
@@ -59,7 +59,13 @@ export function buildPaymentReviewChange(context: BuildContext): InsightResponse
   const redJune = kriRows.filter((row) => row.june?.status === "red").length;
   const redSeptember = kriRows.filter((row) => row.september?.status === "red").length;
 
-  const profiles = controlProfiles(context).filter((profile) => profile.id.startsWith("CTL-PAY"));
+  /* Only controls tested in both quarters: an untested Q3 has no exceptions yet, which is not an improvement. */
+  const profiles = controlProfiles(context).filter(
+    (profile) =>
+      profile.id.startsWith("CTL-PAY") &&
+      profile.results.get("2026-Q2")?.result !== "not-tested" &&
+      profile.results.get("2026-Q3")?.result !== "not-tested",
+  );
   const exceptionsQ2 = sum(profiles.map((profile) => profile.results.get("2026-Q2")?.exceptions ?? 0));
   const exceptionsQ3 = sum(profiles.map((profile) => profile.results.get("2026-Q3")?.exceptions ?? 0));
   const staleNow = at("2026-09")?.assuranceStatus === "stale";
@@ -430,8 +436,8 @@ export function buildCaseNextAction(context: BuildContext): InsightResponseInput
     question: context.question,
     title: L("Next action on the current case", "Naechster Schritt im aktuellen Fall"),
     conclusion: L(
-      `Record the decision on "${title}" first${unescalatedDays && subjectId === "TP-0042" ? `: the recovery gap has gone unescalated for ${unescalatedDays} days` : ""}, and request a current recovery test so the outcome rests on today's evidence.`,
-      `Zuerst die Entscheidung zu "${title}" erfassen${unescalatedDays && subjectId === "TP-0042" ? `: die Wiederherstellungsluecke ist seit ${unescalatedDays} Tagen nicht eskaliert` : ""}, und einen aktuellen Wiederherstellungstest anfordern, damit das Ergebnis auf heutigen Nachweisen beruht.`,
+      `Record the decision on "${title}" first, then request a current recovery test so the outcome rests on today's evidence, not on a test from ${drTest ? formatDate(drTest.documentDate) : "May"}.`,
+      `Zuerst die Entscheidung zu "${title}" erfassen, dann einen aktuellen Wiederherstellungstest anfordern, damit das Ergebnis auf heutigen Nachweisen beruht und nicht auf einem Test vom ${drTest ? formatDate(drTest.documentDate) : "Mai"}.`,
     ),
     language: lang,
     roleId,

@@ -213,12 +213,12 @@ export function buildFailingControls(context: BuildContext): InsightResponseInpu
     recommendations.unshift({
       id: "rec-rating",
       title: L(`Take the ${mismatch.id} rating through its decision`, `Die Bewertung von ${mismatch.id} ueber ihre Entscheidung fuehren`),
-      rationale: L(
-        "The rating is a human judgment with its own decision today. The Workspace prepared the evidence; it does not change the rating.",
-        "Die Bewertung ist eine menschliche Entscheidung mit eigenem Entscheidungspunkt heute. Der Workspace hat den Nachweis vorbereitet; er aendert die Bewertung nicht.",
-      ),
+      rationale:
+        roleId === "rcsa"
+          ? L("The rating is your judgment, with its own decision today. The Workspace prepared the evidence; it does not change the rating.", "Die Bewertung ist Ihre Entscheidung, mit eigenem Entscheidungspunkt heute. Der Workspace hat den Nachweis vorbereitet; er aendert die Bewertung nicht.")
+          : L("The rating is the Operational Risk Partner's judgment, with its own decision today. The Workspace prepared the evidence; it does not change the rating.", "Die Bewertung ist die Entscheidung der Operational Risk Partnerin, mit eigenem Entscheidungspunkt heute. Der Workspace hat den Nachweis vorbereitet; er aendert die Bewertung nicht."),
       urgency: "now",
-      href: `/workday/${roleId}/decisions`,
+      href: "/workday/rcsa/decisions",
     });
   }
   void holder;

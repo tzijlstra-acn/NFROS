@@ -14,7 +14,7 @@ import { buildExpiringAcceptances } from "./acceptances";
 import { buildResilienceGaps } from "./resilience";
 import { buildPolicyImpact } from "./regulatory";
 import { buildConcentration, buildDeterioration } from "./third-parties";
-import { tx, type BuildContext } from "./common";
+import { joinNames, tx, type BuildContext } from "./common";
 
 interface Area {
   id: string;
@@ -85,8 +85,8 @@ export function buildManagementSummary(context: BuildContext): InsightResponseIn
     question: context.question,
     title: L("Top NFR concerns, one page", "Wichtigste NFR-Themen, eine Seite"),
     conclusion: L(
-      `${top.map((entry) => entry.area.label).join(", ")} carry the most material findings today; ${totalCritical} findings across the group are critical.`,
-      `${top.map((entry) => entry.area.label).join(", ")} tragen heute die wesentlichsten Feststellungen; ${totalCritical} Feststellungen in der Gruppe sind kritisch.`,
+      `${joinNames(top.map((entry, index) => (index === 0 ? entry.area.label : entry.area.label.toLowerCase())), lang)} carry the most material findings today; ${totalCritical} findings across the group are critical.`,
+      `${joinNames(top.map((entry) => entry.area.label), lang)} tragen heute die wesentlichsten Feststellungen; ${totalCritical} Feststellungen in der Gruppe sind kritisch.`,
     ),
     language: lang,
     roleId,

@@ -33,6 +33,7 @@ import { PreviewRolePage } from "@/components/workday-v3/PreviewRolePage";
 import { readHomeView } from "@/features/home";
 import { getScenarioState } from "@/scenario/engine/state";
 import { RoleHome } from "@/components/workday-v3/RoleHome";
+import { suggestedIntents } from "@/features/insights/intents";
 import { NotSeeded } from "@/components/shell/WorkdayShell";
 import { ExperienceBeacon } from "@/features/product/experience/ExperienceBeacon";
 import type { RouteQuery } from "@/workday/dispatch";
@@ -69,7 +70,14 @@ export default async function RoleHomeV3({
   /* The beacon records "workday opened" for experience analytics: no user, one row per visit. */
   return (
     <>
-      <RoleHome view={readHomeView(roleId, state)} />
+      <RoleHome
+        view={readHomeView(roleId, state)}
+        roleId={roleId}
+        askSuggestions={suggestedIntents(roleId, 3).map((intent) => ({
+          label: state.language === "de" ? intent.label.de : intent.label.en,
+          question: state.language === "de" ? intent.question.de : intent.question.en,
+        }))}
+      />
       <ExperienceBeacon kind="workday-opened" roleId={roleId} />
     </>
   );

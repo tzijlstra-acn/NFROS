@@ -18,7 +18,7 @@
  * Synthetic institution and data.
  */
 
-import { notFound } from "next/navigation";
+import { notFound, redirect } from "next/navigation";
 import { ROLE_IDS, type RoleId } from "@/db/schema/core";
 import { isDatabaseReady } from "@/db/client";
 import { getScenarioState } from "@/scenario/engine/state";
@@ -71,7 +71,6 @@ function ProcessesTabRow({ roleId, activeView, language }: { roleId: string; act
   const tabs = [
     { id: "processes" as const, label: pick(LABELS.processApps, language), href: `/workday/${roleId}/processes` },
     { id: "routines" as const, label: pick(LABELS.aiRoutines, language), href: `/workday/${roleId}/processes?view=routines` },
-    { id: "skills" as const, label: pick(LABELS.skills, language), href: `/workday/${roleId}/processes?view=skills` },
   ];
   return (
     <div style={{ display: "flex", gap: 0, borderBottom: "1px solid var(--wd-border)", marginBottom: "var(--wd-6)" }}>
@@ -202,7 +201,12 @@ export default async function ProcessesV3({
   const rawView = typeof searchParams?.view === "string" ? searchParams.view : undefined;
   const rawRoutine = typeof searchParams?.routine === "string" ? searchParams.routine : undefined;
   const showRoutines = rawView === "routines";
-  const showSkills = rawView === "skills" && ready && state !== null;
+  /* NFR Workspace v3: skills moved to Agents. An old link lands there with its query. */
+  if (rawView === "skills") {
+    const forward = new URLSearchParams(Object.entries(searchParams ?? {}).filter((entry): entry is [string, string] => typeof entry[1] === "string"));
+    redirect(`/workday/${roleId}/agents?${forward.toString()}`);
+  }
+  const showSkills = false;
   const activeView: ProcessesView = showSkills ? "skills" : showRoutines ? "routines" : "processes";
   const text = (key: string) => (typeof searchParams?.[key] === "string" ? (searchParams[key] as string) : undefined);
 

@@ -53,6 +53,9 @@ export const V3_NATIVE_SEGMENTS: readonly string[] = [
   "work",
   "decisions",
   "processes",
+  /* NFR Workspace v3: analysis and personal agents. V3 only. */
+  "insights",
+  "agents",
 ];
 
 /** Whether a workday pathname can be rendered by V3.1. */

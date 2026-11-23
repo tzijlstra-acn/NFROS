@@ -202,16 +202,16 @@ export function buildResilienceGaps(context: BuildContext): InsightResponseInput
         title: worst
           ? L(`${shortService(worst.service?.name, worst.row.serviceId)} took ${worst.row.observedMinutes - worst.row.toleranceMinutes} minutes longer than its tolerance`, `${shortService(worst.service?.name, worst.row.serviceId)} brauchte ${worst.row.observedMinutes - worst.row.toleranceMinutes} Minuten laenger als die Toleranz`)
           : L("Every service recovered inside tolerance", "Alle Services innerhalb der Toleranz"),
-        subtitle: L("Observed recovery against impact tolerance, latest measurement", "Beobachtete Wiederherstellung gegen Toleranz, letzte Messung"),
-        explanation: L("The bar is the observed recovery; the tick is the tolerance. A bar past its tick is a breach.", "Der Balken ist die beobachtete Wiederherstellung, die Markierung die Toleranz. Ein Balken ueber der Markierung ist eine Ueberschreitung."),
-        unit: L("minutes", "Minuten"),
+        subtitle: L("Observed recovery as a percentage of each service's impact tolerance, latest measurement", "Beobachtete Wiederherstellung in Prozent der Auswirkungstoleranz je Service, letzte Messung"),
+        explanation: L("Each bar is the observed recovery as a share of that service's own tolerance; the tick at 100 is the tolerance. A bar past the tick is a breach. The minutes are under each service name.", "Jeder Balken ist die beobachtete Wiederherstellung als Anteil an der Toleranz des Services; die Markierung bei 100 ist die Toleranz. Ein Balken darueber ist eine Ueberschreitung. Die Minuten stehen unter dem Servicenamen."),
+        unit: L("% of tolerance", "% der Toleranz"),
         data: rows.map((entry) => ({
           id: entry.row.id,
           label: shortService(entry.service?.name, entry.row.serviceId),
-          sublabel: `${entry.row.serviceId}, ${entry.row.entityId}, ${entry.row.reference}`,
-          target: entry.row.toleranceMinutes,
-          actual: entry.row.observedMinutes,
-          targetLabel: L(`tolerance ${entry.row.toleranceMinutes}`, `Toleranz ${entry.row.toleranceMinutes}`),
+          sublabel: L(`${entry.row.serviceId} ${entry.row.entityId}: ${entry.row.observedMinutes} of ${entry.row.toleranceMinutes} min`, `${entry.row.serviceId} ${entry.row.entityId}: ${entry.row.observedMinutes} von ${entry.row.toleranceMinutes} Min.`),
+          target: 100,
+          actual: Math.round(entry.ratio * 100),
+          targetLabel: L(`tolerance ${entry.row.toleranceMinutes} min`, `Toleranz ${entry.row.toleranceMinutes} Min.`),
           tone: toneFor(entry.ratio),
           href: recordHref(roleId, "resilience", entry.row.id),
         })),

@@ -23,7 +23,9 @@ import {
   IconChevronsLeft,
   IconChevronsRight,
   IconGavel,
+  IconChartDots3,
   IconHome,
+  IconRobot,
   IconSitemap,
   type Icon,
 } from "@tabler/icons-react";
@@ -37,10 +39,12 @@ export interface NavigationCounts {
 }
 
 const LABELS = {
-  home: { en: "Home", de: "Start" },
+  home: { en: "Today", de: "Heute" },
   work: { en: "Work", de: "Arbeit" },
   processes: { en: "Processes", de: "Prozesse" },
   decisions: { en: "Decisions", de: "Entscheidungen" },
+  insights: { en: "Insights", de: "Insights" },
+  agents: { en: "Agents", de: "Agenten" },
   collapse: { en: "Collapse", de: "Einklappen" },
   expand: { en: "Expand", de: "Ausklappen" },
 } as const;
@@ -66,6 +70,9 @@ const PRIMARY: Array<{
   { key: "work", icon: IconBriefcase, segment: "/work" },
   { key: "processes", icon: IconSitemap, segment: "/processes" },
   { key: "decisions", icon: IconGavel, segment: "/decisions", count: (c) => c.decisions },
+  /* NFR Workspace v3: ask the records (Insights) and keep personal agents (Agents). */
+  { key: "insights", icon: IconChartDots3, segment: "/insights" },
+  { key: "agents", icon: IconRobot, segment: "/agents" },
 ];
 
 export function WorkdayNavigation({

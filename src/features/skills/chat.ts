@@ -44,8 +44,9 @@ export function detectSkillRequest(input: string): string | null {
 }
 
 export function skillBuilderHref(roleId: RoleId, query: Record<string, string>): string {
+  /* NFR Workspace v3: skills are personal agents and live on Agents. */
   const params = new URLSearchParams({ view: "skills", ...query });
-  return `/workday/${roleId}/processes?${params.toString()}`;
+  return `/workday/${roleId}/agents?${params.toString()}`;
 }
 
 export interface ChatSkillOutcome {

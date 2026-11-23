@@ -68,6 +68,8 @@ import { getPartnerContext, savePartnerContext } from "@/db/repositories/partner
 import {
   answerPart,
   blockedPart,
+  evidencePart,
+  recommendationPart,
   approvalRequestPart,
   enforceNeutralCopy,
   executionReceiptPart,
@@ -82,6 +84,8 @@ import {
 import { CHAT_PROMPT, renderChatContext } from "./prompt";
 import { matchSeededChatAnswer, seededChatDecline } from "./seeded";
 import { detectSkillRequest, draftSkillInChat } from "@/features/skills/chat";
+import { routeQuestion } from "@/features/insights/intents";
+import { prepareInsight } from "@/features/insights/service";
 
 const log = createLogger("workday-chat");
 const db = () => getDb();
@@ -908,6 +912,36 @@ async function produceAnswer(params: {
   const { context, request, runId } = params;
   const language = context.language;
   const role = getRole(request.roleId, runId);
+
+  /*
+   * ---- An analytical question: the insight engine, in every mode ----
+   * NFR Workspace v3. A question the engine routes to an analysis is
+   * answered from the records through the analyseQuestion READ tool, in
+   * Safe, Offline and Live mode alike, because the figures must be the
+   * records' and not a model's. The chat shows the conclusion, the key
+   * numbers and the first recommendation, and links to the full analysis.
+   */
+  const selectionContext = request.selection ? { kind: request.selection.objectType, id: request.selection.objectId } : null;
+  if (routeQuestion(request.input, selectionContext)) {
+    const outcome = await prepareInsight({ roleId: request.roleId, question: request.input, context: selectionContext });
+    if (outcome.ok) {
+      const response = outcome.response;
+      const parts: ChatTurnPart[] = [answerPart(response.conclusion)];
+      for (const metric of response.metrics.slice(0, 3)) {
+        parts.push(evidencePart(`${metric.label}: ${metric.value}${metric.unit ? ` ${metric.unit}` : ""}${metric.deltaLabel ? ` (${metric.deltaLabel})` : ""}`));
+      }
+      const first = response.recommendations[0];
+      if (first) parts.push(recommendationPart(`${first.title}. ${first.rationale}`));
+      const open = followUpPart(
+        language === "de"
+          ? `Die vollstaendige Analyse zeigt ${response.visualisations.length} Ansichten, ${response.evidence.length} Nachweise und die gesteuerten Schritte.`
+          : `The full analysis shows ${response.visualisations.length} views, ${response.evidence.length} evidence items and the governed next steps.`,
+      );
+      open.meta = { href: `/workday/${request.roleId}/insights/${outcome.id}`, hrefLabel: language === "de" ? "Vollstaendige Analyse oeffnen" : "Open the full analysis" };
+      parts.push(open);
+      return { parts, source: "seeded", model: "" };
+    }
+  }
 
   /* ---- Live, when the mode permits it and a client exists ---- */
   let liveFailure: string | null = null;

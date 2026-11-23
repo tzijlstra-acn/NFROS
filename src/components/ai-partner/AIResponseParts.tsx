@@ -90,7 +90,8 @@ function linkFromMeta(meta: Record<string, unknown> | undefined): { href: string
   const href = meta?.["href"];
   const label = meta?.["hrefLabel"];
   if (typeof href !== "string" || typeof label !== "string") return null;
-  if (!/^\/workday\/[a-z-]+\/[a-z-]+(?:\?[A-Za-z0-9_.~%&=+-]*)?$/.test(href)) return null;
+  /* A workday route, optionally with one identifier segment (an insight: /workday/tprm/insights/INS-1A2B3C4D). */
+  if (!/^\/workday\/[a-z-]+\/[a-z-]+(?:\/[A-Za-z0-9-]{1,40})?(?:\?[A-Za-z0-9_.~%&=+-]*)?$/.test(href)) return null;
   return { href, label };
 }
 

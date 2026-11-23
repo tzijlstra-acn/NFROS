@@ -125,8 +125,9 @@ function pick(pair: Bilingual, language: Language): string {
 }
 
 function skillsHref(roleId: RoleId, query: Record<string, string>): string {
+  /* NFR Workspace v3: skills are personal agents and live on Agents. */
   const params = new URLSearchParams({ view: "skills", ...query });
-  return `/workday/${roleId}/processes?${params.toString()}`;
+  return `/workday/${roleId}/agents?${params.toString()}`;
 }
 
 const card: CSSProperties = {
@@ -369,7 +370,7 @@ export async function SkillsWorkspace({ roleId, language, query }: { roleId: Rol
         </p>
       ) : null}
 
-      <form method="get" action={`/workday/${roleId}/processes`} style={card} data-testid="skill-composer">
+      <form method="get" action={`/workday/${roleId}/agents`} style={card} data-testid="skill-composer">
         <input type="hidden" name="view" value="skills" />
         <label style={{ display: "flex", flexDirection: "column", gap: "var(--wd-2)" }}>
           <span className="wd-section-label" style={{ display: "inline-flex", alignItems: "center", gap: "var(--wd-2)" }}>

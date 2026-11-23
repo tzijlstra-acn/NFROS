@@ -208,7 +208,7 @@ describe("the work partner", () => {
     expect(evidence?.text).toContain("1 of 8 suppliers match");
     expect(evidence?.refs).toContain("TP-0042");
     const followUp = parts.find((entry) => entry.kind === "follow-up");
-    expect(String(followUp?.meta?.["href"])).toMatch(/^\/workday\/tprm\/processes\?view=skills&draft=[A-Za-z0-9_-]+&via=rules&ask=/);
+    expect(String(followUp?.meta?.["href"])).toMatch(/^\/workday\/tprm\/agents\?view=skills&draft=[A-Za-z0-9_-]+&via=rules&ask=/);
     expect(followUp?.meta?.["hrefLabel"]).toBe("Open in Skills");
     expect(runSkillCalls().length).toBe(calls + 1);
     expect(rowCount("skills")).toBe(skillsBefore);

@@ -41,6 +41,7 @@ import { WorkdayDisclosure } from "./WorkdayDisclosure";
 import { WorkdayEvidenceTrigger } from "./WorkdayEvidenceTrigger";
 import { HomeYourDay } from "./home/HomeYourDay";
 import { HomePartnerUpdate } from "./home/HomePartnerUpdate";
+import { AskPanel, type AskSuggestion } from "@/components/insights/AskPanel";
 
 const COPY = {
   today: { en: "Today", de: "Heute" },
@@ -169,7 +170,7 @@ export interface RoleHomeProps {
   view: HomeView;
 }
 
-export function RoleHome({ view }: RoleHomeProps) {
+export function RoleHome({ view, roleId = null, askSuggestions = [] }: RoleHomeProps & { roleId?: string | null; askSuggestions?: AskSuggestion[] }) {
   const { language, now, next, watching, suggestion, done } = view;
   const current = view.atMoment;
 
@@ -272,6 +273,16 @@ export function RoleHome({ view }: RoleHomeProps) {
                   count={now.detail.sources.length}
                   objectLabel={now.detail.item.title}
                 />
+                {roleId ? (
+                  <a
+                    className="wd-btn wd-btn-secondary wd-btn-lg"
+                    data-testid="now-ask-case"
+                    href={`/workday/${roleId}/insights?q=${encodeURIComponent(language === "de" ? "Welchen Schritt sollte ich im aktuellen Fall gehen?" : "What action should I take on the current case?")}`}
+                  >
+                    <IconSparkles size={16} stroke={1.8} aria-hidden="true" />
+                    {language === "de" ? "Zu diesem Fall fragen" : "Ask about this case"}
+                  </a>
+                ) : null}
               </div>
             </div>
           </div>
@@ -329,6 +340,23 @@ export function RoleHome({ view }: RoleHomeProps) {
               </a>
             ))}
           </div>
+        </section>
+      ) : null}
+
+      {/* ---------------- Ask NFR Workspace ---------------- */}
+      {/*
+        * After the work, not before it: the person starts with what needs
+        * them, and the question comes second. Prominent, not dominant.
+        */}
+      {roleId ? (
+        <section className="wd-section" aria-label={language === "de" ? "NFR Workspace fragen" : "Ask NFR Workspace"} data-home-region="ask">
+          <div className="wd-section-head">
+            <h2 className="wd-section-label">{language === "de" ? "Den Datensaetzen eine Frage stellen" : "Ask the records"}</h2>
+            <a className="wd-btn wd-btn-link wd-btn-sm" href={`/workday/${roleId}/insights`}>
+              {language === "de" ? "Alle Insights" : "All insights"}
+            </a>
+          </div>
+          <AskPanel roleId={roleId} language={language} suggestions={askSuggestions} compact testId="home-ask" />
         </section>
       ) : null}
 

@@ -31,8 +31,9 @@ const removeSchema = z.object({
 });
 
 function skillsHref(roleId: RoleId, query: Record<string, string>): string {
+  /* NFR Workspace v3: skills are personal agents and live on Agents. */
   const params = new URLSearchParams({ view: "skills", ...query });
-  return `/workday/${roleId}/processes?${params.toString()}`;
+  return `/workday/${roleId}/agents?${params.toString()}`;
 }
 
 function fields(data: FormData): Record<string, string> {
