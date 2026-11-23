@@ -22,3 +22,4 @@ export * from "./product-console";
 export * from "./personalisation";
 export * from "./process-inputs";
 export * from "./skills";
+export * from "./portfolio";

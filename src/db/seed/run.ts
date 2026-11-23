@@ -102,6 +102,16 @@ import {
   tprmOnboardingEvidenceDocuments,
 } from "@/db/seed/tprm-onboarding";
 import * as risk from "@/scenario/data/risk";
+import { buildPortfolio } from "@/scenario/data/portfolio";
+import {
+  controlTestResults,
+  kriHistory,
+  portfolioProviderLinks,
+  portfolioThirdParties,
+  riskAcceptances,
+  serviceResilienceTests,
+  thirdPartyMonthlyMetrics,
+} from "@/db/schema/portfolio";
 import * as assurance from "@/scenario/data/assurance";
 import * as eventData from "@/scenario/data/event";
 import * as evidence from "@/scenario/data/evidence";
@@ -155,6 +165,9 @@ export interface SeedSummary {
  * yesterday's conclusions already on the record.
  */
 const RUN_SCOPED_TABLES = [
+  /* Migration 0010: the portfolio register, its history and the insight runs (NFR Workspace v3). */
+  "insight_runs", "service_resilience_tests", "risk_acceptances", "kri_history", "control_test_results",
+  "third_party_monthly_metrics", "portfolio_provider_links", "portfolio_third_parties",
   /* Migrations 0006, 0008 and 0009: the AI Partner, operations, personalisation, stage inputs, skills. Empty after a seed. */
   "skills", "ai_routine_run_outputs", "ai_routine_runs", "ai_suggestion_dispositions", "ai_feedback",
   "partner_contexts", "notifications", "integration_incidents", "data_quality_issues",
@@ -344,6 +357,38 @@ export function seedScenario(runId: string = DEFAULT_RUN_ID): SeedSummary {
     total += insertAll(kriReadings, risk.kriReadings, counts, "kriReadings");
     total += insertAll(assessments, risk.assessments, counts, "assessments");
     total += insertAll(assessmentLines, risk.assessmentLines, counts, "assessmentLines");
+
+    /*
+     * The portfolio register and its history (migration 0010). Built from the
+     * same authored controls and indicators, so the history leads into the
+     * day rather than beside it. See src/scenario/data/portfolio.ts.
+     */
+    const firstReading = new Map<string, number>();
+    for (const reading of [...risk.kriReadings].sort((a, b) => (a.sortOrder ?? 0) - (b.sortOrder ?? 0))) {
+      if (!firstReading.has(reading.kriId)) firstReading.set(reading.kriId, reading.value);
+    }
+    const portfolio = buildPortfolio(runId, {
+      controls: risk.controls.map((control) => ({
+        id: control.id,
+        currentEffectiveness: control.currentEffectiveness,
+        isKeyControl: Boolean(control.isKeyControl),
+        lastTestedOn: control.lastTestedOn ?? null,
+      })),
+      kris: risk.kris.map((kri) => ({
+        id: kri.id,
+        adverseDirection: kri.adverseDirection,
+        amberThreshold: kri.amberThreshold,
+        redThreshold: kri.redThreshold,
+        firstValue: firstReading.get(kri.id) ?? kri.currentValue,
+      })),
+    });
+    total += insertAll(portfolioThirdParties, portfolio.portfolioThirdParties, counts, "portfolioThirdParties");
+    total += insertAll(portfolioProviderLinks, portfolio.portfolioProviderLinks, counts, "portfolioProviderLinks");
+    total += insertAll(thirdPartyMonthlyMetrics, portfolio.thirdPartyMonthlyMetrics, counts, "thirdPartyMonthlyMetrics");
+    total += insertAll(controlTestResults, portfolio.controlTestResults, counts, "controlTestResults");
+    total += insertAll(kriHistory, portfolio.kriHistory, counts, "kriHistory");
+    total += insertAll(riskAcceptances, portfolio.riskAcceptances, counts, "riskAcceptances");
+    total += insertAll(serviceResilienceTests, portfolio.serviceResilienceTests, counts, "serviceResilienceTests");
 
     /* Control assurance */
     total += insertAll(controlTests, assurance.controlTests, counts, "controlTests");
