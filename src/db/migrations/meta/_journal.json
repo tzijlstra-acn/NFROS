@@ -78,6 +78,13 @@
       "when": 1795443921823,
       "tag": "0010_portfolio_register",
       "breakpoints": true
+    },
+    {
+      "idx": 11,
+      "version": "6",
+      "when": 1795449263438,
+      "tag": "0011_analysis_agents",
+      "breakpoints": true
     }
   ]
 }

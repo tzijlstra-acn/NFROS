@@ -46,93 +46,37 @@ async function expectNoSidewaysOverflow(page: Page): Promise<void> {
    The entry page
    ========================================================================== */
 
-test.describe("the product entrance", () => {
-  test("states the proposition and offers the three ways in", async ({ page }) => {
+test.describe("the NFR Workspace entrance", () => {
+  /* Signed out: the entrance is what a person sees before the workspace. */
+  test.use({ storageState: { cookies: [], origins: [] } });
+
+  test("plays the startup, then asks for the sign-in, labelled as a synthetic environment", async ({ page }) => {
     await open(page, "/");
-
-    await expect(
-      page.getByRole("heading", { level: 1, name: "Run NFR work from one governed environment" }),
-    ).toBeVisible();
-    await expect(
-      page.getByText(
-        "NFROS prepares the work, runs complete risk processes and keeps material decisions with people",
-      ),
-    ).toBeVisible();
-
-    await expect(page.getByRole("link", { name: "Explore the product" })).toHaveAttribute("href", "/workday");
-    await expect(page.getByRole("link", { name: "View the presentation" })).toHaveAttribute("href", "/story");
-
-    // No design-partner workspace route exists in this build, so the action
-    // is present, disabled, and says why.
-    const designPartner = page.getByRole("button", { name: "Enter design-partner workspace" });
-    await expect(designPartner).toBeDisabled();
-    await expect(designPartner).toHaveAccessibleDescription("Not available in this release");
+    await expect(page.getByTestId("sign-in-form")).toBeVisible({ timeout: 15_000 });
+    await expect(page.getByRole("heading", { level: 1, name: "Sign in" })).toBeVisible();
+    await expect(page.getByText("Synthetic demonstration environment")).toBeVisible();
+    await expect(page.getByText(/not production authentication/i)).toBeVisible();
   });
 
-  test("shows exactly the four trust words", async ({ page }) => {
-    await open(page, "/");
-    await expect(page.getByTestId("trust-strip").getByRole("listitem")).toHaveText([
-      "Evidence-linked",
-      "Human-approved",
-      "Audit-ready",
-      "Synthetic demonstration",
-    ]);
+  test("refuses wrong details without saying which one was wrong", async ({ page }) => {
+    await open(page, "/login");
+    await page.getByLabel("Username").fill("Admin");
+    await page.getByLabel("Password", { exact: true }).fill("wrong");
+    await page.getByLabel("Password", { exact: true }).press("Enter");
+    await expect(page.getByTestId("sign-in-error")).toContainText("username or password does not match");
   });
 
-  test("carries no runtime state, setup command or reset control", async ({ page }) => {
-    await open(page, "/");
-    const text = (await page.locator("body").innerText()).toLowerCase();
-    for (const banned of [
-      "runtime status",
-      "ai mode",
-      "live ai configured",
-      "live ai verified",
-      "configuration source",
-      "scenario seeded",
-      "demonstration mode",
-      "npm run",
-      "reset the day",
-    ]) {
-      expect(text, `the entry page shows "${banned}"`).not.toContain(banned);
-    }
-    await expect(page.getByRole("button", { name: /reset/i })).toHaveCount(0);
-    await expect(page.getByRole("group", { name: "Demonstration mode" })).toHaveCount(0);
-  });
-
-  test("links presenters to the control room from the footer", async ({ page }) => {
-    await open(page, "/");
-    await expect(page.locator("footer").getByRole("link", { name: "Control room" })).toHaveAttribute(
-      "href",
-      "/control-room",
-    );
-  });
-
-  test("previews both flagship roles inside the first viewport, from live data", async ({ page }) => {
-    await open(page, "/");
-    await requireSeeded(page);
-
-    await expect(page.getByTestId("landing-proof-source")).toHaveText(
-      /^Synthetic scenario, \d{2}\.\d{2}\.\d{4}, \d{2}:\d{2}$/,
-    );
-    for (const roleId of ["rcsa", "tprm"]) {
-      const preview = page.getByTestId(`role-preview-${roleId}`);
-      await expect(preview).toBeInViewport({ ratio: 1 });
-      await expect(preview.locator('[data-signal="process"] .nfr-preview-value')).toHaveText(/Stage \d of 8/);
-      await expect(preview.locator('[data-signal="focus"]')).toHaveAttribute("data-state", /present|empty/);
-    }
-    await expectNoSidewaysOverflow(page);
+  test("sends a signed-out request for a workspace page to the sign-in with the page as next", async ({ page }) => {
+    await page.goto("/workday/tprm/decisions");
+    await expect(page).toHaveURL(/\/login\?next=%2Fworkday%2Ftprm%2Fdecisions/);
   });
 
   test("never exposes a key or a key fragment", async ({ page }) => {
-    await open(page, "/");
+    await open(page, "/login");
     const html = await page.content();
-    expect(html).not.toMatch(/\bsk-[A-Za-z0-9_-]{8,}/);
+    expect(html).not.toMatch(/sk-[A-Za-z0-9]{8,}/);
   });
 });
-
-/* ==========================================================================
-   The role selector
-   ========================================================================== */
 
 test.describe("the role selector", () => {
   test("gives each Available role one live signal from the database", async ({ page }) => {

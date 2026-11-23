@@ -23,3 +23,4 @@ export * from "./personalisation";
 export * from "./process-inputs";
 export * from "./skills";
 export * from "./portfolio";
+export * from "./agents";

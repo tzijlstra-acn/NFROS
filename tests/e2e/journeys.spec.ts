@@ -77,37 +77,35 @@ async function scrubTo(page: Page, moment: string): Promise<void> {
    Entry
    ========================================================================== */
 
-test.describe("the entry screen", () => {
-  test("renders the proposition and the synthetic data label, and leaves runtime state to the control room", async ({
-    page,
-  }) => {
+test.describe("the NFR Workspace entrance", () => {
+  /* Signed out: the entrance is what a person sees before the workspace. */
+  test.use({ storageState: { cookies: [], origins: [] } });
+
+  test("plays the startup, then asks for the sign-in, labelled as a synthetic environment", async ({ page }) => {
     await open(page, "/");
-
-    await expect(
-      page.getByRole("heading", { level: 1, name: /Run NFR work from one governed environment/i }),
-    ).toBeVisible();
-
-    // The synthetic data label is mandatory on every surface that shows
-    // Arcadia content, and this is the first one an executive sees.
-    await expect(page.getByText("Synthetic institution and data").first()).toBeVisible();
-
-    // The runtime status moved to the control room, which the entry links to.
-    await expect(page.getByText("Runtime status")).toHaveCount(0);
-    await expect(page.getByRole("link", { name: "Control room" })).toBeVisible();
+    await expect(page.getByTestId("sign-in-form")).toBeVisible({ timeout: 15_000 });
+    await expect(page.getByRole("heading", { level: 1, name: "Sign in" })).toBeVisible();
+    await expect(page.getByText("Synthetic demonstration environment")).toBeVisible();
+    await expect(page.getByText(/not production authentication/i)).toBeVisible();
   });
 
-  test("offers both the presentation and the interactive day", async ({ page }) => {
-    await open(page, "/");
-    await expect(page.getByRole("link", { name: /View the presentation/i })).toBeVisible();
-    await expect(page.getByRole("link", { name: /Explore the product/i })).toBeVisible();
+  test("refuses wrong details without saying which one was wrong", async ({ page }) => {
+    await open(page, "/login");
+    await page.getByLabel("Username").fill("Admin");
+    await page.getByLabel("Password", { exact: true }).fill("wrong");
+    await page.getByLabel("Password", { exact: true }).press("Enter");
+    await expect(page.getByTestId("sign-in-error")).toContainText("username or password does not match");
   });
 
-  test("states that the institution and the regulatory context are illustrative", async ({
-    page,
-  }) => {
-    await open(page, "/");
-    await expect(page.getByText(/Arcadia Banking Group is a synthetic institution/i)).toBeVisible();
-    await expect(page.getByText(/not legal advice/i).first()).toBeVisible();
+  test("sends a signed-out request for a workspace page to the sign-in with the page as next", async ({ page }) => {
+    await page.goto("/workday/tprm/decisions");
+    await expect(page).toHaveURL(/\/login\?next=%2Fworkday%2Ftprm%2Fdecisions/);
+  });
+
+  test("never exposes a key or a key fragment", async ({ page }) => {
+    await open(page, "/login");
+    const html = await page.content();
+    expect(html).not.toMatch(/sk-[A-Za-z0-9]{8,}/);
   });
 });
 

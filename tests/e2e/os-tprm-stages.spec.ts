@@ -166,9 +166,7 @@ test("Third-Party Onboarding opens the Veridian file by default and switches fil
   await expect(page).toHaveURL(/\?run=RUN-TPRM-VERIDIAN-2026$/, { timeout: 60_000 });
   await expect(page.getByTestId("process-status-line")).toContainText("Stage 4 of 8");
 
-  // The landing page and the role selector name the same run.
-  await page.goto("/", { timeout: 180_000 });
-  await expect(page.getByTestId("role-preview-tprm")).toContainText("Third-Party Onboarding, Stage 4 of 8", { timeout: 60_000 });
+  // The role selector names the same run. (NFR Workspace v3 retired the landing page's role previews.)
   await page.goto("/workday", { timeout: 180_000 });
   await expect(page.getByTestId("signals-tprm")).toContainText("Third-Party Onboarding, Stage 4 of 8", { timeout: 60_000 });
 });

@@ -16,7 +16,7 @@
  * the numbers, one chart and one action.
  */
 
-import { useCallback, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import {
   IconAlertTriangle,
@@ -356,6 +356,14 @@ export function InsightCanvas({ roleId, insightId, response, permissions, savedT
 
 function EvidenceDrawer({ evidence, highlight, language, onClose }: { evidence: InsightEvidence[]; highlight: string[]; language: Language; onClose: () => void }) {
   const ordered = highlight.length ? [...evidence].sort((a, b) => Number(highlight.includes(b.id)) - Number(highlight.includes(a.id))) : evidence;
+  /* Escape closes the drawer wherever focus is. */
+  useEffect(() => {
+    const onKey = (event: KeyboardEvent) => {
+      if (event.key === "Escape") onClose();
+    };
+    document.addEventListener("keydown", onKey);
+    return () => document.removeEventListener("keydown", onKey);
+  }, [onClose]);
   return (
     <div className="ins-drawer-scrim" onClick={onClose}>
       <div
@@ -364,9 +372,6 @@ function EvidenceDrawer({ evidence, highlight, language, onClose }: { evidence: 
         aria-modal="true"
         aria-labelledby="ev-title"
         onClick={(event) => event.stopPropagation()}
-        onKeyDown={(event) => {
-          if (event.key === "Escape") onClose();
-        }}
         data-testid="evidence-drawer"
       >
         <div className="ins-drawer-head">

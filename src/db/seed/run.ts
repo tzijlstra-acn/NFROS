@@ -166,7 +166,7 @@ export interface SeedSummary {
  */
 const RUN_SCOPED_TABLES = [
   /* Migration 0010: the portfolio register, its history and the insight runs (NFR Workspace v3). */
-  "insight_runs", "service_resilience_tests", "risk_acceptances", "kri_history", "control_test_results",
+  "analysis_agents", "insight_runs", "service_resilience_tests", "risk_acceptances", "kri_history", "control_test_results",
   "third_party_monthly_metrics", "portfolio_provider_links", "portfolio_third_parties",
   /* Migrations 0006, 0008 and 0009: the AI Partner, operations, personalisation, stage inputs, skills. Empty after a seed. */
   "skills", "ai_routine_run_outputs", "ai_routine_runs", "ai_suggestion_dispositions", "ai_feedback",
