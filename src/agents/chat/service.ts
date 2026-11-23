@@ -81,6 +81,7 @@ import {
 } from "./parts";
 import { CHAT_PROMPT, renderChatContext } from "./prompt";
 import { matchSeededChatAnswer, seededChatDecline } from "./seeded";
+import { detectSkillRequest, draftSkillInChat } from "@/features/skills/chat";
 
 const log = createLogger("workday-chat");
 const db = () => getDb();
@@ -598,6 +599,56 @@ export async function postChatTurn(request: PostChatTurnRequest): Promise<PostCh
         atMoment: turn.atMoment,
       },
       blocked: guardrail.reason,
+    };
+  }
+
+  /*
+   * ---- A request to build a skill ----
+   * Drafted with the builder's own drafter, previewed through `runSkill` and
+   * the gate, and handed to Processes, Skills as a link. Nothing is saved
+   * here. Resolved after the action intents and the guardrails, so a request
+   * that names a governed action still reaches the gate first.
+   */
+  const skillRequest = detectSkillRequest(request.input);
+  if (skillRequest !== null) {
+    const built = await draftSkillInChat({ input: skillRequest, roleId: request.roleId, toolContext, language, mode });
+    const neutralSkill = enforceNeutralCopy(built.parts, language);
+    const turn = writeTurn({
+      threadId: thread.id,
+      runId,
+      author: "partner",
+      atMoment: state.currentMoment,
+      selection,
+      decisionId,
+      eventId: null,
+      parts: neutralSkill.parts,
+      source: built.via === "model" ? "live" : "seeded",
+      model: "",
+      durationMs: Date.now() - startedMs,
+    });
+    appendMessage(session.id, "assistant", partsToPlainText(neutralSkill.parts), runId);
+    if (built.tool) {
+      recordToolCallActivity({
+        runId,
+        roleId: request.roleId,
+        atMoment: state.currentMoment,
+        result: built.tool,
+        label: "Drafted a skill in the work partner chat and previewed it read only",
+        labelDe: "Einen Skill im Arbeitspartner-Chat entworfen und lesend in der Vorschau gezeigt",
+        detail: built.tool.summary,
+        objectType: "skill",
+        objectId: "draft",
+      });
+    }
+    return {
+      threadId: thread.id,
+      turn: {
+        id: turn.id,
+        author: "partner",
+        parts: turn.parts,
+        source: turn.source,
+        atMoment: turn.atMoment,
+      },
     };
   }
 

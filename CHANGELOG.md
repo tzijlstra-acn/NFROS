@@ -9,6 +9,42 @@ each is listed under the product release that ships it. The release registry
 in `src/product/release`, the version in package.json and the top entry here
 are held together by `tests/unit/product-release.test.ts`.
 
+## [Unreleased]
+
+Not yet assigned to a product release. It changes the database schema
+(migration 0009) and adds one READ tool to the authority registry, both of
+which 4.1.0 lists as not changed, so it ships under the next version.
+
+### Added
+
+- Skills, on Processes (`?view=skills`) for every role: a person describes
+  what they want to keep an eye on in a sentence, sees how it was read (the
+  records it reads, one line per filter, the order, the schedule and what was
+  assumed), previews it and saves it. A skill is a read-only query over a
+  whitelisted catalog of five sources (suppliers, evidence, contract
+  obligations, incidents and key risk indicators), narrowed to the role's
+  legal entity and the current scenario moment as Search is. Feature module
+  `src/features/skills`; interface
+  `src/components/workday-v3/skills/SkillsWorkspace.tsx`.
+- `runSkill` (READ, `work.read` and `evidence.read`) in the authority
+  registry. Every preview and run goes through `executeTool`, so the gate
+  decides and the call is recorded in `tool_calls` and the audit trail. The
+  handler checks the spec against the catalog again and takes the scope from
+  the tool context, never from the payload.
+- Drafting: in live mode the model drafts the spec in strict structured
+  output from a description of the catalog only, and its draft is checked like
+  any other; in safe and offline mode, and whenever the model's draft fails
+  the check, a deterministic rule-based drafter reads the sentence in English
+  or German and says what it assumed.
+- The work partner builds a skill on request ("Build a skill that lists
+  ..."): it drafts and previews the skill and links to the builder with the
+  checked draft; it never saves one. Governed action requests still reach the
+  gate first. A follow-up part may carry an in-app link (`meta.href`).
+- Migration 0009: the `skills` table, cleared by a reseed. Saving and removing
+  a skill are audited in the system category. A weekly skill is due on the
+  Monday after the scenario day and is run by the person until a scheduler
+  exists.
+
 ## [4.1.0] - 2026-10-05
 
 Product truth and release coherence. Release candidate: the release is in

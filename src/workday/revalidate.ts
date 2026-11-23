@@ -66,6 +66,7 @@ export type WorkdayChange =
   | "suggestion"
   | "activity"
   | "routine"
+  | "skill"
   | "scenario";
 
 /**

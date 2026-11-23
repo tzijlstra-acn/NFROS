@@ -32,7 +32,7 @@ const EMPTY_AFTER_SEED = [
   "notifications", "ai_evaluation_runs", "ai_evaluation_case_results", "ai_configuration_releases",
   "product_feedback", "pilot_measure_readings", "pilot_issues", "pilot_exit_decisions", "product_release_events",
   "release_gate_runs", "integration_incidents", "data_quality_issues", "experience_events", "user_preferences",
-  "saved_views", "user_object_lists", "process_stage_inputs",
+  "saved_views", "user_object_lists", "process_stage_inputs", "skills",
 ] as const;
 
 const AT = "2026-10-06T08:00:00.000Z";

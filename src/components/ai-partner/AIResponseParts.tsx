@@ -81,6 +81,19 @@ const AUTHORITY_VALUES: AuthorityClass[] = [
   "PROHIBITED",
 ];
 
+/**
+ * A product route a part links to, for example the Skills builder a chat
+ * draft is handed to. Only an in-app workday path is followed; anything else
+ * is ignored, so a part can never send the reader off the product.
+ */
+function linkFromMeta(meta: Record<string, unknown> | undefined): { href: string; label: string } | null {
+  const href = meta?.["href"];
+  const label = meta?.["hrefLabel"];
+  if (typeof href !== "string" || typeof label !== "string") return null;
+  if (!/^\/workday\/[a-z-]+\/[a-z-]+(?:\?[A-Za-z0-9_.~%&=+-]*)?$/.test(href)) return null;
+  return { href, label };
+}
+
 function authorityFromMeta(meta: Record<string, unknown> | undefined): AuthorityClass | null {
   const value = meta?.["authorityClass"];
   return typeof value === "string" && (AUTHORITY_VALUES as string[]).includes(value)
@@ -262,7 +275,19 @@ export function AIResponseParts({
               </span>
             ) : null}
 
-            {part.kind === "follow-up" && onAskFollowUp && part.text ? (
+            {part.kind === "follow-up" && linkFromMeta(part.meta) ? (
+              <span className="app-row">
+                <a
+                  className="app-prompt-chip"
+                  href={linkFromMeta(part.meta)?.href}
+                  data-testid="chat-part-link"
+                  style={{ display: "inline-flex", alignItems: "center", gap: 4, whiteSpace: "nowrap" }}
+                >
+                  {linkFromMeta(part.meta)?.label}
+                  <IconArrowUpRight size={11} stroke={2} aria-hidden="true" />
+                </a>
+              </span>
+            ) : part.kind === "follow-up" && onAskFollowUp && part.text ? (
               <span className="app-row">
                 <button
                   type="button"

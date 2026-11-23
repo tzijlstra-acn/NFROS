@@ -155,8 +155,8 @@ export interface SeedSummary {
  * yesterday's conclusions already on the record.
  */
 const RUN_SCOPED_TABLES = [
-  /* Migrations 0006 and 0008: the AI Partner, operations, personalisation, stage inputs. Empty after a seed. */
-  "ai_routine_run_outputs", "ai_routine_runs", "ai_suggestion_dispositions", "ai_feedback",
+  /* Migrations 0006, 0008 and 0009: the AI Partner, operations, personalisation, stage inputs, skills. Empty after a seed. */
+  "skills", "ai_routine_run_outputs", "ai_routine_runs", "ai_suggestion_dispositions", "ai_feedback",
   "partner_contexts", "notifications", "integration_incidents", "data_quality_issues",
   "experience_events", "user_preferences", "saved_views", "user_object_lists", "process_stage_inputs",
   "background_job_attempts", "background_jobs", "os_events",
