@@ -1,6 +1,6 @@
 # Changelog
 
-All notable changes to NFROS are recorded here.
+All notable changes to NFR Workspace (released as NFROS up to 4.1.0) are recorded here.
 
 Format based on Keep a Changelog (keepachangelog.com). Product releases use
 semantic versions and are listed newest first. The workday interface and the
@@ -9,15 +9,67 @@ each is listed under the product release that ships it. The release registry
 in `src/product/release`, the version in package.json and the top entry here
 are held together by `tests/unit/product-release.test.ts`.
 
-## [Unreleased]
+## [5.0.0] - 2026-11-23
 
-Not yet assigned to a product release. It changes the database schema
-(migration 0009) and adds one READ tool to the authority registry, both of
-which 4.1.0 lists as not changed, so it ships under the next version.
+NFR Workspace. Release candidate. The plan, checked against what NFROS already
+did, is `docs/NFR_WORKSPACE_V3_PLAN.md`; the presenter guide is
+`docs/NFR_WORKSPACE_PRESENTER_GUIDE.md`.
+
+Components: Workday interface V3.3, Risk Audience Presentation V2.4 (the
+recorded decks keep the NFROS name they were released under).
 
 ### Added
 
-- Skills, on Processes (`?view=skills`) for every role: a person describes
+- The product is NFR Workspace: `PRODUCT_IDENTITY`, the brand profiles
+  (migration 0010 renames existing rows), the header, the model prompt and the
+  showcase launcher. A test keeps NFROS off every interface file except the
+  recorded presentation releases.
+- Entrance: a startup sequence at `/` (about 1.8 seconds, static under
+  reduced motion), the demonstration sign-in Admin / Admin checked on the
+  server, and a context step showing the acting role and scopes, the open
+  decisions and the moment the records are read at. `/login` takes a safe
+  same-origin `next`. `POST` and `DELETE /api/session` sign in and out,
+  both audited.
+- Session guard in `middleware.ts` for the workday, the administration
+  surfaces and the work APIs (redirect for pages, 401 for APIs);
+  `NFR_DEMO_AUTH=off` disables it for isolated stacks. The account menu shows
+  who is signed in and the acting role, switches between the Available roles,
+  resets the demonstration and signs out.
+- Portfolio register and history (migration 0010): 27 register third parties
+  and their underlying providers, 24 months of performance for 34 third
+  parties, eight quarters of test results per control, KRI history before
+  2026, a risk acceptance register, service resilience tests and insight runs.
+  Deterministic, and consistent with the day; the operational tables are
+  unchanged.
+- Insight engine (`src/features/insights`): ten analytical questions answered
+  from the records in every mode, each as a Zod-validated `InsightResponse`
+  with a conclusion, up to five key numbers, typed visuals, findings with
+  evidence and freshness, recommendations with governed action payloads, a
+  query plan and follow-ups. A router reads English and German.
+- `analyseQuestion` (READ, `work.read` and `evidence.read`) in the authority
+  registry. Every analysis runs through the gate and is audited.
+- Insights area: the canvas (conclusion first, key numbers, primary visual,
+  findings, evidence drawer, recommended action, how it was prepared,
+  supporting views, print), saved and recent analyses, and Records (register,
+  history and the audit log).
+- Chart renderer: bar, stacked bar, line and area, waterfall, bullet,
+  heatmap, treemap, three-layer network, timeline and table, on d3 scales with
+  a validated categorical palette, each with an explanation and a table view.
+- Governed write-back from an analysis: review of target, fields before and
+  after, evidence and authority; commit through `runGovernedChain` with the
+  payload read from the stored analysis; a receipt with transaction, record,
+  approval, actor and links to the record and the audit log.
+- Today: an Ask bar under Next and "Ask about this case" on the Now item.
+  The rail adds Insights and Agents, and Home is now Today.
+- AI Partner: an analytical question is answered from the engine with a link
+  to the full analysis in Safe, Offline and Live mode, where Safe mode used to
+  decline.
+- Agents (migration 0011, `analysis_agents`): Save as agent opens a four-step
+  builder (outcome, scope and permissions, plan, run and save); agents run
+  their saved analysis through the gate in the owner's context, keep a run
+  history, and can be submitted for team review or retired. Watch lists
+  (skills) sit beside them.
+- Skills, now on Agents (`/workday/<role>/agents`; old Processes links forward) for every role: a person describes
   what they want to keep an eye on in a sentence, sees how it was read (the
   records it reads, one line per filter, the order, the schedule and what was
   assumed), previews it and saves it. A skill is a read-only query over a
@@ -44,6 +96,18 @@ which 4.1.0 lists as not changed, so it ships under the next version.
   a skill are audited in the system category. A weekly skill is due on the
   Monday after the scenario day and is run by the person until a scheduler
   exists.
+
+### Fixed
+
+- The V3 header no longer clips its own menus: `overflow: hidden` hid the
+  account and display menus entirely.
+
+### Changed
+
+- The marketing-style entrance at `/` is retired in favour of the startup and
+  sign-in; the presenter controls are in the account menu and the control
+  room.
+- End-to-end specs sign in once in a global setup.
 
 ## [4.1.0] - 2026-10-05
 

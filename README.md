@@ -20,11 +20,11 @@ repository are invented for the purpose of a demonstration.
 | | |
 |---|---|
 | Product | NFR Workspace, Non-financial risk workspace |
-| Product release | 4.1.0, Product truth and release coherence (release candidate, 2026-10-05) |
+| Product release | 5.0.0, NFR Workspace (release candidate, 2026-11-23) |
 | Workday interface | V3.3, `/workday` |
 | NFROS Risk Audience Presentation | V2.4, `/story` |
 
-One product identity, one release registry and one status vocabulary. Versions, role release states, Role Apps, connector modes, AI modes, evaluation status, readiness and audit integrity are read from data or marked Not verified.
+The product is NFR Workspace. A startup and a demonstration sign-in lead to a guarded workspace; questions are answered from the records as structured, chart-first analyses with evidence; a recommended action is reviewed, approved and committed through the authority gate with a receipt; and an analysis can be kept as a governed personal agent.
 
 Role release states:
 
@@ -49,21 +49,47 @@ Role Apps:
 Known limitations:
 
 1. **Two of six roles are complete.** Only the Available roles have the full workday and complete processes. A Demo role opens an explanatory page, and a Planned role is not built. The role selector labels each one. State: stated in the product. See `src/product/release/role-release.ts`.
-2. **AI evaluation is structural only.** Evaluation cases are graded against synthetic test envelopes built from each case. Grounded and live modes record every case as not run, so the quality of model output is not verified. The AI quality page shows the recorded run and says so. State: stated in the product. See `/settings/ai-quality`.
-3. **No client system is connected.** Every seeded connector instance is simulated, sandbox ready without a credential, configured but unreachable, or planned. None reads a client system, and each one shows its mode. State: stated in the product. See `/settings/integrations`.
-4. **No enterprise identity.** Sessions are local demonstration personas or a static pilot account list. There is no single sign-on and no tenancy, and in demonstration mode the acting role is scenario state. State: open. See `src/identity/`.
-5. **Role App management is read only.** A product owner cannot enable, disable, stage, compare, assign or retire a Role App. Installed and preview states come from the code registry. State: open. See `/settings/role-apps`.
-6. **The pilot cohort holds local accounts only.** The pilot workspace manages setup, the cohort, the baseline, weekly readings, issues and the governed exit decision. The cohort can hold only the static pilot accounts, because there is no identity provider, and every figure the product measures in this environment comes from the synthetic institution. State: open. See `/product/pilot`.
-7. **Audit chain verification runs from the command line.** The pilot evidence pack downloads from the pilot workspace. Audit chain verification and the support bundle are still produced by npm scripts, and the backup script always reads data/nfr-workos.db. State: open. See `npm run audit:verify-chain, npm run support:bundle, scripts/backup.ts`.
-8. **Operations is not linked to roles or processes.** The operations console shows component health, the job queue and the audit chain. It does not connect an incident to an affected role, process, person or release decision. State: open. See `/ops`.
-9. **Stored administrator values are English.** The settings area and the operations console follow the scenario language. Values read from a registry or the database, such as tool and autonomy descriptions, deployment profiles, connector notes, model profile purposes and regulatory references, are shown as stored, in English. State: open. See `app/settings/`.
-10. **Runs on one machine.** One process with a local SQLite file. A Dockerfile and a compose file exist; no cloud deployment has been made. State: open. See `/settings/deployment`.
-11. **Voice is best effort.** Voice falls back to typed input whenever a realtime model or live mode is unavailable. The typed path is the tested one. State: open. See `docs/ASSUMPTIONS.md`.
-12. **Two scenario figures are not fully reconciled.** Two figures could not be fully reconciled with the coded risk methodology and with each other. Cost figures are illustrative and no live price list is read. State: open. See `docs/ASSUMPTIONS.md sections 4.2 and 4.3`.
+2. **Analyses cover ten question types.** The insight engine answers ten kinds of question deterministically from the records and the portfolio register, in every mode; any other question is declined with the questions it can answer. In live mode the model does not yet phrase around the computed figures, and the portfolio register and its history are synthetic. State: open. See `src/features/insights/`.
+3. **AI evaluation is structural only.** Evaluation cases are graded against synthetic test envelopes built from each case. Grounded and live modes record every case as not run, so the quality of model output is not verified. The AI quality page shows the recorded run and says so. State: stated in the product. See `/settings/ai-quality`.
+4. **No client system is connected.** Every seeded connector instance is simulated, sandbox ready without a credential, configured but unreachable, or planned. None reads a client system, and each one shows its mode. State: stated in the product. See `/settings/integrations`.
+5. **No enterprise identity.** The sign-in is one documented demonstration account (Admin / Admin) on a signed browser-session cookie with a development secret: an experience gate, not authentication. There is no single sign-on and no tenancy, and in demonstration mode the acting role is scenario state. State: open. See `src/identity/`.
+6. **Role App management is read only.** A product owner cannot enable, disable, stage, compare, assign or retire a Role App. Installed and preview states come from the code registry. State: open. See `/settings/role-apps`.
+7. **The pilot cohort holds local accounts only.** The pilot workspace manages setup, the cohort, the baseline, weekly readings, issues and the governed exit decision. The cohort can hold only the static pilot accounts, because there is no identity provider, and every figure the product measures in this environment comes from the synthetic institution. State: open. See `/product/pilot`.
+8. **Audit chain verification runs from the command line.** The pilot evidence pack downloads from the pilot workspace. Audit chain verification and the support bundle are still produced by npm scripts, and the backup script always reads data/nfr-workos.db. State: open. See `npm run audit:verify-chain, npm run support:bundle, scripts/backup.ts`.
+9. **Operations is not linked to roles or processes.** The operations console shows component health, the job queue and the audit chain. It does not connect an incident to an affected role, process, person or release decision. State: open. See `/ops`.
+10. **Stored administrator values are English.** The settings area and the operations console follow the scenario language. Values read from a registry or the database, such as tool and autonomy descriptions, deployment profiles, connector notes, model profile purposes and regulatory references, are shown as stored, in English. State: open. See `app/settings/`.
+11. **Runs on one machine.** One process with a local SQLite file. A Dockerfile and a compose file exist; no cloud deployment has been made. State: open. See `/settings/deployment`.
+12. **Voice is best effort.** Voice falls back to typed input whenever a realtime model or live mode is unavailable. The typed path is the tested one. State: open. See `docs/ASSUMPTIONS.md`.
+13. **Two scenario figures are not fully reconciled.** Two figures could not be fully reconciled with the coded risk methodology and with each other. Cost figures are illustrative and no live price list is read. State: open. See `docs/ASSUMPTIONS.md sections 4.2 and 4.3`.
 
 _This section is generated from `src/product/release`. After changing the registry, run `npx tsx scripts/sync-release-readme.ts`._
 
 ---
+
+## NFR Workspace v3 in one minute
+
+> AI prepares. Professionals decide. Systems record.
+
+1. **Sign in** after a short startup; the workspace loads the acting role,
+   its open decisions and the moment the records are read at.
+2. **Today** shows one item that needs the person now, at most three next,
+   what is being watched and what was done without them.
+3. **Ask** a question on Today, on a case or in the AI Partner. Ten kinds of
+   question are answered by a deterministic insight engine
+   (`src/features/insights`) from the records and a portfolio register with
+   24 months of history: a conclusion, up to five numbers, a chart, findings
+   with evidence and freshness, and the recommended next step.
+4. **Act**: the recommended step is a governed action. The person reviews the
+   target and every field before and after, confirms, and the change is
+   committed through the authority gate with a payload-bound approval and a
+   receipt that links to the audit log.
+5. **Keep it**: an analysis can be saved, printed as a briefing, or saved as
+   an agent that runs again in the person's own access.
+
+Everything above runs offline in Safe mode: the analyses do not need a model,
+and no model ever supplies a figure. The reasoning behind the design is
+`docs/NFR_WORKSPACE_V3_PLAN.md`; the demonstration script is
+`docs/NFR_WORKSPACE_PRESENTER_GUIDE.md`.
 
 ## What this is
 
@@ -119,11 +145,19 @@ npm run db:seed
 npm run demo:safe
 ```
 
-Then open:
+Then open http://localhost:3000 and sign in with **Admin / Admin**, the
+demonstration account. It is an experience gate, not authentication; see the
+known limitations. `NFR_DEMO_USERNAME` and `NFR_DEMO_PASSWORD` change it, and
+`NFR_DEMO_AUTH=off` removes the sign-in for an isolated test stack.
 
 | Surface | URL |
 |---|---|
-| Entry screen | http://localhost:3000 |
+| Entrance: startup, then sign-in | http://localhost:3000 |
+| Sign-in only | http://localhost:3000/login |
+| Today, Third-Party Risk Manager | http://localhost:3000/workday/tprm |
+| Insights: ask, analyses, saved | http://localhost:3000/workday/tprm/insights |
+| Insights, Records and audit log | http://localhost:3000/workday/tprm/insights/records |
+| Agents | http://localhost:3000/workday/tprm/agents |
 | Presentation | http://localhost:3000/story |
 | Workday, role selection | http://localhost:3000/workday |
 | Workday, Operational Risk Partner | http://localhost:3000/workday/rcsa |
@@ -617,7 +651,9 @@ the sources.
 
 | File | Contents |
 |---|---|
-| `docs/OS_PRODUCT_EXCELLENCE_PLAN.md` | **The current improvement programme for the two flagship Role Operating Systems** |
+| `docs/NFR_WORKSPACE_V3_PLAN.md` | **NFR Workspace v3: the plan checked against the product, and ten architecture decisions** |
+| `docs/NFR_WORKSPACE_PRESENTER_GUIDE.md` | **The five-act demonstration, with what to click and what to say** |
+| `docs/OS_PRODUCT_EXCELLENCE_PLAN.md` | The improvement programme for the two flagship Role Operating Systems |
 | `docs/handoffs/os-excellence-audit.md` | The baseline audit the programme started from: 102 defects with evidence |
 | `docs/handoffs/os-excellence-*.md` | One handoff per workstream: what changed, acceptance evidence, tests, limitations |
 | `docs/SCENARIO_BIBLE.md` | The single source of truth for all synthetic content |

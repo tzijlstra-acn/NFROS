@@ -1,8 +1,8 @@
 {
   "name": "nfr-workos",
-  "version": "4.1.0",
+  "version": "5.0.0",
   "private": true,
-  "description": "NFR WorkOS: Live the NFR Day. One work environment for non-financial risk, with specialist intelligence per function and human accountability at every material decision.",
+  "description": "NFR Workspace: one workspace for non-financial risk. The work arrives prepared, professionals decide, and the systems of record are updated through governed steps.",
   "type": "module",
   "engines": {
     "node": ">=20.9.0"

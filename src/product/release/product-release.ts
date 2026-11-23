@@ -97,16 +97,16 @@ export interface ProductRelease {
  * releases, which now live under their own heading and their own V labels.
  */
 export const PRODUCT_RELEASE: ProductRelease = {
-  version: "4.1.0",
-  date: "2026-10-05",
+  version: "5.0.0",
+  date: "2026-11-23",
   name: {
-    en: "Product truth and release coherence",
-    de: "Produktwahrheit und stimmiges Release",
+    en: "NFR Workspace",
+    de: "NFR Workspace",
   },
   stage: "candidate",
   summary: {
-    en: "One product identity, one release registry and one status vocabulary. Versions, role release states, Role Apps, connector modes, AI modes, evaluation status, readiness and audit integrity are read from data or marked Not verified.",
-    de: "Eine Produktidentitaet, ein Release-Verzeichnis und ein Statusvokabular. Versionen, Rollenstatus, Rollen-Apps, Konnektormodi, KI-Modi, Evaluationsstatus, Bereitschaft und Audit-Integritaet werden aus Daten gelesen oder als Nicht verifiziert ausgewiesen.",
+    en: "The product is NFR Workspace. A startup and a demonstration sign-in lead to a guarded workspace; questions are answered from the records as structured, chart-first analyses with evidence; a recommended action is reviewed, approved and committed through the authority gate with a receipt; and an analysis can be kept as a governed personal agent.",
+    de: "Das Produkt heisst NFR Workspace. Start und Demonstrationsanmeldung fuehren in einen geschuetzten Arbeitsbereich; Fragen werden aus den Datensaetzen als strukturierte, grafische Analysen mit Nachweisen beantwortet; eine empfohlene Massnahme wird geprueft, genehmigt und ueber das Befugnis-Gate mit Beleg ausgefuehrt; und eine Analyse kann als gesteuerter persoenlicher Agent behalten werden.",
   },
 };
 
@@ -283,6 +283,20 @@ export const KNOWN_LIMITATIONS: readonly KnownLimitation[] = [
     reference: "src/product/release/role-release.ts",
   },
   {
+    id: "analysis-ten-questions",
+    area: "ai",
+    status: "open",
+    title: {
+      en: "Analyses cover ten question types",
+      de: "Analysen decken zehn Fragetypen ab",
+    },
+    detail: {
+      en: "The insight engine answers ten kinds of question deterministically from the records and the portfolio register, in every mode; any other question is declined with the questions it can answer. In live mode the model does not yet phrase around the computed figures, and the portfolio register and its history are synthetic.",
+      de: "Die Analyse-Engine beantwortet zehn Fragetypen deterministisch aus den Datensaetzen und dem Portfolioregister, in jedem Modus; jede andere Frage wird mit den beantwortbaren Fragen abgelehnt. Im Live-Modus formuliert das Modell noch nicht um die berechneten Zahlen herum, und Portfolioregister und Historie sind synthetisch.",
+    },
+    reference: "src/features/insights/",
+  },
+  {
     id: "evaluation-structural-only",
     area: "ai",
     status: "mitigated",
@@ -319,8 +333,8 @@ export const KNOWN_LIMITATIONS: readonly KnownLimitation[] = [
       de: "Keine Unternehmensidentitaet",
     },
     detail: {
-      en: "Sessions are local demonstration personas or a static pilot account list. There is no single sign-on and no tenancy, and in demonstration mode the acting role is scenario state.",
-      de: "Sitzungen sind lokale Demonstrationspersonen oder eine feste Liste von Pilotkonten. Es gibt kein Single Sign-on und keine Mandantentrennung, und im Demonstrationsmodus ist die handelnde Rolle Teil des Szenariozustands.",
+      en: "The sign-in is one documented demonstration account (Admin / Admin) on a signed browser-session cookie with a development secret: an experience gate, not authentication. There is no single sign-on and no tenancy, and in demonstration mode the acting role is scenario state.",
+      de: "Die Anmeldung ist ein dokumentiertes Demonstrationskonto (Admin / Admin) auf einem signierten Sitzungscookie mit Entwicklungsschluessel: ein Zugang zur Erfahrung, keine Authentifizierung. Es gibt kein Single Sign-on und keine Mandantentrennung, und im Demonstrationsmodus ist die handelnde Rolle Teil des Szenariozustands.",
     },
     reference: "src/identity/",
   },
