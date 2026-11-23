@@ -25,6 +25,7 @@
   --chart-neutral-soft: #eef0f3;
   --chart-good: #0ca30c;
   --chart-good-soft: #e3f4e3;
+  --chart-good-ink: #0e5c2a;
   --chart-watch: #fab219;
   --chart-warning: #ec835a;
   --chart-critical: #d03b3b;
@@ -42,6 +43,7 @@
   --chart-neutral: #5d6676;
   --chart-neutral-soft: #222934;
   --chart-good-soft: #17301d;
+  --chart-good-ink: #8fe0a8;
   --chart-grid: #262d38;
   --chart-baseline: #3c4553;
 }
@@ -320,11 +322,13 @@
   outline-offset: 1px;
 }
 
-.workday-v3 .ins-heat-cell[data-tone="good"] { background: var(--chart-good-soft); color: var(--wd-success); }
+.workday-v3 .ins-heat-cell[data-tone="good"] { background: var(--chart-good-soft); color: var(--chart-good-ink); }
 .workday-v3 .ins-heat-cell[data-tone="watch"] { background: var(--chart-watch); color: var(--chart-on-watch); }
 .workday-v3 .ins-heat-cell[data-tone="warning"] { background: var(--chart-warning); color: var(--chart-on-fill); }
 .workday-v3 .ins-heat-cell[data-tone="critical"] { background: var(--chart-critical); color: var(--chart-on-fill); }
 .workday-v3 .ins-heat-cell[data-tone="accent"] { background: var(--chart-accent); color: var(--chart-on-fill); }
+/* The dark accent is light, so its cells take dark ink. */
+.workday-v3[data-wd-theme="dark"] .ins-heat-cell[data-tone="accent"] { color: #14121f; }
 .workday-v3 .ins-heat-cell:hover,
 .workday-v3 .ins-heat-cell:focus-visible { outline: 2px solid var(--wd-text); }
 

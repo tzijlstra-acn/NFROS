@@ -45,7 +45,7 @@ export function BarChart({ viz }: { viz: Of<"bar"> }) {
 
   return (
     <div className="ins-chart" ref={ref} data-hovering={active ? "true" : undefined}>
-      <svg width={width} height={height} role="img" aria-label={viz.title}>
+      <svg width={width} height={height} role="group" aria-label={viz.title}>
         {ticks.map((tick) => (
           <g key={tick}>
             <line className="ins-grid-line" x1={x(tick)} x2={x(tick)} y1={top} y2={height - 20} />
@@ -133,7 +133,7 @@ export function StackedBarChart({ viz }: { viz: Of<"stacked-bar"> }) {
 
   return (
     <div className="ins-chart" ref={ref} data-hovering={active ? "true" : undefined}>
-      <svg width={width} height={height} role="img" aria-label={viz.title}>
+      <svg width={width} height={height} role="group" aria-label={viz.title}>
         {ticks.map((tick) => (
           <g key={tick}>
             <line className="ins-grid-line" x1={x(tick)} x2={x(tick)} y1={6} y2={height - 20} />
@@ -386,7 +386,7 @@ export function WaterfallChart({ viz }: { viz: Of<"waterfall"> }) {
 
   return (
     <div className="ins-chart" ref={ref}>
-      <svg width={width} height={height} role="img" aria-label={viz.title}>
+      <svg width={width} height={height} role="group" aria-label={viz.title}>
         {y.ticks(4).map((tick) => (
           <g key={tick}>
             <line className="ins-grid-line" x1={margin.left} x2={width - margin.right} y1={y(tick)} y2={y(tick)} />
@@ -470,7 +470,7 @@ export function BulletChart({ viz, labels }: { viz: Of<"bullet">; labels: Bullet
 
   return (
     <div className="ins-chart" ref={ref}>
-      <svg width={width} height={height} role="img" aria-label={viz.title}>
+      <svg width={width} height={height} role="group" aria-label={viz.title}>
         {x.ticks(5).map((tick) => (
           <g key={tick}>
             <line className="ins-grid-line" x1={x(tick)} x2={x(tick)} y1={4} y2={height - 20} />

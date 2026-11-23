@@ -50,6 +50,19 @@ function databaseCurrent() {
   }
 }
 
+// Whether the portfolio register (migration 0010) holds rows; an upgraded database has none.
+function portfolioSeeded() {
+  try {
+    const Database = require(join(root, "node_modules", "better-sqlite3"));
+    const conn = new Database(db, { readonly: true, fileMustExist: true });
+    const n = conn.prepare("select count(*) as n from third_party_monthly_metrics").get().n;
+    conn.close();
+    return n > 0;
+  } catch {
+    return false;
+  }
+}
+
 // Newest modification time under the app's own code, to tell whether the build is stale
 function newestSourceTime() {
   let newest = 0;
@@ -90,6 +103,11 @@ function run(command, commandArgs) {
   }
   if (fresh) {
     say("First run: seeding the synthetic institution (a few minutes)...");
+    run("npx", ["tsx", "scripts/seed.ts"]);
+  } else if (!portfolioSeeded()) {
+    // NFR Workspace v3 (migration 0010) added the portfolio register and its history. A database
+    // migrated from an earlier release has the tables but no rows until it is seeded again.
+    say("Updating the showcase day for NFR Workspace (a few minutes, once)...");
     run("npx", ["tsx", "scripts/seed.ts"]);
   }
 

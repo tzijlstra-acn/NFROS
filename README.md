@@ -184,7 +184,9 @@ If port 3000 is taken, pass another: `next dev -p 3001`.
 
 ### Upgrading an existing database
 
-Pulling a newer release can add migrations. With the dev server stopped:
+Pulling a newer release can add migrations. NFR Workspace 5.0.0 adds 0010 and
+0011; the portfolio register they create is filled by the reset, so run both
+steps. With the dev server stopped:
 
 ```bash
 npm run db:migrate

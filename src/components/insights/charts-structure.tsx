@@ -37,12 +37,14 @@ export function Heatmap({ viz }: { viz: Of<"heatmap"> }) {
         aria-label={viz.title}
         style={{ gridTemplateColumns: `minmax(150px, 1.4fr) repeat(${viz.columns.length}, minmax(38px, 1fr))` }}
       >
-        <div role="columnheader" />
-        {viz.columns.map((column) => (
-          <div key={column} className="ins-heat-head" role="columnheader">
-            {column}
-          </div>
-        ))}
+        <div role="row" style={{ display: "contents" }}>
+          <div role="columnheader" />
+          {viz.columns.map((column) => (
+            <div key={column} className="ins-heat-head" role="columnheader">
+              {column}
+            </div>
+          ))}
+        </div>
         {viz.rows.map((row) => (
           <div key={row.id} role="row" style={{ display: "contents" }}>
             <div className="ins-heat-row-label" role="rowheader">
@@ -107,7 +109,7 @@ export function TreemapChart({ viz }: { viz: Of<"treemap"> }) {
 
   return (
     <div className="ins-chart" ref={ref}>
-      <svg width={width} height={height} role="img" aria-label={viz.title}>
+      <svg width={width} height={height} role="group" aria-label={viz.title}>
         {layout.descendants().filter((node) => node.depth === 1).map((node) => {
           const data = node.data as unknown as { id: string; label: string };
           return (
@@ -201,7 +203,7 @@ export function NetworkView({ viz, labels }: { viz: Of<"network">; labels: Netwo
 
   return (
     <div className="ins-chart" ref={ref} data-hovering={active ? "true" : undefined}>
-      <svg width={width} height={height} role="img" aria-label={viz.title}>
+      <svg width={width} height={height} role="group" aria-label={viz.title}>
         {viz.layers.map((layer, index) => (
           <text key={layer.id} className="ins-axis-text" x={xFor(index) + (index === 2 ? colWidth : 0)} y={14} textAnchor={index === 2 ? "end" : "start"}>
             {layer.label}
@@ -318,7 +320,7 @@ export function TimelineView({ viz }: { viz: Of<"timeline"> }) {
 
   return (
     <div className="ins-chart" ref={ref}>
-      <svg width={width} height={height} role="img" aria-label={viz.title}>
+      <svg width={width} height={height} role="group" aria-label={viz.title}>
         {ticks.map((tick) => (
           <g key={tick.toISOString()}>
             <line className="ins-grid-line" x1={x(tick)} x2={x(tick)} y1={18} y2={height - 22} />

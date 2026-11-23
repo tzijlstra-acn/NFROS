@@ -307,13 +307,13 @@ export function InsightCanvas({ roleId, insightId, response, permissions, savedT
               <div><dt className="ins-section-sub">{pick(COPY.grouped, language)}</dt><dd style={{ margin: "2px 0 0", fontSize: 13 }}>{response.plan.groupedBy}</dd></div>
               <div><dt className="ins-section-sub">{pick(COPY.output, language)}</dt><dd style={{ margin: "2px 0 0", fontSize: 13 }}>{response.plan.output}</dd></div>
               <div><dt className="ins-section-sub">{pick(COPY.confidence, language)}</dt><dd style={{ margin: "2px 0 0", fontSize: 13 }}>{response.confidence.explanation}</dd></div>
-              <div className="ins-no-print">
-                <button type="button" className="wd-btn wd-btn-link wd-btn-sm" aria-expanded={technical} onClick={() => setTechnical((open) => !open)}>
-                  {pick(COPY.technical, language)}
-                </button>
-                {technical ? <p className="ins-explain">{pick(COPY.technicalBody, language).replace("{audit}", auditEventId ?? "n/a")}</p> : null}
-              </div>
             </dl>
+            <div className="ins-no-print" style={{ padding: "0 20px 16px" }}>
+              <button type="button" className="wd-btn wd-btn-link wd-btn-sm" aria-expanded={technical} onClick={() => setTechnical((open) => !open)}>
+                {pick(COPY.technical, language)}
+              </button>
+              {technical ? <p className="ins-explain">{pick(COPY.technicalBody, language).replace("{audit}", auditEventId ?? "n/a")}</p> : null}
+            </div>
           </div>
 
           {response.followUps.length ? (

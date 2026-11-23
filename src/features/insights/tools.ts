@@ -56,14 +56,21 @@ function register(): void {
       today: state.scenarioDate,
       language: context.language,
     });
-    const built = intent.build({
-      data: dataset,
-      question,
-      roleId: context.roleId,
-      language: context.language,
-      dataAsOf: formatMoment(state.scenarioDate, context.atMoment),
-      context: subject,
-    });
+    /* A builder that cannot work with the records it finds refuses; it never fails the tool call. */
+    let built: unknown;
+    try {
+      built = intent.build({
+        data: dataset,
+        question,
+        roleId: context.roleId,
+        language: context.language,
+        dataAsOf: formatMoment(state.scenarioDate, context.atMoment),
+        context: subject,
+      });
+    } catch (error) {
+      const data: AnalysisToolData = { ok: false, reason: "invalid", issues: [error instanceof Error ? error.message : String(error)] };
+      return { summary: `The ${intent.id} analysis could not be built from the records and was not shown.`, data, objectKind: "insight", objectId: intent.id };
+    }
     const checked = validateInsight(built);
     if (!checked.ok) {
       const data: AnalysisToolData = { ok: false, reason: "invalid", issues: checked.issues };
