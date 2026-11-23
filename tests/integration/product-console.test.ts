@@ -43,6 +43,9 @@ const { readRoleAppAvailability } = await import("@/role-apps/enablement");
 const { getCurrentRoleAppVersion, listRoleAppLifecycleEvents, getRoleAppVersion } = await import("@/db/repositories/role-app-release");
 const { createEvaluationRun } = await import("@/db/repositories/ai-evaluations");
 const { startReleaseGateRun, completeReleaseGateRun, getDeployedRelease } = await import("@/db/repositories/release-management");
+/* The gate and the release read the version from the registry, so the test does too. */
+const { PRODUCT_RELEASE } = await import("@/product/release");
+const VERSION = PRODUCT_RELEASE.version;
 const lifecycle = await import("@/features/product/role-apps/lifecycle");
 const release = await import("@/features/product/releases/release");
 const { recordReleaseEvent } = await import("@/db/repositories/release-management");
@@ -195,7 +198,7 @@ describe("release management", () => {
     let proposal = release.proposeApprovePilotRelease();
     expect(proposal.blocked?.en).toContain("No release gate run");
 
-    startReleaseGateRun({ id: "RGR-test-1", releaseVersion: "4.1.0", startedAt: "2026-10-06T10:00:00.000Z", triggeredByLabel: "test" });
+    startReleaseGateRun({ id: "RGR-test-1", releaseVersion: VERSION, startedAt: "2026-10-06T10:00:00.000Z", triggeredByLabel: "test" });
     completeReleaseGateRun("RGR-test-1", {
       status: "failed",
       results: [{ gateKey: "a", label: "A", mandatory: true, status: "failed", detail: "", evidenceRef: null, durationMs: 1 }],
@@ -205,7 +208,7 @@ describe("release management", () => {
     expect(proposal.blocked?.en).toContain("No release while mandatory gates fail");
     expect(await release.approvePilotRelease({ reviewedFingerprint: proposal.fingerprint, rationale, rationaleConfirmed: true })).toMatchObject({ ok: false, code: "rule" });
 
-    startReleaseGateRun({ id: "RGR-test-2", releaseVersion: "4.1.0", startedAt: "2026-10-06T11:00:00.000Z", triggeredByLabel: "test" });
+    startReleaseGateRun({ id: "RGR-test-2", releaseVersion: VERSION, startedAt: "2026-10-06T11:00:00.000Z", triggeredByLabel: "test" });
     completeReleaseGateRun("RGR-test-2", {
       status: "passed",
       results: [{ gateKey: "a", label: "A", mandatory: true, status: "passed", detail: "", evidenceRef: null, durationMs: 1 }],
@@ -213,7 +216,7 @@ describe("release management", () => {
     });
     recordReleaseEvent({
       id: "PRE-test-evidence",
-      releaseVersion: "4.1.0",
+      releaseVersion: VERSION,
       kind: "evidence-pack-generated",
       gateRunId: "RGR-test-2",
       evidencePackRef: "release/console-evidence/test.json",
@@ -230,7 +233,7 @@ describe("release management", () => {
     expect(await release.deployRelease({ reviewedFingerprint: deploy.fingerprint, rationale, rationaleConfirmed: true })).toMatchObject({ ok: false, code: "missing-scope" });
     acting.persona = "operations-owner";
     expect((await release.deployRelease({ reviewedFingerprint: deploy.fingerprint, rationale, rationaleConfirmed: true })).ok).toBe(true);
-    expect(getDeployedRelease()).toMatchObject({ releaseVersion: "4.1.0", rolloutStatus: "pilot" });
+    expect(getDeployedRelease()).toMatchObject({ releaseVersion: VERSION, rolloutStatus: "pilot" });
 
     const rollBack = release.proposeReleaseRollBack();
     expect((await release.rollBackRelease({ reviewedFingerprint: rollBack.fingerprint, rationale, rationaleConfirmed: true })).ok).toBe(true);
@@ -239,7 +242,7 @@ describe("release management", () => {
 
   it("refuses a second gate run while one is in progress", async () => {
     acting.persona = "operations-owner";
-    startReleaseGateRun({ id: "RGR-test-3", releaseVersion: "4.1.0", startedAt: new Date().toISOString(), triggeredByLabel: "test" });
+    startReleaseGateRun({ id: "RGR-test-3", releaseVersion: VERSION, startedAt: new Date().toISOString(), triggeredByLabel: "test" });
     expect(await release.startReleaseGate()).toMatchObject({ ok: false, code: "rule" });
   });
 });
