@@ -88,9 +88,76 @@ describe("the rule, for every role in the registry", () => {
   });
 });
 
+const { signValue } = await import("@/identity/session");
+const { DEMO_SESSION_COOKIE } = await import("@/identity/cookies");
+
+/** A signed demonstration session, as the sign-in sets it. */
+async function sessionCookie(expiresInMs = 60 * 60 * 1000): Promise<string> {
+  const now = Date.now();
+  const payload = JSON.stringify({
+    sessionId: "test",
+    userId: "DEMO-WSA-001",
+    displayName: "Admin",
+    organisationId: "ORG-DEMO",
+    legalEntityIds: [],
+    roleIds: ["rcsa", "tprm"],
+    authorityScopes: [],
+    isAdministrator: true,
+    productMode: "demonstration",
+    issuedAt: new Date(now).toISOString(),
+    expiresAt: new Date(now + expiresInMs).toISOString(),
+  });
+  return `${DEMO_SESSION_COOKIE}=${encodeURIComponent(await signValue(payload))}`;
+}
+
+describe("the session guard (NFR Workspace v3)", () => {
+  async function bare(path: string, cookie?: string) {
+    const headers = cookie ? { cookie } : undefined;
+    return middleware(new NextRequest(new URL(path, "http://localhost:3108"), { headers }));
+  }
+
+  it("sends a signed-out page request to the sign-in screen with the page as next", async () => {
+    const response = await bare("/workday/tprm/decisions?ui=v3.3");
+    expect(response.status).toBe(307);
+    const location = new URL(response.headers.get("location") ?? "");
+    expect(location.pathname).toBe("/login");
+    expect(location.searchParams.get("next")).toBe("/workday/tprm/decisions?ui=v3.3");
+  });
+
+  it("guards the administration surfaces as well as the workday", async () => {
+    for (const path of ["/settings", "/control-room", "/product/pilot", "/ops", "/trust"]) {
+      expect((await bare(path)).status, path).toBe(307);
+    }
+  });
+
+  it("answers a signed-out API call with 401 rather than a redirect", async () => {
+    const response = await bare("/api/workday/chat");
+    expect(response.status).toBe(401);
+  });
+
+  it("lets a valid session through and refuses a tampered or expired one", async () => {
+    const valid = await sessionCookie();
+    expect((await bare("/workday/rcsa", valid)).status).toBe(200);
+    const tampered = valid.slice(0, -4) + "0000";
+    expect((await bare("/workday/rcsa", tampered)).status).toBe(307);
+    expect((await bare("/workday/rcsa", await sessionCookie(-1000))).status).toBe(307);
+  });
+
+  it("is off when NFR_DEMO_AUTH=off, for isolated test stacks", async () => {
+    process.env["NFR_DEMO_AUTH"] = "off";
+    try {
+      expect((await bare("/workday/rcsa")).status).toBe(200);
+    } finally {
+      delete process.env["NFR_DEMO_AUTH"];
+    }
+  });
+});
+
 describe("the middleware", () => {
+  let cookie = "";
   async function run(path: string) {
-    return middleware(new NextRequest(new URL(path, "http://localhost:3108")));
+    if (!cookie) cookie = await sessionCookie();
+    return middleware(new NextRequest(new URL(path, "http://localhost:3108"), { headers: { cookie } }));
   }
 
   it("redirects every route of a Planned role to the role selector, under any interface", async () => {

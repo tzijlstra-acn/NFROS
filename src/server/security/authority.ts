@@ -286,6 +286,15 @@ export const TOOL_REGISTRY: Readonly<Record<string, ToolDefinition>> = Object.fr
    * scope and returns rows; it never writes, so it is READ at every level.
    */
   runSkill: r("runSkill", ["work.read", "evidence.read"], "Runs a person's skill: a catalog-checked, read-only query over the role's records, scoped to the role's entity and the current moment."),
+  /*
+   * NFR Workspace v3, Insights. Answers an analytical question with a
+   * structured, chart-first insight computed deterministically from the
+   * records and the portfolio register, scoped to the current moment. Handler
+   * in `src/features/insights/tools.ts`. It reads and returns an analysis; it
+   * never writes, so it is READ at every level. A model may phrase around its
+   * result in live mode but never supplies a figure.
+   */
+  analyseQuestion: r("analyseQuestion", ["work.read", "evidence.read"], "Answers an analytical question with a structured insight: conclusion, key numbers, a chart, findings with evidence and governed next steps, computed from the records."),
 
   /* ---- PROHIBITED: present so refusal is explicit and testable ---- */
   sendExternalEmail: x("sendExternalEmail", "Sending mail outside this machine is not implemented and is refused by design."),
