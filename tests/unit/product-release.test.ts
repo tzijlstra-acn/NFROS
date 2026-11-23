@@ -64,7 +64,7 @@ describe("the product release", () => {
   it("is a semantic version with an ISO date", () => {
     expect(PRODUCT_RELEASE.version).toMatch(SEMVER);
     expect(PRODUCT_RELEASE.date).toMatch(/^\d{4}-\d{2}-\d{2}$/);
-    expect(PRODUCT_IDENTITY.name).toBe("NFROS");
+    expect(PRODUCT_IDENTITY.name).toBe("NFR Workspace");
   });
 
   it("matches the package.json version", () => {
@@ -103,7 +103,7 @@ describe("the product release", () => {
     ).toBe(renderReleaseMarkdown());
   });
 
-  it("names the product NFROS in the README title", () => {
+  it("names the product NFR Workspace in the README title", () => {
     expect(read("README.md").split(/\r?\n/)[0]).toBe(`# ${PRODUCT_IDENTITY.name}`);
   });
 
@@ -141,6 +141,43 @@ describe("the product release", () => {
         .filter((line) => !/^\s*(\*|\/\/|\/\*)/.test(line))
         .join("\n");
       expect(code, file).not.toContain("NFR WorkOS");
+    }
+  });
+
+  it("leaves the previous name NFROS only on the recorded presentation releases", () => {
+    /*
+     * NFR Workspace v3 renamed the product. The /story decks and their
+     * exported files are recorded releases with captures and PDFs, so they
+     * keep the name they were released under (docs/NFR_WORKSPACE_V3_PLAN.md,
+     * decision D10). Every other interface file must use the registry name.
+     */
+    const exempt = new Set([
+      join("src", "components", "presentation", "StoryDeck.tsx"),
+      join("app", "api", "downloads", "[filename]", "route.ts"),
+      join("app", "story", "page.tsx"),
+    ]);
+    const files: string[] = [];
+    const walk = (dir: string): void => {
+      for (const entry of readdirSync(join(ROOT, dir))) {
+        const path = join(dir, entry);
+        if (statSync(join(ROOT, path)).isDirectory()) {
+          if (entry === "presentation") continue;
+          walk(path);
+        } else if (/\.(ts|tsx)$/.test(entry) && !exempt.has(path)) files.push(path);
+      }
+    };
+    walk("app");
+    walk(join("src", "components"));
+    walk(join("src", "i18n"));
+    walk(join("src", "features"));
+    files.push(join("src", "db", "repositories", "header.ts"));
+
+    for (const file of files) {
+      const code = read(file)
+        .split(/\r?\n/)
+        .filter((line) => !/^\s*(\*|\/\/|\/\*)/.test(line))
+        .join("\n");
+      expect(code, file).not.toMatch(/\bNFROS\b/);
     }
   });
 });

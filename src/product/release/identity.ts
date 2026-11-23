@@ -18,10 +18,10 @@ export interface ProductIdentity {
 }
 
 export const PRODUCT_IDENTITY: ProductIdentity = {
-  name: "NFROS",
-  descriptor: { en: "NFR Operating System", de: "NFR-Betriebssystem" },
+  name: "NFR Workspace",
+  descriptor: { en: "Non-financial risk workspace", de: "Arbeitsbereich fuer nicht-finanzielle Risiken" },
   tagline: {
-    en: "Role Operating Systems for non-financial risk professionals, with human accountability at every material decision.",
-    de: "Rollen-Betriebssysteme fuer Fachleute im nicht-finanziellen Risiko, mit menschlicher Verantwortung bei jeder wesentlichen Entscheidung.",
+    en: "One workspace for non-financial risk. The work arrives prepared, professionals decide, and the systems of record are updated through governed steps.",
+    de: "Ein Arbeitsbereich fuer nicht-finanzielle Risiken. Die Arbeit kommt vorbereitet an, Fachleute entscheiden, und die fuehrenden Systeme werden ueber gesteuerte Schritte aktualisiert.",
   },
 };

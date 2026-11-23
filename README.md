@@ -1,9 +1,12 @@
-# NFROS
+# NFR Workspace
 
 ## Live the NFR Day
 
-Role Operating Systems for non-financial risk professionals, with human
-accountability at every material decision.
+One workspace for non-financial risk. The work arrives prepared, professionals
+decide, and the systems of record are updated through governed steps.
+
+Previously released as NFROS. The recorded presentation releases under `/story`
+keep that name; see `docs/NFR_WORKSPACE_V3_PLAN.md`.
 
 **Synthetic institution and data.** Arcadia Banking Group and every person,
 supplier, control, transaction, incident and regulatory publication in this
@@ -16,7 +19,7 @@ repository are invented for the purpose of a demonstration.
 
 | | |
 |---|---|
-| Product | NFROS, NFR Operating System |
+| Product | NFR Workspace, Non-financial risk workspace |
 | Product release | 4.1.0, Product truth and release coherence (release candidate, 2026-10-05) |
 | Workday interface | V3.3, `/workday` |
 | NFROS Risk Audience Presentation | V2.4, `/story` |

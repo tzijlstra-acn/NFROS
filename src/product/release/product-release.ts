@@ -470,7 +470,7 @@ export function getProductReleaseRegistry(): ProductReleaseRegistry {
   };
 }
 
-/** "NFROS 4.1.0", the one line form for a title or a footer. */
+/** "NFR Workspace 4.1.0", the one line form for a title or a footer. */
 export function productReleaseLabel(): string {
   return `${PRODUCT_IDENTITY.name} ${PRODUCT_RELEASE.version}`;
 }
