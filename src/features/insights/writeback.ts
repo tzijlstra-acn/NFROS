@@ -17,7 +17,9 @@ import { runGovernedChain } from "@/features/work/governance";
 import { requireScenarioState } from "@/scenario/engine/state";
 import { getDb } from "@/db/client";
 import { auditEvents } from "@/db/schema/core";
-import { and, eq } from "drizzle-orm";
+import { and, eq, isNotNull } from "drizzle-orm";
+import { approvals } from "@/db/schema/decisions";
+import { fingerprintPayload } from "@/server/security/authority";
 import { permissionFor } from "./build/common";
 import { getInsight } from "./service";
 import type { ProposedInsightAction } from "./schema";
@@ -58,6 +60,34 @@ function empty(status: WritebackReceipt["status"], message: WritebackReceipt["me
     committedAt: null,
     evidenceIds: [],
   };
+}
+
+/**
+ * The recommendations of an analysis that were already committed.
+ *
+ * An insight write-back records an approval bound to the analysis and to the
+ * payload fingerprint, consumed by the commit. Finding those approvals again
+ * is how the canvas shows a committed step as done after a refresh, instead
+ * of offering it a second time.
+ */
+export function committedRecommendations(roleId: RoleId, insightId: string): Record<string, { approvalId: string; at: string }> {
+  const insight = getInsight(roleId, insightId);
+  if (!insight?.response) return {};
+  const state = requireScenarioState();
+  const rows = getDb()
+    .select({ id: approvals.id, fingerprint: approvals.payloadFingerprint, consumedAt: approvals.consumedAt, toolName: approvals.toolName })
+    .from(approvals)
+    .where(and(eq(approvals.runId, state.runId), eq(approvals.targetKind, "insight"), eq(approvals.targetId, insightId), isNotNull(approvals.consumedAt)))
+    .all();
+  const done: Record<string, { approvalId: string; at: string }> = {};
+  for (const recommendation of insight.response.recommendations) {
+    const action = recommendation.proposedAction;
+    if (!action) continue;
+    const fingerprint = fingerprintPayload(action.toolName, action.payload);
+    const match = rows.find((row) => row.toolName === action.toolName && row.fingerprint === fingerprint);
+    if (match) done[recommendation.id] = { approvalId: match.id, at: match.consumedAt ?? "" };
+  }
+  return done;
 }
 
 export function findProposal(roleId: RoleId, insightId: string, recommendationId: string): ProposedInsightAction | null {

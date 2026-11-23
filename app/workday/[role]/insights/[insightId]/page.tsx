@@ -11,6 +11,7 @@ import { notFound } from "next/navigation";
 import { InsightCanvas } from "@/components/insights/InsightCanvas";
 import { getInsight } from "@/features/insights/service";
 import { insightsPageContext, permissionViews } from "@/features/insights/page-context";
+import { committedRecommendations } from "@/features/insights/writeback";
 
 export const dynamic = "force-dynamic";
 
@@ -35,6 +36,7 @@ export default async function InsightPage({ params }: { params: Promise<{ role: 
       response={stored.response}
       permissions={permissionViews(page.roleId, stored.response)}
       savedTitle={stored.savedTitle}
+      committed={committedRecommendations(page.roleId, stored.id)}
       auditEventId={stored.auditEventId}
       actorLabel={actorLabel}
       agentHref={`/workday/${page.roleId}/agents?from=${encodeURIComponent(stored.id)}`}

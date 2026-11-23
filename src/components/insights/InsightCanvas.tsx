@@ -96,12 +96,14 @@ export interface CanvasProps {
   response: InsightResponse;
   permissions: Record<string, ActionPermissionView>;
   savedTitle: string | null;
+  /** Recommendations already committed, found again from their approvals. */
+  committed?: Record<string, { approvalId: string; at: string }>;
   auditEventId: string | null;
   actorLabel: string;
   agentHref: string;
 }
 
-export function InsightCanvas({ roleId, insightId, response, permissions, savedTitle, auditEventId, actorLabel, agentHref }: CanvasProps) {
+export function InsightCanvas({ roleId, insightId, response, permissions, savedTitle, committed = {}, auditEventId, actorLabel, agentHref }: CanvasProps) {
   const language = response.language as Language;
   const router = useRouter();
   const [drawer, setDrawer] = useState<{ highlight: string[] } | null>(null);
@@ -141,10 +143,10 @@ export function InsightCanvas({ roleId, insightId, response, permissions, savedT
         </span>
         <p className="ins-rec-title">{rec.title}</p>
         <p className="ins-rec-rationale">{rec.rationale}</p>
-        {receipt ? (
-          <p className="ins-question" style={{ color: "var(--wd-success)", margin: 0 }}>
+        {receipt || committed[rec.id] ? (
+          <p className="ins-question" style={{ color: "var(--wd-success)", margin: 0 }} data-testid={`done-${rec.id}`}>
             <IconCircleCheck size={16} stroke={2} aria-hidden="true" />
-            {pick(COPY.done, language).replace("{id}", receipt.createdRecordId ?? receipt.auditEventId ?? "")}
+            {pick(COPY.done, language).replace("{id}", receipt?.createdRecordId ?? receipt?.auditEventId ?? committed[rec.id]?.approvalId ?? "")}
           </p>
         ) : rec.proposedAction ? (
           <>

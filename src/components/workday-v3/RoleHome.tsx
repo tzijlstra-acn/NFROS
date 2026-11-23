@@ -54,7 +54,7 @@ const COPY = {
     en: "A decision, an escalation or prepared work that needs you appears here as it arrives.",
     de: "Eine Entscheidung, eine Eskalation oder vorbereitete Arbeit, die Sie benoetigt, erscheint hier, sobald sie eingeht.",
   },
-  prepared: { en: "AI prepared", de: "KI hat vorbereitet" },
+  prepared: { en: "Prepared by Workspace", de: "Vom Workspace vorbereitet" },
   review: { en: "Review preparation", de: "Vorbereitung ansehen" },
 } as const;
 
@@ -132,7 +132,7 @@ const SUBJECT_LABEL: Record<string, { en: string; de: string }> = {
  * there is nothing to name but the entry itself.
  */
 const KIND_LABEL: Record<string, { en: string; de: string }> = {
-  suggestion: { en: "Prepared by AI", de: "Von KI vorbereitet" },
+  suggestion: { en: "Prepared by Workspace", de: "Vom Workspace vorbereitet" },
   incident: { en: "Incident", de: "Vorfall" },
   kri: { en: "Indicator breach", de: "Indikatorverletzung" },
   supplier: { en: "Supplier", de: "Lieferant" },

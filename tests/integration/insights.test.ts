@@ -18,6 +18,7 @@ import { DEFAULT_RUN_ID } from "@/db/schema/core";
 import { setMoment } from "@/scenario/engine/state";
 import { INTENTS } from "@/features/insights/intents";
 import { getInsight, listInsights, prepareInsight, saveInsight } from "@/features/insights/service";
+import { commitInsightAction, committedRecommendations } from "@/features/insights/writeback";
 
 function recordFingerprint(): string {
   const tables = ["suppliers", "controls", "issues", "actions", "decisions", "approvals", "risk_acceptances"];
@@ -99,5 +100,42 @@ describe("insights", () => {
     expect(listInsights("tprm", { savedOnly: true }).map((entry) => entry.savedTitle)).toContain("Resilience gaps for the committee");
     seedScenario(DEFAULT_RUN_ID);
     expect(rowCount("insight_runs")).toBe(0);
+  });
+
+  it("commits a reviewed recommendation through the gate, with an approval and a receipt", async () => {
+    const outcome = await prepareInsight({ roleId: "tprm", question: "Which critical third-party services are deteriorating, and why?" });
+    expect(outcome.ok).toBe(true);
+    if (!outcome.ok) return;
+    const recommendation = outcome.response.recommendations.find((rec) => rec.proposedAction?.toolName === "requestEvidenceDocument");
+    expect(recommendation).toBeDefined();
+    if (!recommendation) return;
+
+    const unconfirmed = await commitInsightAction({ roleId: "tprm", insightId: outcome.id, recommendationId: recommendation.id, rationale: "Stale recovery evidence on a critical supplier.", confirmed: false });
+    expect(unconfirmed.status).toBe("needs-confirmation");
+
+    const actionsBefore = rowCount("actions");
+    const receipt = await commitInsightAction({ roleId: "tprm", insightId: outcome.id, recommendationId: recommendation.id, rationale: "Stale recovery evidence on a critical supplier.", confirmed: true });
+    expect(receipt.ok, receipt.message.en).toBe(true);
+    expect(receipt.createdRecordId).toMatch(/^REQ-/);
+    expect(receipt.auditEventId).toMatch(/^AUD-/);
+    expect(rowCount("actions")).toBe(actionsBefore + 1);
+    const created = getSqlite().prepare("select kind, related_object_id from actions where id = ?").get(receipt.createdRecordId) as { kind: string; related_object_id: string };
+    expect(created.kind).toBe("evidence-request");
+    expect(created.related_object_id).toBe("TP-0042");
+    if (receipt.approvalId) {
+      const approval = getSqlite().prepare("select target_kind, target_id, consumed_at from approvals where id = ?").get(receipt.approvalId) as { target_kind: string; target_id: string; consumed_at: string | null };
+      expect(approval.target_kind).toBe("insight");
+      expect(approval.target_id).toBe(outcome.id);
+      expect(approval.consumed_at).not.toBeNull();
+    }
+    expect(Object.keys(committedRecommendations("tprm", outcome.id))).toContain(recommendation.id);
+  });
+
+  it("refuses a recommendation that is not part of the stored analysis", async () => {
+    const outcome = await prepareInsight({ roleId: "tprm", question: "Which high-severity issues are overdue?" });
+    if (!outcome.ok) throw new Error("no analysis");
+    const receipt = await commitInsightAction({ roleId: "tprm", insightId: outcome.id, recommendationId: "rec-made-up", rationale: "An attempt with no proposal behind it.", confirmed: true });
+    expect(receipt.ok).toBe(false);
+    expect(receipt.status).toBe("not-found");
   });
 });
