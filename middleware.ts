@@ -44,8 +44,9 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { CURRENT_WORKDAY_UI, isV3NativePath, resolveWorkdayUi } from "@/workday/contracts";
 import { gateForPath, plannedRoleRedirectHref } from "@/workday/role-gate";
-import { verifyAndExtract } from "@/identity/session";
+import { readEdgeSession } from "@/identity/edge-session";
 import { DEMO_SESSION_COOKIE, PILOT_SESSION_COOKIE } from "@/identity/cookies";
+import { isProtectedApi, isProtectedPage, SIGN_IN_PATH } from "@/features/entry/routes";
 
 /** The request header the workday layout and the page dispatcher read. */
 export const UI_HEADER = "x-nfr-workday-ui";
@@ -56,14 +57,56 @@ export const UI_COOKIE = "nfr-workday-ui";
 /** The header carrying the resolved product mode for downstream layouts. */
 export const PRODUCT_MODE_HEADER = "x-product-mode";
 
+/** Whether the workspace asks for a sign-in. `NFR_DEMO_AUTH=off` turns it off for isolated test stacks. */
+function signInRequired(): boolean {
+  return (process.env["NFR_DEMO_AUTH"] ?? "on").toLowerCase() !== "off";
+}
+
 export async function middleware(request: NextRequest) {
+  const { pathname } = request.nextUrl;
+
+  /*
+   * NFR Workspace v3: the session guard comes before everything else.
+   *
+   * A page without a valid signed session goes to the sign-in screen with
+   * the page it asked for as `next`, so the person lands where they meant
+   * to after signing in. An API call gets a 401 instead of a redirect,
+   * because a fetch that silently follows a redirect to an HTML page fails
+   * in a far less legible way. Either valid cookie, demonstration or pilot,
+   * is a session; what the person may then do is the authority gate's
+   * business, as before.
+   */
+  const demoSession = await readEdgeSession(request.cookies.get(DEMO_SESSION_COOKIE)?.value);
+  const pilotSession = await readEdgeSession(request.cookies.get(PILOT_SESSION_COOKIE)?.value);
+  const hasValidDemoSession = demoSession !== null;
+  const hasValidPilotSession = pilotSession !== null;
+
+  if (signInRequired() && !hasValidDemoSession && !hasValidPilotSession) {
+    if (isProtectedApi(pathname)) {
+      return NextResponse.json(
+        { ok: false, reason: "signed-out", message: "Sign in to NFR Workspace to use this." },
+        { status: 401, headers: { "cache-control": "no-store" } },
+      );
+    }
+    if (isProtectedPage(pathname)) {
+      const target = new URL(SIGN_IN_PATH, request.url);
+      target.searchParams.set("next", `${pathname}${request.nextUrl.search}`);
+      return NextResponse.redirect(target, 307);
+    }
+  }
+
+  /* Everything below is the workday's interface resolution, which only the workday needs. */
+  if (pathname !== "/workday" && !pathname.startsWith("/workday/")) {
+    return NextResponse.next();
+  }
+
   /*
    * The release gate comes first. A Planned role has nothing to render, so
    * there is no interface to resolve for it. A 307 keeps the method, which is
    * irrelevant for a page and correct for a form post that should not be
    * silently turned into a GET elsewhere.
    */
-  const gate = gateForPath(request.nextUrl.pathname);
+  const gate = gateForPath(pathname);
   if (gate.kind === "planned") {
     return NextResponse.redirect(new URL(plannedRoleRedirectHref(gate.release.roleId), request.url), 307);
   }
@@ -119,12 +162,6 @@ export async function middleware(request: NextRequest) {
    */
   const envMode = process.env["PRODUCT_MODE"] ?? "demonstration";
 
-  const demoCookieRaw = request.cookies.get(DEMO_SESSION_COOKIE)?.value;
-  const pilotCookieRaw = request.cookies.get(PILOT_SESSION_COOKIE)?.value;
-
-  const hasValidDemoSession = demoCookieRaw ? (await verifyAndExtract(demoCookieRaw)) !== null : false;
-  const hasValidPilotSession = pilotCookieRaw ? (await verifyAndExtract(pilotCookieRaw)) !== null : false;
-
   if (hasValidPilotSession && envMode === "design-partner") {
     headers.set(PRODUCT_MODE_HEADER, "design-partner");
   } else if (hasValidDemoSession) {
@@ -162,5 +199,26 @@ export const config = {
    * Static assets and the fonts are excluded so no request pays for a
    * middleware hop it has no use for.
    */
-  matcher: ["/workday", "/workday/:path*"],
+  matcher: [
+    "/workday",
+    "/workday/:path*",
+    "/settings/:path*",
+    "/settings",
+    "/product/:path*",
+    "/product",
+    "/ops/:path*",
+    "/ops",
+    "/control-room/:path*",
+    "/control-room",
+    "/trust",
+    "/value",
+    "/roadmap",
+    "/setup",
+    "/api/workday/:path*",
+    "/api/agent/:path*",
+    "/api/agent",
+    "/api/realtime/:path*",
+    "/api/insights/:path*",
+    "/api/insights",
+  ],
 };

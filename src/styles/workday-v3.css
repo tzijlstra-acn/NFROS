@@ -198,7 +198,16 @@ html:has(.wd-frame) .ambient {
   background: var(--wd-surface);
   border-bottom: 1px solid var(--wd-border);
   min-width: 0;
-  overflow: hidden;
+  /*
+   * Clipped across, open downwards. "overflow: hidden" also clipped the
+   * account and display menus, which drop below the header, so neither menu
+   * could be seen. "clip" on one axis keeps the one-line guarantee without
+   * creating a scroll container, and leaves the other axis visible.
+   */
+  overflow-x: clip;
+  overflow-y: visible;
+  position: relative;
+  z-index: 60;
   flex-wrap: nowrap;
 }
 
@@ -1405,6 +1414,38 @@ html:has(.wd-frame) .ambient {
   padding: var(--wd-2) var(--wd-2) var(--wd-1);
   font-size: var(--wd-text-xs);
   color: var(--wd-text-muted);
+}
+
+.wd-menu-identity {
+  display: grid;
+  gap: 2px;
+  padding: var(--wd-2) var(--wd-2) var(--wd-2);
+}
+
+.wd-menu-identity-name {
+  font-size: var(--wd-text-sm);
+  font-weight: var(--wd-weight-strong);
+  color: var(--wd-text);
+}
+
+.wd-menu-identity-role {
+  font-size: var(--wd-text-xs);
+  color: var(--wd-text-muted);
+}
+
+.wd-menu-item[aria-current="true"] {
+  color: var(--wd-text);
+  font-weight: var(--wd-weight-medium);
+}
+
+.wd-menu-item[data-state="armed"] {
+  background: var(--wd-warning-soft);
+  color: var(--wd-warning);
+}
+
+.wd-menu-item:disabled {
+  opacity: 0.6;
+  cursor: progress;
 }
 
 .wd-menu-sep {

@@ -1,0 +1,316 @@
+/*
+ * NFR Workspace entry: startup, sign-in and workspace preparation.
+ *
+ * Scoped under `.workday-v3` so it uses the application tokens, light by
+ * default and dark when the reader chose it. Motion explains a change of
+ * state (the product starting, the form arriving, a step completing) and is
+ * removed entirely under reduced motion.
+ */
+
+.workday-v3 .ws-entry {
+  min-height: 100dvh;
+  display: grid;
+  grid-template-rows: 1fr auto;
+  background:
+    radial-gradient(1200px 600px at 50% -10%, var(--wd-accent-soft), transparent 70%),
+    var(--wd-canvas);
+  color: var(--wd-text);
+  font-family: var(--wd-font);
+  font-size: var(--wd-text-base);
+  line-height: var(--wd-leading-normal);
+}
+
+.workday-v3 .ws-entry-main {
+  display: grid;
+  place-items: center;
+  padding: var(--wd-10) var(--wd-4);
+}
+
+/* ---- The mark ---------------------------------------------------------- */
+
+.workday-v3 .ws-mark { display: block; flex-shrink: 0; }
+.workday-v3 .ws-mark-tile { fill: #0f1216; }
+.workday-v3 .ws-mark-arch { stroke: #f4f6f8; }
+.workday-v3 .ws-mark-point { fill: #8b82ff; }
+.workday-v3[data-wd-theme="dark"] .ws-mark-tile { fill: #f4f6f8; }
+.workday-v3[data-wd-theme="dark"] .ws-mark-arch { stroke: #0f1216; }
+.workday-v3[data-wd-theme="dark"] .ws-mark-point { fill: #5b4ff2; }
+
+.workday-v3 .ws-mark[data-animated="true"] .ws-mark-tile {
+  animation: ws-tile-in 420ms var(--wd-ease) both;
+}
+.workday-v3 .ws-mark[data-animated="true"] .ws-mark-arch {
+  stroke-dasharray: 1;
+  stroke-dashoffset: 1;
+  animation: ws-arch-draw 640ms 180ms var(--wd-ease) forwards;
+}
+.workday-v3 .ws-mark[data-animated="true"] .ws-mark-point {
+  transform-origin: 16px 8.6px;
+  animation: ws-point-in 360ms 700ms var(--wd-ease) both;
+}
+
+@keyframes ws-tile-in { from { opacity: 0; transform: scale(0.92); } to { opacity: 1; transform: none; } }
+@keyframes ws-arch-draw { to { stroke-dashoffset: 0; } }
+@keyframes ws-point-in { from { opacity: 0; transform: scale(0); } to { opacity: 1; transform: none; } }
+
+/* ---- Startup ----------------------------------------------------------- */
+
+.workday-v3 .ws-startup {
+  display: grid;
+  justify-items: center;
+  gap: var(--wd-4);
+  text-align: center;
+}
+
+.workday-v3 .ws-startup-name {
+  margin: var(--wd-2) 0 0;
+  font-size: 26px;
+  font-weight: var(--wd-weight-strong);
+  letter-spacing: -0.01em;
+  animation: ws-rise 480ms 420ms var(--wd-ease) both;
+}
+
+.workday-v3 .ws-startup-progress {
+  width: 168px;
+  height: 2px;
+  border-radius: 2px;
+  background: var(--wd-border);
+  overflow: hidden;
+  animation: ws-fade 300ms 600ms both;
+}
+
+.workday-v3 .ws-startup-progress > span {
+  display: block;
+  height: 100%;
+  background: var(--wd-accent);
+  transform-origin: left center;
+  animation: ws-progress 1150ms 640ms cubic-bezier(0.4, 0, 0.2, 1) both;
+}
+
+.workday-v3 .ws-startup-status {
+  margin: 0;
+  min-height: 1.5em;
+  color: var(--wd-text-muted);
+  font-size: var(--wd-text-sm);
+  animation: ws-fade 300ms 600ms both;
+}
+
+@keyframes ws-rise { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: none; } }
+@keyframes ws-fade { from { opacity: 0; } to { opacity: 1; } }
+@keyframes ws-progress { from { transform: scaleX(0); } to { transform: scaleX(1); } }
+
+/* ---- Card -------------------------------------------------------------- */
+
+.workday-v3 .ws-card {
+  width: min(400px, 100%);
+  padding: var(--wd-8);
+  border: 1px solid var(--wd-border);
+  border-radius: 12px;
+  background: var(--wd-surface);
+  box-shadow: var(--wd-shadow-lg);
+  animation: ws-card-in 420ms var(--wd-ease) both;
+}
+
+@keyframes ws-card-in { from { opacity: 0; transform: translateY(10px) scale(0.99); } to { opacity: 1; transform: none; } }
+
+.workday-v3 .ws-card-brand {
+  display: flex;
+  align-items: center;
+  gap: var(--wd-3);
+  padding-bottom: var(--wd-5);
+  margin-bottom: var(--wd-5);
+  border-bottom: 1px solid var(--wd-border);
+}
+
+.workday-v3 .ws-card-product {
+  margin: 0;
+  font-size: var(--wd-text-md);
+  font-weight: var(--wd-weight-strong);
+  line-height: var(--wd-leading-tight);
+}
+
+.workday-v3 .ws-card-tenant {
+  margin: 2px 0 0;
+  color: var(--wd-text-muted);
+  font-size: var(--wd-text-xs);
+}
+
+.workday-v3 .ws-card-title {
+  margin: 0;
+  font-size: var(--wd-text-2xl);
+  font-weight: var(--wd-weight-strong);
+  line-height: var(--wd-leading-tight);
+}
+
+.workday-v3 .ws-card-lede {
+  margin: var(--wd-1) 0 var(--wd-5);
+  color: var(--wd-text-secondary);
+  font-size: var(--wd-text-sm);
+}
+
+/* ---- Form -------------------------------------------------------------- */
+
+.workday-v3 .ws-form { display: grid; }
+
+.workday-v3 .ws-field {
+  display: grid;
+  gap: 6px;
+  margin-bottom: var(--wd-4);
+}
+
+.workday-v3 .ws-field-label {
+  font-size: var(--wd-text-sm);
+  font-weight: var(--wd-weight-medium);
+  color: var(--wd-text);
+}
+
+.workday-v3 .ws-input-group { position: relative; display: block; }
+
+.workday-v3 .ws-input {
+  width: 100%;
+  height: 40px;
+  padding: 0 var(--wd-3);
+  border: 1px solid var(--wd-border-strong);
+  border-radius: var(--wd-radius);
+  background: var(--wd-surface);
+  color: var(--wd-text);
+  font: inherit;
+  font-size: var(--wd-text-base);
+  transition: border-color var(--wd-t-fast) var(--wd-ease), box-shadow var(--wd-t-fast) var(--wd-ease);
+}
+
+.workday-v3 .ws-input-group .ws-input { padding-right: 44px; }
+
+.workday-v3 .ws-input:hover:not(:disabled) { border-color: var(--wd-text-muted); }
+
+.workday-v3 .ws-input:focus-visible {
+  outline: none;
+  border-color: var(--wd-accent);
+  box-shadow: 0 0 0 3px var(--wd-accent-soft);
+}
+
+.workday-v3 .ws-input[aria-invalid="true"] { border-color: var(--wd-danger); }
+.workday-v3 .ws-input:disabled { opacity: 0.65; }
+
+.workday-v3 .ws-input-toggle {
+  position: absolute;
+  top: 4px;
+  right: 4px;
+}
+
+.workday-v3 .ws-submit {
+  width: 100%;
+  height: 40px;
+  margin-top: var(--wd-2);
+}
+
+.workday-v3 .ws-alert {
+  display: flex;
+  gap: var(--wd-2);
+  align-items: flex-start;
+  margin: 0 0 var(--wd-4);
+  padding: var(--wd-2) var(--wd-3);
+  border: 1px solid color-mix(in srgb, var(--wd-danger) 30%, transparent);
+  border-radius: var(--wd-radius);
+  background: var(--wd-danger-soft);
+  color: var(--wd-danger);
+  font-size: var(--wd-text-sm);
+  animation: ws-shake 320ms var(--wd-ease);
+}
+
+.workday-v3 .ws-alert svg { flex-shrink: 0; margin-top: 2px; }
+
+@keyframes ws-shake {
+  0%, 100% { transform: none; }
+  25% { transform: translateX(-4px); }
+  75% { transform: translateX(4px); }
+}
+
+.workday-v3 .ws-spin { animation: ws-spin 900ms linear infinite; }
+@keyframes ws-spin { to { transform: rotate(360deg); } }
+
+/* ---- Preparing --------------------------------------------------------- */
+
+.workday-v3 .ws-steps {
+  display: grid;
+  gap: var(--wd-3);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.workday-v3 .ws-step {
+  display: grid;
+  grid-template-columns: 22px 1fr;
+  gap: var(--wd-3);
+  align-items: start;
+  color: var(--wd-text-muted);
+  transition: color var(--wd-t-base) var(--wd-ease);
+}
+
+.workday-v3 .ws-step[data-state="active"],
+.workday-v3 .ws-step[data-state="done"] { color: var(--wd-text); }
+
+.workday-v3 .ws-step-icon {
+  display: grid;
+  place-items: center;
+  width: 22px;
+  height: 22px;
+  border: 1px solid var(--wd-border-strong);
+  border-radius: 50%;
+  color: var(--wd-accent);
+  transition: background var(--wd-t-base) var(--wd-ease), border-color var(--wd-t-base) var(--wd-ease);
+}
+
+.workday-v3 .ws-step[data-state="done"] .ws-step-icon {
+  border-color: var(--wd-success);
+  background: var(--wd-success);
+  color: #fff;
+  animation: ws-pop 260ms var(--wd-ease);
+}
+
+@keyframes ws-pop { from { transform: scale(0.7); } to { transform: none; } }
+
+.workday-v3 .ws-step-text { display: grid; gap: 2px; padding-top: 1px; }
+.workday-v3 .ws-step-label { font-size: var(--wd-text-sm); font-weight: var(--wd-weight-medium); }
+.workday-v3 .ws-step-detail {
+  font-size: var(--wd-text-xs);
+  color: var(--wd-text-secondary);
+  animation: ws-fade 240ms both;
+}
+
+/* ---- Footer ------------------------------------------------------------ */
+
+.workday-v3 .ws-entry-footer {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: var(--wd-2) var(--wd-4);
+  padding: var(--wd-4);
+  color: var(--wd-text-muted);
+  font-size: var(--wd-text-xs);
+  text-align: center;
+  transition: opacity var(--wd-t-base) var(--wd-ease);
+}
+
+.workday-v3 .ws-entry[data-phase="startup"] .ws-entry-footer { opacity: 0; }
+
+.workday-v3 .ws-env {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  color: var(--wd-text-secondary);
+  font-weight: var(--wd-weight-medium);
+}
+
+/* ---- Reduced motion ---------------------------------------------------- */
+
+@media (prefers-reduced-motion: reduce) {
+  .workday-v3 .ws-entry *,
+  .workday-v3 .ws-entry *::before,
+  .workday-v3 .ws-entry *::after {
+    animation: none !important;
+    transition: none !important;
+  }
+  .workday-v3 .ws-mark-arch { stroke-dashoffset: 0 !important; }
+}

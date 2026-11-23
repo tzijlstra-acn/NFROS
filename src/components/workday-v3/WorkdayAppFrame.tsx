@@ -47,12 +47,15 @@ export function WorkdayAppFrame({
   theme,
   demoMode,
   navExpanded,
+  signedInAs = null,
   children,
 }: {
   roleParam: string;
   theme: WdTheme;
   demoMode: boolean;
   navExpanded: boolean;
+  /** The signed-in account, shown in the account menu beside the acting role holder. */
+  signedInAs?: string | null;
   children: ReactNode;
 }) {
   /*
@@ -93,7 +96,7 @@ export function WorkdayAppFrame({
           {model.degraded ? (
             <WorkdayHeaderFallback language={language} />
           ) : (
-            <WorkdayHeader model={model} />
+            <WorkdayHeader model={model} roleId={roleParam} signedInAs={signedInAs} />
           )}
 
           <WorkdayBody

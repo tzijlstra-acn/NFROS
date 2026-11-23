@@ -1,4 +1,4 @@
-// Launches the NFROS showcase: its own database (data/showcase.db), a production server on
+// Launches the NFR Workspace showcase: its own database (data/showcase.db), a production server on
 // port 3200, and the browser. If the showcase is already running it only opens the browser.
 // The shared demonstration database (data/nfr-workos.db) and port 3000 are never touched.
 //
@@ -20,7 +20,7 @@ const buildDir = ".next-showcase-prod";
 const args = new Set(process.argv.slice(2));
 const dev = args.has("--dev");
 
-process.title = `NFROS showcase (port ${port})`;
+process.title = `NFR Workspace showcase (port ${port})`;
 process.chdir(root);
 
 const openInBrowser = (target) => exec(`start "" "${target}"`);
@@ -73,12 +73,12 @@ function run(command, commandArgs) {
 
 (async () => {
   if (await portAnswers()) {
-    say(`NFROS is already running. Opening ${url}`);
+    say(`NFR Workspace is already running. Opening ${url}`);
     openInBrowser(url);
     return;
   }
 
-  // The browser opens at once on a local starting page that switches to NFROS when it answers
+  // The browser opens at once on a local starting page that switches to NFR Workspace when it answers
   openInBrowser(join(__dirname, "starting.html"));
 
   process.env.NFR_DB_PATH = db;
@@ -100,7 +100,7 @@ function run(command, commandArgs) {
     const buildId = join(root, buildDir, "BUILD_ID");
     const stale = !existsSync(buildId) || newestSourceTime() > statSync(buildId).mtimeMs;
     if (stale || args.has("--rebuild")) {
-      say("Building NFROS for fast loading (about 10 minutes, only after code changes)...");
+      say("Building NFR Workspace for fast loading (about 10 minutes, only after code changes)...");
       if (!run(process.execPath, [`"${nextBin}"`, "build"])) {
         say("The build failed. Starting the development server instead.");
         mode = "dev";
@@ -110,8 +110,8 @@ function run(command, commandArgs) {
   }
 
   say("");
-  say(`Starting NFROS on ${url}`);
-  say("Keep this window open while you use NFROS. Close it to stop the server.");
+  say(`Starting NFR Workspace on ${url}`);
+  say("Keep this window open while you use NFR Workspace. Close it to stop the server.");
   say("To start the showcase day again, close this window and delete data\\showcase.db.");
   say("");
   const server = spawn(process.execPath, [nextBin, mode, "-p", String(port)], { stdio: "inherit", env: process.env });
@@ -120,8 +120,20 @@ function run(command, commandArgs) {
   // The first request after a start loads the server code and data; make it here, not in the
   // presenter's first click. The starting page waits for the landing page to render.
   while (!(await portAnswers())) await new Promise((r) => setTimeout(r, 500));
-  for (const path of ["/", "/workday", "/workday/rcsa", "/workday/tprm", "/workday/rcsa/work", "/workday/rcsa/processes/rcsa-cycle", "/workday/rcsa/decisions", "/product"]) {
-    try { await fetch(url.replace(/\/$/, "") + path); } catch {}
+  // NFR Workspace guards the workday, so the warm-up signs in first and carries the session.
+  // The presenter still signs in on screen: this cookie lives only in this script.
+  const origin = url.slice(0, -1);
+  let cookie = "";
+  try {
+    const response = await fetch(origin + "/api/session", {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({ username: process.env.NFR_DEMO_USERNAME || "Admin", password: process.env.NFR_DEMO_PASSWORD || "Admin" }),
+    });
+    cookie = (response.headers.get("set-cookie") || "").split(";")[0];
+  } catch {}
+  for (const path of ["/", "/login", "/workday/tprm", "/workday/rcsa", "/workday/tprm/insights", "/workday/tprm/decisions", "/workday/tprm/work", "/workday/tprm/agents", "/workday/rcsa/processes/rcsa-cycle", "/workday/rcsa/decisions"]) {
+    try { await fetch(origin + path, { headers: cookie ? { cookie } : {} }); } catch {}
   }
-  say("NFROS is warmed up and ready.");
+  say("NFR Workspace is warmed up and ready. Sign in with Admin / Admin.");
 })();

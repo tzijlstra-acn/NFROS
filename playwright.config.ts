@@ -15,6 +15,8 @@ export default defineConfig({
   timeout: 90_000,
   expect: { timeout: 15_000 },
   reporter: [["list"], ["html", { open: "never" }]],
+  /* NFR Workspace v3 guards the workday: sign in once and share the session. */
+  globalSetup: "./tests/e2e/support/global-setup.ts",
   use: {
     baseURL: process.env.NFR_BASE_URL ?? "http://localhost:3000",
     trace: "retain-on-failure",
@@ -22,6 +24,7 @@ export default defineConfig({
     // Deterministic rendering for the visual checks.
     colorScheme: "dark",
     reducedMotion: "reduce",
+    storageState: "test-results/.auth/admin.json",
   },
   projects: [
     { name: "desktop-1920", use: { ...devices["Desktop Chrome"], viewport: { width: 1920, height: 1080 } } },

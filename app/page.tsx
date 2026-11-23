@@ -1,37 +1,26 @@
 /**
- * Entry experience.
+ * The entrance to NFR Workspace.
  *
- * Thin. The page is the product entrance and nothing else: the proposition,
- * the way in, and a live preview of the two Available roles. Runtime state
- * (AI mode, key state, verification, configuration source, database state,
- * mode selection, setup commands and the reset control) moved to
- * `/control-room`, which the footer links to for presenters.
+ * Opening the product plays the startup sequence and then asks for the
+ * demonstration sign-in, the way an enterprise workspace is entered. A reader
+ * who is already signed in goes straight to their workspace: replaying the
+ * startup on every visit would be theatre, not information.
  *
- * The previews are read through `readRoleSignalOverview`, the same read model
- * the role selector uses, so the entrance and the selector always describe
- * the same day. See `src/components/landing/LandingPage.tsx` for the layout.
+ * The earlier marketing-style entrance (`src/components/landing`) is retired
+ * from this route. The runtime state and the reset control it pointed
+ * presenters to are in the account menu and the control room.
  */
 
-import { LandingPage } from "@/components/landing/LandingPage";
-import { readRoleSignalOverview } from "@/features/role-signals";
+import { redirect } from "next/navigation";
+import { getSession } from "@/identity";
+import { demoAuthEnabled } from "@/identity/demo-credentials";
+import { DEFAULT_WORKSPACE_HREF } from "@/features/entry/routes";
+import { EntryPage } from "@/components/entry/EntryPage";
 
 export const dynamic = "force-dynamic";
 
-/**
- * The design-partner workspace route.
- *
- * This build has no design-partner workspace route: the previous entry linked
- * to `/pilot`, which does not exist, and `/settings/pilot` is a readiness
- * checklist for administrators rather than a workspace. So the action renders
- * disabled with its reason. When a workspace route ships, set it here.
- */
-const DESIGN_PARTNER_WORKSPACE_HREF: string | null = null;
-
-export default function EntryPage() {
-  return (
-    <LandingPage
-      overview={readRoleSignalOverview()}
-      designPartnerHref={DESIGN_PARTNER_WORKSPACE_HREF}
-    />
-  );
+export default async function Entrance() {
+  const session = await getSession().catch(() => null);
+  if (session || !demoAuthEnabled()) redirect(DEFAULT_WORKSPACE_HREF);
+  return <EntryPage initialPhase="startup" next={null} />;
 }

@@ -33,6 +33,7 @@ import { notFound } from "next/navigation";
 import { ROLE_IDS } from "@/db/schema/core";
 import { normaliseWorkdayUi } from "@/workday/contracts";
 import { WorkdayAppFrame } from "@/components/workday-v3/WorkdayAppFrame";
+import { getSession } from "@/identity";
 import {
   THEME_COOKIE,
   DEMO_COOKIE,
@@ -80,12 +81,16 @@ export default async function WorkdayRoleLayout({
    */
   const navExpanded = cookieStore.get(NAV_COOKIE)?.value !== "0";
 
+  /* Who signed in, for the account menu. The acting role holder is separate and comes from the header model. */
+  const session = await getSession().catch(() => null);
+
   return (
     <WorkdayAppFrame
       roleParam={role}
       theme={theme}
       demoMode={demoMode}
       navExpanded={navExpanded}
+      signedInAs={session?.displayName ?? null}
     >
       {children}
     </WorkdayAppFrame>

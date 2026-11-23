@@ -44,6 +44,18 @@ const PERSONAS = {
     roleIds: ["tprm"],
     isAdministrator: false,
   },
+  /*
+   * The NFR Workspace sign-in account (src/identity/demo-credentials.ts).
+   * An administrator who works as the holder of an Available role, so the
+   * workday it opens is a real one; the acting role is shown beside the name.
+   */
+  "workspace-admin": {
+    userId: "DEMO-WSA-001",
+    displayName: "Admin",
+    email: "admin@arcadia.example",
+    roleIds: ["rcsa", "tprm"],
+    isAdministrator: true,
+  },
   administrator: {
     userId: "DEMO-ADM-001",
     displayName: "Demonstration administrator",
@@ -136,14 +148,23 @@ export function makeLocalDemoProvider(
     },
 
     async signIn(input?: unknown): Promise<ProductSession> {
-      const personaId: DemoPersonaId = isDemoPersonaId(input) ? input : "rcsa-analyst";
+      /*
+       * A persona id, or `{ personaId, browserSession }`. A browser session
+       * cookie carries no max age, so closing the browser ends it, which is
+       * what the workspace sign-in wants; the signed payload still expires
+       * after eight hours either way.
+       */
+      const request = typeof input === "object" && input !== null ? (input as { personaId?: unknown; browserSession?: unknown }) : null;
+      const candidate = request ? request.personaId : input;
+      const personaId: DemoPersonaId = isDemoPersonaId(candidate) ? candidate : "rcsa-analyst";
+      const browserSession = request?.browserSession === true;
       const session = buildSession(personaId, mode);
       const jar = await cookies();
       jar.set(DEMO_SESSION_COOKIE, await signValue(JSON.stringify(session)), {
         path: "/",
         httpOnly: true,
         sameSite: "lax",
-        maxAge: SESSION_TTL_MS / 1000,
+        ...(browserSession ? {} : { maxAge: SESSION_TTL_MS / 1000 }),
       });
       return session;
     },

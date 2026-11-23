@@ -27,9 +27,14 @@
 
 import { useCallback, useEffect, useRef, useState } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import {
   IconAdjustmentsHorizontal,
+  IconArrowsExchange,
   IconBell,
+  IconCheck,
+  IconLogout,
+  IconRefresh,
   IconMessage2,
   IconMoon,
   IconSearch,
@@ -41,6 +46,7 @@ import {
 } from "@tabler/icons-react";
 import type { Language } from "@/i18n/labels";
 import { WorkdayFeedbackDialog } from "@/features/product/feedback/WorkdayFeedbackDialog";
+import { actionResetScenario } from "../../../app/actions";
 import { useWorkdayChrome } from "./ChromeContext";
 
 const LABELS = {
@@ -67,6 +73,9 @@ export function WorkdayHeaderClientActions({
   suggestionsNeedingYou,
   aiState,
   userLabel,
+  roleLabel = null,
+  signedInAs = null,
+  switchRoles = [],
   gated,
 }: {
   language: Language;
@@ -74,10 +83,47 @@ export function WorkdayHeaderClientActions({
   suggestionsNeedingYou: number;
   aiState: "idle" | "working" | "ready" | "offline";
   userLabel: string | null;
+  /** The acting role, shown under the signed-in account. */
+  roleLabel?: string | null;
+  /** The signed-in account. Null when the workspace runs without a sign-in. */
+  signedInAs?: string | null;
+  /** The Available roles a presenter can switch to. */
+  switchRoles?: Array<{ roleId: string; label: string; href: string; current: boolean }>;
   /** True for a role the release gate does not open: no work controls. */
   gated: boolean;
 }) {
   const chrome = useWorkdayChrome();
+  const router = useRouter();
+  /* Reset asks twice: the first click arms it for a few seconds, the second resets. */
+  const [resetState, setResetState] = useState<"idle" | "armed" | "running" | "done">("idle");
+  const [signingOut, setSigningOut] = useState(false);
+
+  useEffect(() => {
+    if (resetState !== "armed" && resetState !== "done") return;
+    const timer = window.setTimeout(() => setResetState("idle"), 4000);
+    return () => window.clearTimeout(timer);
+  }, [resetState]);
+
+  const onReset = useCallback(async () => {
+    if (resetState === "idle" || resetState === "done") {
+      setResetState("armed");
+      return;
+    }
+    if (resetState !== "armed") return;
+    setResetState("running");
+    const result = await actionResetScenario();
+    setResetState(result.ok ? "done" : "idle");
+    router.refresh();
+  }, [resetState, router]);
+
+  const onSignOut = useCallback(async () => {
+    setSigningOut(true);
+    try {
+      await fetch("/api/session", { method: "DELETE" });
+    } finally {
+      window.location.assign("/");
+    }
+  }, []);
   const [userOpen, setUserOpen] = useState(false);
   const [demoOpen, setDemoOpen] = useState(false);
   /* Product feedback (os-console-quality): a dialog from the account menu, not a navigation item. */
@@ -289,7 +335,41 @@ export function WorkdayHeaderClientActions({
 
         {userOpen ? (
           <Menu label={language === "de" ? "Konto" : "Account"}>
-            {userLabel ? <div className="wd-menu-label">{userLabel}</div> : null}
+            {signedInAs ? (
+              <div className="wd-menu-identity" data-testid="account-identity">
+                <span className="wd-menu-identity-name">{signedInAs}</span>
+                <span className="wd-menu-identity-role">
+                  {language === "de" ? "Handelt als " : "Acting as "}
+                  {userLabel ? `${userLabel}, ` : ""}
+                  {roleLabel}
+                </span>
+              </div>
+            ) : userLabel ? (
+              <div className="wd-menu-label">{userLabel}</div>
+            ) : null}
+            {switchRoles.length > 1 ? (
+              <>
+                <div className="wd-menu-sep" />
+                <div className="wd-menu-label">{language === "de" ? "Rolle wechseln" : "Switch role"}</div>
+                {switchRoles.map((entry) => (
+                  <Link
+                    key={entry.roleId}
+                    className="wd-menu-item"
+                    href={entry.href}
+                    aria-current={entry.current ? "true" : undefined}
+                    onClick={() => setUserOpen(false)}
+                  >
+                    {entry.current ? (
+                      <IconCheck size={16} stroke={1.8} aria-hidden="true" />
+                    ) : (
+                      <IconArrowsExchange size={16} stroke={1.8} aria-hidden="true" />
+                    )}
+                    {entry.label}
+                  </Link>
+                ))}
+                <div className="wd-menu-sep" />
+              </>
+            ) : null}
             <Link className="wd-menu-item" href="/trust">
               <IconShieldCheck size={16} stroke={1.8} aria-hidden="true" />
               {language === "de" ? "Vertrauen" : "Trust"}
@@ -316,6 +396,44 @@ export function WorkdayHeaderClientActions({
                 {language === "de" ? "Produktrueckmeldung senden" : "Send product feedback"}
               </button>
             )}
+            <div className="wd-menu-sep" />
+            <button
+              type="button"
+              className="wd-menu-item"
+              data-testid="account-reset"
+              data-state={resetState}
+              onClick={onReset}
+              disabled={resetState === "running"}
+            >
+              <IconRefresh size={16} stroke={1.8} aria-hidden="true" />
+              {resetState === "armed"
+                ? language === "de"
+                  ? "Zuruecksetzen bestaetigen"
+                  : "Confirm reset of the demonstration"
+                : resetState === "running"
+                  ? language === "de"
+                    ? "Wird zurueckgesetzt"
+                    : "Resetting"
+                  : resetState === "done"
+                    ? language === "de"
+                      ? "Demonstration zurueckgesetzt"
+                      : "Demonstration reset"
+                    : language === "de"
+                      ? "Demonstration zuruecksetzen"
+                      : "Reset demonstration"}
+            </button>
+            {signedInAs ? (
+              <button
+                type="button"
+                className="wd-menu-item"
+                data-testid="account-sign-out"
+                onClick={onSignOut}
+                disabled={signingOut}
+              >
+                <IconLogout size={16} stroke={1.8} aria-hidden="true" />
+                {language === "de" ? "Abmelden" : "Sign out"}
+              </button>
+            ) : null}
           </Menu>
         ) : null}
       </div>

@@ -21,12 +21,27 @@
 import Link from "next/link";
 import { IconCircleDot } from "@tabler/icons-react";
 import type { WorkdayHeaderModel } from "@/db/repositories/header";
-import { ROLE_RELEASE_STATUS_LABELS } from "@/product/release";
+import { ROLE_RELEASE_DEFINITIONS, ROLE_RELEASE_STATUS_LABELS } from "@/product/release";
 import { WorkdayHeaderClientActions } from "./WorkdayHeaderClientActions";
 
-export function WorkdayHeader({ model }: { model: WorkdayHeaderModel }) {
+export function WorkdayHeader({
+  model,
+  roleId = null,
+  signedInAs = null,
+}: {
+  model: WorkdayHeaderModel;
+  roleId?: string | null;
+  signedInAs?: string | null;
+}) {
   const { language } = model;
   const gated = model.releaseStatus !== null && model.releaseStatus !== "available";
+  /* The roles a presenter can switch to: the Available ones, as the release registry says. */
+  const switchRoles = ROLE_RELEASE_DEFINITIONS.filter((entry) => entry.status === "available").map((entry) => ({
+    roleId: entry.roleId,
+    label: entry.releaseLabel,
+    href: entry.defaultRoute ?? `/workday/${entry.roleId}`,
+    current: entry.roleId === roleId,
+  }));
 
   return (
     <header className="wd-header">
@@ -72,6 +87,9 @@ export function WorkdayHeader({ model }: { model: WorkdayHeaderModel }) {
         suggestionsNeedingYou={model.suggestionsNeedingYou}
         aiState={model.aiState}
         userLabel={model.userLabel}
+        roleLabel={model.roleLabel}
+        signedInAs={signedInAs}
+        switchRoles={switchRoles}
         gated={gated}
       />
     </header>
