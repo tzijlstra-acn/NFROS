@@ -5,39 +5,60 @@
 <title>Starting NFR Workspace</title>
 <style>
   html, body { margin: 0; height: 100%; font-family: "Segoe UI", Arial, sans-serif; background: #f5f6f8; color: #171c24; }
-  main { height: 100%; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 16px; }
+  main { height: 100%; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 16px; text-align: center; padding: 0 24px; }
   .mark { width: 56px; height: 56px; }
   h1 { margin: 0; font-size: 22px; font-weight: 600; }
-  p { margin: 0; color: #5a6372; font-size: 14px; }
+  p { margin: 0; color: #5a6372; font-size: 14px; max-width: 560px; line-height: 1.45; }
   .bar { width: 220px; height: 3px; background: #e4e7ec; overflow: hidden; }
   .bar span { display: block; width: 40%; height: 100%; background: #5b4ff5; animation: slide 1.2s ease-in-out infinite; }
+  .failed .bar span { animation: none; width: 100%; background: #c0392b; }
+  .failed h1 { color: #a12a1f; }
   @keyframes slide { from { transform: translateX(-100%); } to { transform: translateX(250%); } }
   @media (prefers-reduced-motion: reduce) { .bar span { animation: none; width: 100%; } }
 </style>
 </head>
 <body>
-<main>
+<main id="main">
   <svg class="mark" viewBox="0 0 32 32" aria-hidden="true">
     <rect width="32" height="32" rx="7" fill="#0f1216" />
     <path d="M9 23V13.5a7 7 0 0 1 14 0V23" fill="none" stroke="#f4f6f8" stroke-width="2.2" stroke-linecap="round" />
     <circle cx="16" cy="8.6" r="2" fill="#8b82ff" />
   </svg>
-  <h1>Starting NFR Workspace</h1>
-  <p id="status">The workday opens here as soon as it is ready.</p>
+  <h1 id="title">Starting NFR Workspace</h1>
+  <p id="status" aria-live="polite">The workday opens here as soon as it is ready.</p>
   <div class="bar"><span></span></div>
   <p>Synthetic institution and data</p>
 </main>
 <script>
-  // Polls the local server and opens the product the moment it answers
-  const target = "http://localhost:3200/";
-  async function poll() {
-    try {
-      // The landing page itself, so the switch happens once it has rendered
-      await fetch(target, { mode: "no-cors", cache: "no-store" });
-      window.location.replace(target);
-    } catch {
-      setTimeout(poll, 700);
+  // The launcher writes ../../data/launch-state.js as it goes. This page shows its message and
+  // switches to the product only when the launcher reports the scripted journey ready.
+  var fallbackTarget = "http://localhost:3200/";
+  var misses = 0;
+  function poll() {
+    var tag = document.createElement("script");
+    tag.src = "../../data/launch-state.js?t=" + Date.now();
+    tag.onload = function () { tag.remove(); show(window.__nfrLaunch); };
+    tag.onerror = function () { tag.remove(); misses += 1; legacy(); };
+    document.head.appendChild(tag);
+  }
+  function show(state) {
+    if (!state) { setTimeout(poll, 700); return; }
+    if (state.state === "ready") { window.location.replace(state.url || fallbackTarget); return; }
+    document.getElementById("status").textContent = state.message || "";
+    if (state.state === "failed") {
+      document.getElementById("main").className = "failed";
+      document.getElementById("title").textContent = "NFR Workspace could not start";
+      document.getElementById("status").textContent = state.message + " The launcher window and " + state.log + " say more.";
+      return;
     }
+    setTimeout(poll, 700);
+  }
+  // No state file (an older launcher): fall back to opening the product once it answers
+  function legacy() {
+    if (misses < 5) { setTimeout(poll, 700); return; }
+    fetch(fallbackTarget, { mode: "no-cors", cache: "no-store" })
+      .then(function () { window.location.replace(fallbackTarget); })
+      .catch(function () { setTimeout(legacy, 700); });
   }
   poll();
 </script>
