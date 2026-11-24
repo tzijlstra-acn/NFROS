@@ -52,6 +52,32 @@ Method: the five acts of `docs/NFR_WORKSPACE_PRESENTER_GUIDE.md` were driven end
 2. **First-answer visual (plan section 13).** The answer is already conclusion-first with five figures and a ranked bar chart. Optional: put the shared-provider point in the chart title ("Three critical third parties deteriorated; two share Basalt Cloud"), cap the figures at four (plan), and show the as-of date and stale-evidence count beside the chart.
 3. **Authority line in the review.** Show a plain label instead of `requestEvidenceDocument, POLICY_BOUND_AUTONOMOUS`.
 
-## 5. Timings
+## 5. Timings (measured 2026-11-24, 1920x1080, this laptop)
 
-See the presenter guide's checklist; measured values are in section 6 of this document after the launcher change.
+Rehearsal step times from `scripts/demo/rehearse.mjs`. The sign-in and the first answer include the deliberate preparation steps on screen (about one to two seconds).
+
+| Step | Old launcher in practice: development server, cold | Production server, cold, no warm-up | New launcher: production, warmed, presenter's first run |
+|---|---:|---:|---:|
+| Startup to sign-in | 9.6 s | 2.2 s | 2.0 s |
+| Sign-in to Today | 23.2 s | 2.8 s | 2.7 s |
+| First question to visual answer | 18.2 s | 1.4 s | 1.3 s |
+| Evidence drawer | 0.07 s | 0.05 s | 0.05 s |
+| Concentration follow-up | 8.5 s | 1.4 s | 1.4 s |
+| Write-back review | 0.08 s | 0.06 s | 0.05 s |
+| Commit to receipt | 1.4 s | 0.13 s | 0.15 s |
+| Audit log entry | 6.2 s | 0.27 s | 0.12 s |
+| Agent Builder | 8.6 s | 0.63 s | 1.0 s |
+| Reset | 1.7 s | 1.1 s | 0.9 s |
+| Console errors | 1 (development-only hydration warning on Agents) | 0 | 0 |
+
+The left column is what a presenter got from `Launch NFROS.cmd` before this branch: the failed build sent it to the development server (measured here with webpack; the main checkout's Turbopack server is faster, but still compiles each page on first open).
+
+| Launcher | Time |
+|---|---|
+| First run on a new laptop (migrate, seed, production build, readiness, warm-up) | 5 min 47 s |
+| Meeting morning with `--reset` (build and database present) | 25 s to "Ready" |
+| Already running (reuse, checks only) | 2.8 s |
+| `/api/health/demo` | 60 to 90 ms; first question built in 22 to 202 ms |
+| `Stop NFROS.cmd` | under 2 s |
+
+Verified: the launcher refuses nothing healthy, reuses a running showcase, reports a used day ("clean day" warns), and `--reset` restores it. `tests/e2e/nfr-workspace-journey.spec.ts` passes against the isolated showcase (2 of 2); unit tests 1166 of 1166; `tests/integration/demo-readiness.test.ts` 2 of 2; typecheck clean.

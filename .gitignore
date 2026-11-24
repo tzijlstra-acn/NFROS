@@ -14,6 +14,10 @@ next-env.d.ts
 data/*.db
 data/*.db-shm
 data/*.db-wal
+# Showcase launcher runtime files (Launch NFROS.cmd)
+data/launcher.log
+data/launch-state.js
+data/showcase.pid
 src/db/migrations/meta/_journal.json.bak
 
 # Generated exports are reproducible, keep the folder but not the binaries
